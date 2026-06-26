@@ -11,12 +11,13 @@
 4. `PROGRESS.md`
 5. `git log --oneline`
 
-## 현재 마일스톤: M2 (Secret)
+## 현재 마일스톤: M3 (SAST)
 <!-- 진행하며 이 줄을 갱신한다 -->
-- **M0 doctor 완료** (2026-06-27): doctor.py + cli.py. 게이트 통과.
-- **M1 정확한 SCA 완료** (2026-06-27, 90 tests green): adapters(trivy/osv) · models(Finding) · normalize(골든) · merge(consensus) · orchestrator(병렬·부분실패) · reachability(engine 4중 안전장치 + depscan usage-슬라이스 provider) · output(sarif/markdown) · scan.run_scan · profiles · measure · cli scan. **게이트: FP 89%↓(9→1), ground-truth 100%.** 실측: docs/measurements/2026-06-27-m1-*.
-- **M2 다음 할 일**: Gitleaks 어댑터(secret) + opt-in TruffleHog 검증(`--verify-secrets`/`--network-off`/never-validate, spec §8). secret은 위치형(location) finding — models.Location 사용. 정규화/SARIF/MD에 secret 카테고리 통합.
-- **아키텍처 메모**: 새 스캐너 = adapters/<tool>.py + normalize/<tool>.py + normalize._PARSERS 한 줄 + profiles. 도달성은 SCA 전용.
+- **M0 완료**: doctor.py + cli.py.
+- **M1 정확한 SCA 완료** (90 tests): adapters(trivy/osv) · models · normalize(골든) · merge(consensus) · orchestrator · reachability(4중 안전장치 + depscan usage-슬라이스) · output(sarif/md) · scan · profiles · measure · cli scan. 게이트: FP 89%↓(9→1), ground-truth 100%. 실측 docs/measurements/2026-06-27-m1-*.
+- **M2 Secret 완료** (116 tests): adapters/gitleaks(위치형, raw 미저장) · normalize/gitleaks · secret/verify(정책 off/verify/never, network-off 안전) · secret/trufflehog(파서+runner) · scan/cli 통합. 게이트: 탐지3 + 검증 opt-in + network-off 차단(E2E).
+- **M3 다음 할 일**: Semgrep CE 어댑터(SAST, 위치형 finding). taint는 intraprocedural 한계를 보고서에 명시(spec §10.2). normalize/semgrep(SARIF 출력 파싱) + to_findings/profiles(standard) 통합. 취약 패턴 픽스처 + 골든.
+- **아키텍처 메모**: 새 스캐너 = adapters/<tool>.py + normalize/<tool>.py + normalize._PARSERS 한 줄 + profiles + doctor REQUIREMENTS. 도달성·검증은 카테고리 전용(SCA/secret). 네트워크 필요한 실제 스캔은 Bash dangerouslyDisableSandbox=true (DNS 간헐 실패 시 재시도).
 
 ## 핵심 원칙 6 (위반 금지)
 1. **정확도 우선** — FP를 줄이는 레버를 모든 것에 우선.

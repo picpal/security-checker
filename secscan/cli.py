@@ -21,6 +21,8 @@ from .profiles import build_adapters, get_profile
 from .reachability.depscan import DepscanUsageProvider
 from .reachability.engine import Budget
 from .scan import run_scan
+from .secret.trufflehog import trufflehog_runner
+from .secret.verify import resolve_secret_policy
 
 _KIND_LABEL = {"scanner": "스캐너", "runtime": "런타임", "resource": "자원"}
 _KIND_ORDER = ["scanner", "runtime", "resource"]
@@ -125,6 +127,10 @@ def render_scan_summary(result) -> str:
         )
     else:
         lines.append(f"도달성: 미적용 ({result.reachability_reason})")
+    if result.secret_policy == "verify":
+        lines.append(f"시크릿 검증: 적용됨 — 라이브 {result.secret_verified_count}건 확인")
+    elif result.secret_policy == "never":
+        lines.append("시크릿 검증: 차단됨 (network-off — 자격증명 미전송)")
     if result.partial_failures:
         names = ", ".join(f"{r.tool}({r.status})" for r in result.partial_failures)
         lines.append(f"⚠️ 부분 실패: {names} — 나머지 결과는 유효")
@@ -151,6 +157,10 @@ def _cmd_scan(args) -> int:
         provider = DepscanUsageProvider(reports)
         env_ok = reachability_env_ok
 
+    policy = resolve_secret_policy(args.verify_secrets, args.network_off)
+    # 안전: 'verify' 일 때만 네트워크 runner 를 건넨다. off/never 면 None (전송 불가능).
+    secret_runner = trufflehog_runner if policy == "verify" else None
+
     result = run_scan(
         args.target, profile,
         adapters=adapters,
@@ -158,6 +168,8 @@ def _cmd_scan(args) -> int:
         env_ok=env_ok,
         count_loc=count_source_loc,
         budget=Budget(allow_large=args.allow_large),
+        secret_policy=policy,
+        secret_runner=secret_runner,
     )
 
     out = Path(args.out)
@@ -194,6 +206,10 @@ def main(argv: list[str] | None = None) -> int:
                     help="도달성 분석 생략")
     sp.add_argument("--allow-large", action="store_true",
                     help="대형 코드베이스에서도 도달성 강제 실행(크기 임계 무시)")
+    sp.add_argument("--verify-secrets", action="store_true",
+                    help="TruffleHog 로 시크릿 라이브 검증 (자격증명을 제3자로 전송 — opt-in)")
+    sp.add_argument("--network-off", action="store_true",
+                    help="시크릿 검증 강제 차단 (--verify-secrets 보다 우선)")
 
     args = parser.parse_args(argv)
     if args.command == "doctor":

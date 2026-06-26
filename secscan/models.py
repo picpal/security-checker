@@ -95,6 +95,7 @@ class Finding:
     reachability: Reachability = field(default_factory=Reachability)
     consensus: Consensus | None = None
     references: tuple[str, ...] = ()
+    verified: bool | None = None  # secret 전용: None=미검증, True=라이브 확인, False=검증했으나 비활성
 
     @property
     def dedup_key(self) -> str:

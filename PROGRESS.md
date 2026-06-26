@@ -1,6 +1,6 @@
 # 진행 상황
 
-현재 마일스톤: **M2**
+현재 마일스톤: **M3**
 
 ## 인프라 (M0보다 먼저)
 - [x] CLAUDE.md 생성
@@ -34,10 +34,10 @@
 - 조치대상 9→1 (노이즈 89% 감소), 도달성 ground-truth 100% (commons-text 도달가능 / snakeyaml 도달불가)
 - dep-scan ~45s(fresh), 슬라이스 캐시 재사용 시 즉시
 
-## M2 — Secret
-- [ ] Gitleaks 어댑터
-- [ ] opt-in TruffleHog (`--verify-secrets` / `--network-off` / never-validate)
-- [ ] **게이트**: 탐지 · 검증 · network 정책 동작
+## M2 — Secret ✅
+- [x] Gitleaks 어댑터 (위치형 finding, raw 시크릿 미저장)
+- [x] opt-in TruffleHog (`--verify-secrets` / `--network-off` / never-validate)
+- [x] **게이트 통과**: 3건 탐지 · 검증 opt-in · network-off 차단 (E2E 3정책 확인, 116 tests)
 
 ## M3 — SAST
 - [ ] Semgrep CE 어댑터

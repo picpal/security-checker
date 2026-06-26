@@ -141,3 +141,31 @@ def test_main_scan_clean_returns_0(monkeypatch, tmp_path):
         "scan", "--target", "/proj", "--profile", "quick", "--out", str(tmp_path),
     ])
     assert rc == 0
+
+
+def test_main_scan_verify_secrets_sets_policy(monkeypatch, tmp_path):
+    captured = {}
+
+    def fake(*a, **k):
+        captured.update(k)
+        return ScanResult([], [], False, "off", [])
+
+    monkeypatch.setattr(cli, "run_scan", fake)
+    cli.main(["scan", "--target", "/proj", "--profile", "quick",
+              "--out", str(tmp_path), "--verify-secrets"])
+    assert captured["secret_policy"] == "verify"
+    assert captured["secret_runner"] is not None  # opt-in 시 runner 전달
+
+
+def test_main_scan_network_off_forces_never_and_no_runner(monkeypatch, tmp_path):
+    captured = {}
+
+    def fake(*a, **k):
+        captured.update(k)
+        return ScanResult([], [], False, "off", [])
+
+    monkeypatch.setattr(cli, "run_scan", fake)
+    cli.main(["scan", "--target", "/proj", "--profile", "quick", "--out", str(tmp_path),
+              "--verify-secrets", "--network-off"])
+    assert captured["secret_policy"] == "never"  # network-off 가 verify 이김
+    assert captured["secret_runner"] is None  # 네트워크 runner 미전달(전송 불가)

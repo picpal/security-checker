@@ -14,6 +14,8 @@ GOLDEN = Path(__file__).parent / "golden"
 TRIVY = (GOLDEN / "trivy-vuln-maven-app.json").read_text()
 OSV = (GOLDEN / "osv-vuln-maven-app.json").read_text()
 SLICE = (GOLDEN / "atom-usages-vuln-maven-app.json").read_text()
+GITLEAKS = (GOLDEN / "gitleaks-secret-app.json").read_text()
+SECRET_FILE = "fixtures/secret-app/config/application.properties"
 
 
 class FakeAdapter:
@@ -76,6 +78,33 @@ def test_run_scan_reports_partial_failures():
     assert [r.tool for r in res.partial_failures] == ["osv-scanner"]
     # trivy 결과는 온전히 유지
     assert _by_cve(res.findings, "CVE-2022-42889").consensus.tools == ("trivy",)
+
+
+def test_run_scan_verifies_secrets_when_policy_verify():
+    res = run_scan(
+        "/proj", get_profile("quick"),
+        adapters=[FakeAdapter("gitleaks", GITLEAKS)],
+        reachability_provider=None,
+        secret_policy="verify",
+        secret_runner=lambda t: {SECRET_FILE},
+    )
+    assert res.secret_verified_count == 3  # 골든의 시크릿 3건 모두 같은 파일
+    assert all(f.verified for f in res.findings if f.category == "secret")
+
+
+def test_run_scan_off_policy_never_calls_secret_runner():
+    def boom(t):
+        raise AssertionError("off 정책에서 검증 runner 호출 금지(네트워크 전송 없음)")
+
+    res = run_scan(
+        "/proj", get_profile("quick"),
+        adapters=[FakeAdapter("gitleaks", GITLEAKS)],
+        reachability_provider=None,
+        secret_policy="off",
+        secret_runner=boom,
+    )
+    assert res.secret_verified_count == 0
+    assert all(f.verified is None for f in res.findings if f.category == "secret")
 
 
 def test_profiles_build_expected_adapters():
