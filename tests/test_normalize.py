@@ -7,6 +7,8 @@
 import json
 from pathlib import Path
 
+from secscan.adapters.base import FAILED, OK, RawResult
+from secscan.normalize import to_findings
 from secscan.normalize.merge import merge_consensus
 from secscan.normalize.osv import parse_osv
 from secscan.normalize.trivy import parse_trivy
@@ -122,3 +124,29 @@ def test_merge_does_not_mutate_inputs():
     before = trivy[0].consensus.tools
     merge_consensus(trivy + parse_osv(_osv_payload()))
     assert trivy[0].consensus.tools == before  # 입력 불변
+
+
+# --- to_findings: RawResult -> Finding 배선 ---
+
+def test_to_findings_dispatches_and_merges():
+    raws = [
+        RawResult("trivy", OK, payload=_trivy_payload()),
+        RawResult("osv-scanner", OK, payload=_osv_payload()),
+    ]
+    findings = to_findings(raws)
+    f = _by_cve(findings, "CVE-2022-42889")
+    assert f.consensus.score == 2  # 두 도구 병합
+
+
+def test_to_findings_skips_failed_results():
+    raws = [
+        RawResult("trivy", OK, payload=_trivy_payload()),
+        RawResult("osv-scanner", FAILED, error="boom"),
+    ]
+    findings = to_findings(raws)
+    f = _by_cve(findings, "CVE-2022-42889")
+    assert f.consensus.tools == ("trivy",)  # 실패한 osv 는 무시(부분 실패)
+
+
+def test_to_findings_ignores_unknown_tool():
+    assert to_findings([RawResult("mystery", OK, payload="{}")]) == []
