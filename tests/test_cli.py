@@ -5,6 +5,7 @@
 """
 
 from secscan import cli
+from secscan.adapters.base import FAILED, RawResult
 from secscan.doctor import (
     MISSING,
     OK,
@@ -12,6 +13,15 @@ from secscan.doctor import (
     Requirement,
     ToolStatus,
 )
+from secscan.models import (
+    REACHABLE,
+    UNREACHABLE,
+    Advisory,
+    Component,
+    Finding,
+    Reachability,
+)
+from secscan.scan import ScanResult
 
 
 def _status(name, present, version, satisfies, state, kind="scanner", optional=False):
@@ -70,3 +80,64 @@ def test_main_doctor_returns_1_when_problems(monkeypatch):
     bad_report = DoctorReport([_status("depscan", False, None, False, MISSING)])
     monkeypatch.setattr(cli, "run_doctor", lambda: bad_report)
     assert cli.main(["doctor"]) == 1
+
+
+# --- scan 커맨드 ---
+
+def _reach(pkg, cve, sev, reach):
+    return Finding(
+        category="sca", severity=sev, rule_id=cve,
+        component=Component("maven", pkg, "1.0"),
+        advisory=Advisory(cve, aliases=(cve,)),
+        reachability=Reachability(reach),
+    )
+
+
+def test_render_scan_summary_shows_counts_and_reachability():
+    res = ScanResult(
+        findings=[_reach("a", "CVE-1", "critical", REACHABLE),
+                  _reach("b", "CVE-2", "high", UNREACHABLE)],
+        raw_results=[], reachability_ran=True, reachability_reason="ok",
+    )
+    out = cli.render_scan_summary(res)
+    assert "도달 가능" in out
+    assert "2" in out
+
+
+def test_render_scan_summary_reports_partial_failures():
+    res = ScanResult(
+        findings=[], raw_results=[],
+        partial_failures=[RawResult("osv-scanner", FAILED, error="boom")],
+    )
+    out = cli.render_scan_summary(res)
+    assert "osv-scanner" in out
+
+
+def test_render_scan_summary_notes_reachability_fallback():
+    res = ScanResult(findings=[], raw_results=[], reachability_ran=False,
+                     reachability_reason="timeout")
+    out = cli.render_scan_summary(res)
+    assert "timeout" in out  # 폴백 사유 노출
+
+
+def test_main_scan_writes_outputs(monkeypatch, tmp_path):
+    findings = [_reach("commons-text", "CVE-2022-42889", "critical", REACHABLE)]
+    monkeypatch.setattr(
+        cli, "run_scan",
+        lambda *a, **k: ScanResult(findings, [], True, "ok", []),
+    )
+    rc = cli.main([
+        "scan", "--target", "/proj", "--profile", "accurate-sca",
+        "--out", str(tmp_path), "--no-reachability",
+    ])
+    assert (tmp_path / "report.md").exists()
+    assert (tmp_path / "findings.sarif").exists()
+    assert rc == 1  # 도달 가능 critical 존재 → actionable
+
+
+def test_main_scan_clean_returns_0(monkeypatch, tmp_path):
+    monkeypatch.setattr(cli, "run_scan", lambda *a, **k: ScanResult([], [], False, "off", []))
+    rc = cli.main([
+        "scan", "--target", "/proj", "--profile", "quick", "--out", str(tmp_path),
+    ])
+    assert rc == 0

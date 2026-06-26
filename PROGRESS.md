@@ -1,6 +1,6 @@
 # 진행 상황
 
-현재 마일스톤: **M1**
+현재 마일스톤: **M2**
 
 ## 인프라 (M0보다 먼저)
 - [x] CLAUDE.md 생성
@@ -21,13 +21,18 @@
 - [x] 정규화 raw→typed (골든 테스트: trivy/osv 실제 출력)
 - [x] 합의 dedup (Trivy ∪ osv + consensus score) — merge_consensus
 - [x] 취약 픽스처 (commons-text=도달가능 / snakeyaml=도달불가) + golden 캡처
-- [ ] 오케스트레이터 (병렬 · status · 자원 거버넌스)
-- [ ] dep-scan 도달성 엔진 (4중 안전장치: 크기인지 자동 / 캐싱 / 예산+폴백 / doctor 점검)
-- [ ] SARIF 2.1.0 출력
-- [ ] Markdown 보고서 출력
-- [ ] scan CLI 커맨드 (profile/target → findings → 보고서)
-- [ ] 도달성 on/off FP 감소 + 비용 실측 리포트
-- [ ] **게이트**: unreachable 표기 + FP 감소 수치 + unknown 폴백 + 골든·부분실패 테스트 green
+- [x] 오케스트레이터 (병렬 · status · 자원 거버넌스 · 부분실패 격리)
+- [x] dep-scan 도달성 엔진 (4중 안전장치) + usage-슬라이스 provider
+- [x] SARIF 2.1.0 출력 (도달성 주석, 자동억제 X)
+- [x] Markdown 보고서 출력 (도달가능 우선 + 사각지대 명시)
+- [x] scan CLI 커맨드 (`secscan scan --profile --target --out`)
+- [x] 도달성 on/off FP 감소 + 비용 실측 리포트 (docs/measurements/2026-06-27-m1-*)
+- [x] **게이트 통과**: unreachable 표기 ✓ + FP 89%↓(9→1) ✓ + ground-truth 100% ✓ + unknown 폴백 ✓ + 90 tests green
+
+### M1 실측 결과 (게이트 증명)
+- 실제 E2E: `secscan scan --target fixtures/vuln-maven-app --profile accurate-sca`
+- 조치대상 9→1 (노이즈 89% 감소), 도달성 ground-truth 100% (commons-text 도달가능 / snakeyaml 도달불가)
+- dep-scan ~45s(fresh), 슬라이스 캐시 재사용 시 즉시
 
 ## M2 — Secret
 - [ ] Gitleaks 어댑터

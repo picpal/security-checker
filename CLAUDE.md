@@ -11,10 +11,12 @@
 4. `PROGRESS.md`
 5. `git log --oneline`
 
-## 현재 마일스톤: M1 (정확한 SCA)
+## 현재 마일스톤: M2 (Secret)
 <!-- 진행하며 이 줄을 갱신한다 -->
-- **M0 doctor 완료** (2026-06-27, 22 tests green): `secscan/doctor.py`(evaluate 순수 + probe DI), `secscan/cli.py`(render_doctor 순수 + main). 게이트 통과.
-- **M1 다음 할 일**: Trivy/osv 어댑터 → typed model 정규화(골든) → 합의 dedup → dep-scan 도달성(4중 안전장치) → SARIF+MD → 취약 픽스처 → FP 실측.
+- **M0 doctor 완료** (2026-06-27): doctor.py + cli.py. 게이트 통과.
+- **M1 정확한 SCA 완료** (2026-06-27, 90 tests green): adapters(trivy/osv) · models(Finding) · normalize(골든) · merge(consensus) · orchestrator(병렬·부분실패) · reachability(engine 4중 안전장치 + depscan usage-슬라이스 provider) · output(sarif/markdown) · scan.run_scan · profiles · measure · cli scan. **게이트: FP 89%↓(9→1), ground-truth 100%.** 실측: docs/measurements/2026-06-27-m1-*.
+- **M2 다음 할 일**: Gitleaks 어댑터(secret) + opt-in TruffleHog 검증(`--verify-secrets`/`--network-off`/never-validate, spec §8). secret은 위치형(location) finding — models.Location 사용. 정규화/SARIF/MD에 secret 카테고리 통합.
+- **아키텍처 메모**: 새 스캐너 = adapters/<tool>.py + normalize/<tool>.py + normalize._PARSERS 한 줄 + profiles. 도달성은 SCA 전용.
 
 ## 핵심 원칙 6 (위반 금지)
 1. **정확도 우선** — FP를 줄이는 레버를 모든 것에 우선.
