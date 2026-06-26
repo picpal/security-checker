@@ -1,0 +1,4 @@
+com.example:vuln-maven-app:jar:1.0.0
++- org.apache.commons:commons-text:jar:1.9:compile
+|  \- org.apache.commons:commons-lang3:jar:3.11:compile
+\- org.yaml:snakeyaml:jar:1.30:compile

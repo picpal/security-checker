@@ -67,8 +67,9 @@ def enrich_reachability(
         reason = "cache"
     else:
         # 안전장치 3: 예산 + 폴백 (타임아웃/에러 → 도달성만 스킵, 탐지 유지)
+        # provider 는 어떤 컴포넌트를 판정할지 알아야 하므로 findings 를 받는다.
         try:
-            result = provider(target, budget.timeout)
+            result = provider(target, budget.timeout, findings)
         except TimeoutError:
             return EnrichOutcome(findings, False, "timeout")
         except Exception:

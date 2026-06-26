@@ -36,7 +36,7 @@ def _findings():
     ]
 
 
-def _provider_ok(target, timeout):
+def _provider_ok(target, timeout, findings):
     return ReachabilityResult(
         verdicts={
             "org.apache.commons:commons-text@1.9": REACHABLE,
@@ -80,7 +80,7 @@ def test_size_over_threshold_runs_when_allow_large():
 
 
 def test_provider_timeout_falls_back_to_unknown_keeping_findings():
-    def slow(target, timeout):
+    def slow(target, timeout, findings):
         raise TimeoutError()
 
     out = enrich_reachability(
@@ -94,7 +94,7 @@ def test_provider_timeout_falls_back_to_unknown_keeping_findings():
 
 
 def test_provider_error_falls_back_to_unknown():
-    def boom(target, timeout):
+    def boom(target, timeout, findings):
         raise RuntimeError("atom crashed")
 
     out = enrich_reachability(
@@ -134,9 +134,9 @@ def test_component_absent_from_verdicts_stays_unknown():
 def test_cache_hit_skips_provider():
     calls = []
 
-    def prov(target, timeout):
+    def prov(target, timeout, findings):
         calls.append(1)
-        return _provider_ok(target, timeout)
+        return _provider_ok(target, timeout, findings)
 
     cache = {}
     common = dict(provider=prov, env_ok=lambda: True, count_loc=lambda t: 10,
