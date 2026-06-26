@@ -1,0 +1,13 @@
+{
+  "description": "Semgrep CE(p/java + p/security-audit) SAST 탐지 ground truth.",
+  "detected": [
+    {"cwe": "CWE-89", "kind": "sql-injection", "file": "Vuln.java", "line": 15, "severity": "high"}
+  ],
+  "not_detected_ce_limitation": [
+    {
+      "cwe": "CWE-78",
+      "kind": "command-injection",
+      "note": "메서드 인자(userInput)를 경유한 taint. Semgrep CE 는 intraprocedural(함수 내) taint 만 추적해 함수 경계를 넘는 흐름을 놓친다(spec §10.2). cross-function taint 는 Opengrep/CodeQL(백로그)."
+    }
+  ]
+}

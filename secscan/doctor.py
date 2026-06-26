@@ -228,6 +228,12 @@ REQUIREMENTS: list[Requirement] = [
         version_argv=("version",),
     ),
     Requirement(
+        name="semgrep", kind="scanner",
+        purpose="SAST(소스 패턴) — taint 는 intraprocedural 한계(spec §10.2)",
+        install_hint="brew install semgrep",
+        version_regex=_SEMVER,
+    ),
+    Requirement(
         name="trufflehog", kind="scanner",
         purpose="시크릿 유효성 검증 (opt-in, --verify-secrets)",
         install_hint="brew install trufflehog",

@@ -1,6 +1,6 @@
 # 진행 상황
 
-현재 마일스톤: **M3**
+현재 마일스톤: **M4**
 
 ## 인프라 (M0보다 먼저)
 - [x] CLAUDE.md 생성
@@ -39,10 +39,10 @@
 - [x] opt-in TruffleHog (`--verify-secrets` / `--network-off` / never-validate)
 - [x] **게이트 통과**: 3건 탐지 · 검증 opt-in · network-off 차단 (E2E 3정책 확인, 116 tests)
 
-## M3 — SAST
-- [ ] Semgrep CE 어댑터
-- [ ] taint intraprocedural 한계 보고서 명시
-- [ ] **게이트**: 취약 패턴 탐지, typed 모델 통합
+## M3 — SAST ✅
+- [x] Semgrep CE 어댑터 (p/java + p/security-audit)
+- [x] taint intraprocedural 한계 보고서 명시 (markdown _SAST_NOTE, spec §10.2)
+- [x] **게이트 통과**: SQL injection(CWE-89) 탐지 + typed 통합 (E2E, 125 tests). CE 한계로 인자경유 command injection 미탐지(문서화)
 
 ## M4 — 억제
 - [ ] 억제 엔트리 (provenance / evidence / expiry / scope)

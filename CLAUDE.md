@@ -11,13 +11,13 @@
 4. `PROGRESS.md`
 5. `git log --oneline`
 
-## 현재 마일스톤: M3 (SAST)
+## 현재 마일스톤: M4 (억제)
 <!-- 진행하며 이 줄을 갱신한다 -->
-- **M0 완료**: doctor.py + cli.py.
-- **M1 정확한 SCA 완료** (90 tests): adapters(trivy/osv) · models · normalize(골든) · merge(consensus) · orchestrator · reachability(4중 안전장치 + depscan usage-슬라이스) · output(sarif/md) · scan · profiles · measure · cli scan. 게이트: FP 89%↓(9→1), ground-truth 100%. 실측 docs/measurements/2026-06-27-m1-*.
-- **M2 Secret 완료** (116 tests): adapters/gitleaks(위치형, raw 미저장) · normalize/gitleaks · secret/verify(정책 off/verify/never, network-off 안전) · secret/trufflehog(파서+runner) · scan/cli 통합. 게이트: 탐지3 + 검증 opt-in + network-off 차단(E2E).
-- **M3 다음 할 일**: Semgrep CE 어댑터(SAST, 위치형 finding). taint는 intraprocedural 한계를 보고서에 명시(spec §10.2). normalize/semgrep(SARIF 출력 파싱) + to_findings/profiles(standard) 통합. 취약 패턴 픽스처 + 골든.
-- **아키텍처 메모**: 새 스캐너 = adapters/<tool>.py + normalize/<tool>.py + normalize._PARSERS 한 줄 + profiles + doctor REQUIREMENTS. 도달성·검증은 카테고리 전용(SCA/secret). 네트워크 필요한 실제 스캔은 Bash dangerouslyDisableSandbox=true (DNS 간헐 실패 시 재시도).
+- **M0~M3 완료** (125 tests green):
+  - M0 doctor, M1 정확한 SCA(FP 89%↓, ground-truth 100%), M2 Secret(gitleaks+trufflehog 정책), M3 SAST(semgrep, CWE-89 탐지, CE taint 한계 명시).
+- **M4 다음 할 일**: 억제 안전장치(spec §12). 억제 엔트리 필수 필드 provenance/evidence/expiry/scope. baseline(기존 이슈 억제). OpenVEX 루프. stale 무효화(의존성 버전/콜패스/룰셋 변경 시). **Claude 자동 억제 금지 — 제안만, 사람이 확정.** 억제 적용은 normalize 단계에서 finding.suppression 세팅. SARIF emit 시 suppressions 채움(M1에선 항상 빈배열이었음 — 사람이 확정한 것만).
+- **아키텍처 메모**: 새 스캐너 = adapters/<tool>.py + normalize/<tool>.py + normalize._PARSERS 한 줄 + profiles + doctor REQUIREMENTS. 도달성/검증은 카테고리 전용(SCA/secret). 실제 스캔(네트워크)은 Bash dangerouslyDisableSandbox=true. Finding.dedup_key가 억제 매칭 키.
+- **모델**: Finding{category,severity,tool,rule_id,cwe,owasp,component,advisory,location,reachability,consensus,verified}. suppression 필드는 spec §6에 있으나 아직 모델에 미구현 → M4에서 추가.
 
 ## 핵심 원칙 6 (위반 금지)
 1. **정확도 우선** — FP를 줄이는 레버를 모든 것에 우선.

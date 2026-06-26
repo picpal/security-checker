@@ -9,6 +9,7 @@ from ..adapters.base import OK, RawResult
 from .gitleaks import parse_gitleaks
 from .merge import merge_consensus
 from .osv import parse_osv
+from .semgrep import parse_semgrep
 from .trivy import parse_trivy
 
 # 도구명 → 파서. 새 스캐너 = 여기 한 줄 + 파서 모듈 추가.
@@ -16,6 +17,7 @@ _PARSERS = {
     "trivy": parse_trivy,
     "osv-scanner": parse_osv,
     "gitleaks": parse_gitleaks,
+    "semgrep": parse_semgrep,
 }
 
 

@@ -18,6 +18,12 @@ _BLIND_SPOT_NOTE = (
     "근거일 뿐 안전 보증이 아닙니다. 억제는 사람이 증거를 확인해 확정하세요(자동 억제 없음)."
 )
 
+_SAST_NOTE = (
+    "> ℹ️ **SAST(Semgrep CE) 주의**: taint 분석이 **intraprocedural**(함수 내)로 제한되어 "
+    "함수·파일 경계를 넘는 데이터 흐름은 놓칠 수 있습니다(spec §10.2). 깊은 cross-function "
+    "분석은 향후 Opengrep/CodeQL 로 보강 예정."
+)
+
 
 def _sort_key(f: Finding):
     return (_REACH_RANK.get(f.reachability.status, 1), severity_rank(f.severity))
@@ -89,6 +95,9 @@ def to_markdown(findings: list[Finding], *, target: str | None = None, meta: dic
         )
     L.append("")
     L.append(_BLIND_SPOT_NOTE)
+    if any(f.category == "sast" for f in findings):
+        L.append("")
+        L.append(_SAST_NOTE)
     L.append("")
 
     # 낮은 우선순위 = 도달 불가로 판정된 SCA 만. 그 외(도달 가능/미상 SCA, 시크릿/SAST)는

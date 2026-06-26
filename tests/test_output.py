@@ -156,3 +156,21 @@ def test_markdown_secret_is_prioritized_not_treated_as_unreachable():
 def test_markdown_secret_shows_location_not_fix_version():
     md = to_markdown([_secret()])
     assert "application.properties" in md
+
+
+def _sast():
+    return Finding(
+        category="sast", severity="high", title="SQL injection",
+        rule_id="formatted-sql-string", cwe=("CWE-89",),
+        location=Location("src/Vuln.java", start_line=15),
+    )
+
+
+def test_markdown_notes_sast_ce_taint_limitation_when_sast_present():
+    md = to_markdown([_sast()])
+    assert "intraprocedural" in md  # CE taint 한계 명시(spec §10.2)
+
+
+def test_markdown_omits_sast_note_when_no_sast():
+    md = to_markdown([_reachable()])
+    assert "intraprocedural" not in md
