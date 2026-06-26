@@ -14,6 +14,7 @@ from secscan.models import (
     Component,
     Consensus,
     Finding,
+    Location,
     Reachability,
 )
 from secscan.output.markdown import to_markdown
@@ -135,3 +136,23 @@ def test_markdown_summary_counts_by_reachability():
     # 요약에 도달 가능/불가 카운트가 있다
     assert "도달 가능" in md
     assert "도달 불가" in md
+
+
+def _secret():
+    return Finding(
+        category="secret", severity="high", title="AWS access token",
+        rule_id="aws-access-token",
+        location=Location("config/application.properties", start_line=4),
+    )
+
+
+def test_markdown_secret_is_prioritized_not_treated_as_unreachable():
+    # 시크릿은 도달성 개념이 없다(unknown). 도달 불가 SCA 와 함께 묶이면 안 된다.
+    md = to_markdown([_unreachable(), _secret()])
+    # 시크릿이 도달 불가 SCA(snakeyaml) 보다 앞(우선 조치)에 온다
+    assert md.index("aws-access-token") < md.index("CVE-2022-1471")
+
+
+def test_markdown_secret_shows_location_not_fix_version():
+    md = to_markdown([_secret()])
+    assert "application.properties" in md

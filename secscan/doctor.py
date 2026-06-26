@@ -220,6 +220,20 @@ REQUIREMENTS: list[Requirement] = [
         install_hint="brew install node",
         version_regex=r"v?" + _SEMVER,
     ),
+    Requirement(
+        name="gitleaks", kind="scanner",
+        purpose="시크릿(하드코딩 자격증명) 탐지",
+        install_hint="brew install gitleaks",
+        version_regex=_SEMVER,
+        version_argv=("version",),
+    ),
+    Requirement(
+        name="trufflehog", kind="scanner",
+        purpose="시크릿 유효성 검증 (opt-in, --verify-secrets)",
+        install_hint="brew install trufflehog",
+        version_regex=_SEMVER,
+        optional=True,  # 검증은 기본 off → 없어도 차단 아님
+    ),
 ]
 
 

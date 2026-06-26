@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .adapters.gitleaks import GitleaksAdapter
 from .adapters.osv import OsvAdapter
 from .adapters.trivy import TrivyAdapter
 
@@ -20,14 +21,15 @@ class Profile:
 
 
 PROFILES: dict[str, Profile] = {
-    "quick": Profile("quick", ("trivy",), False),
+    "quick": Profile("quick", ("trivy", "gitleaks"), False),
     "accurate-sca": Profile("accurate-sca", ("trivy", "osv-scanner"), True),
-    "standard": Profile("standard", ("trivy", "osv-scanner"), True),
+    "standard": Profile("standard", ("trivy", "osv-scanner", "gitleaks"), True),
 }
 
 _ADAPTER_CLASSES = {
     "trivy": TrivyAdapter,
     "osv-scanner": OsvAdapter,
+    "gitleaks": GitleaksAdapter,
 }
 
 

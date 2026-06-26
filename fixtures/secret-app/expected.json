@@ -1,0 +1,8 @@
+{
+  "description": "gitleaks 시크릿 탐지 ground truth. 모두 가짜값(실제 자격증명 아님).",
+  "secrets": [
+    {"rule": "aws-access-token", "file": "config/application.properties", "line": 4},
+    {"rule": "generic-api-key", "file": "config/application.properties", "line": 5},
+    {"rule": "github-pat", "file": "config/application.properties", "line": 8}
+  ]
+}

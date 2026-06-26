@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from ..adapters.base import OK, RawResult
+from .gitleaks import parse_gitleaks
 from .merge import merge_consensus
 from .osv import parse_osv
 from .trivy import parse_trivy
@@ -14,6 +15,7 @@ from .trivy import parse_trivy
 _PARSERS = {
     "trivy": parse_trivy,
     "osv-scanner": parse_osv,
+    "gitleaks": parse_gitleaks,
 }
 
 

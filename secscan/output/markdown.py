@@ -24,17 +24,27 @@ def _sort_key(f: Finding):
 
 
 def _line(f: Finding) -> list[str]:
-    comp = f"{f.component.package}@{f.component.version}" if f.component else f.rule_id
-    reach = _REACH_LABEL.get(f.reachability.status, f.reachability.status)
-    out = [f"### [{f.severity.upper()}] {f.rule_id} — {comp}"]
-    detail = f"- 도달성: **{reach}**"
-    if f.reachability.source:
-        detail += f" ({f.reachability.source})"
-    if f.reachability.evidence:
-        detail += f" — `{f.reachability.evidence}`"
-    out.append(detail)
-    if f.advisory and f.advisory.fixed_versions:
-        out.append(f"- 수정: `{', '.join(f.advisory.fixed_versions)}` 이상으로 업그레이드")
+    if f.category == "sca":
+        subject = f"{f.component.package}@{f.component.version}" if f.component else f.rule_id
+    else:  # secret / sast — 위치형
+        subject = f.location.file if f.location else f.rule_id
+        if f.location and f.location.start_line:
+            subject += f":{f.location.start_line}"
+    out = [f"### [{f.severity.upper()}] {f.rule_id} — {subject}"]
+
+    if f.category == "sca":
+        reach = _REACH_LABEL.get(f.reachability.status, f.reachability.status)
+        detail = f"- 도달성: **{reach}**"
+        if f.reachability.source:
+            detail += f" ({f.reachability.source})"
+        if f.reachability.evidence:
+            detail += f" — `{f.reachability.evidence}`"
+        out.append(detail)
+        if f.advisory and f.advisory.fixed_versions:
+            out.append(f"- 수정: `{', '.join(f.advisory.fixed_versions)}` 이상으로 업그레이드")
+    elif f.category == "secret":
+        out.append("- 하드코딩된 시크릿 — **즉시 회수(revoke)·교체**하고 코드/히스토리에서 제거")
+
     meta = []
     if f.cwe:
         meta.append(" ".join(f.cwe))
@@ -81,21 +91,25 @@ def to_markdown(findings: list[Finding], *, target: str | None = None, meta: dic
     L.append(_BLIND_SPOT_NOTE)
     L.append("")
 
-    # 우선 조치 (도달 가능)
-    priority = [f for f in findings if f.reachability.status == REACHABLE]
-    rest = [f for f in findings if f.reachability.status != REACHABLE]
+    # 낮은 우선순위 = 도달 불가로 판정된 SCA 만. 그 외(도달 가능/미상 SCA, 시크릿/SAST)는
+    # 모두 우선 조치. (시크릿은 도달성 개념이 없어 강등 대상이 아니다.)
+    def _is_low(f: Finding) -> bool:
+        return f.category == "sca" and f.reachability.status == UNREACHABLE
 
-    L.append("## 우선 조치 — 도달 가능")
+    low = [f for f in findings if _is_low(f)]
+    priority = [f for f in findings if not _is_low(f)]
+
+    L.append("## 우선 조치")
     if priority:
         for f in priority:
             L.extend(_line(f))
     else:
-        L.append("_도달 가능으로 판정된 취약점 없음._")
+        L.append("_조치 대상 없음._")
         L.append("")
 
-    L.append("## 낮은 우선순위 — 도달 불가 / 미상")
-    if rest:
-        for f in rest:
+    L.append("## 낮은 우선순위 — 도달 불가 (SCA)")
+    if low:
+        for f in low:
             L.extend(_line(f))
     else:
         L.append("_해당 없음._")
