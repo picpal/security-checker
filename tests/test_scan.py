@@ -9,6 +9,7 @@ from secscan.adapters.base import FAILED, OK, RawResult
 from secscan.profiles import build_adapters, get_profile
 from secscan.reachability.depscan import decide_reachability, parse_invoked_symbols
 from secscan.scan import run_scan
+from secscan.suppress.engine import record_suppression
 
 GOLDEN = Path(__file__).parent / "golden"
 TRIVY = (GOLDEN / "trivy-vuln-maven-app.json").read_text()
@@ -105,6 +106,30 @@ def test_run_scan_off_policy_never_calls_secret_runner():
     )
     assert res.secret_verified_count == 0
     assert all(f.verified is None for f in res.findings if f.category == "secret")
+
+
+def test_run_scan_applies_human_confirmed_suppression():
+    base = run_scan("/p", get_profile("quick"),
+                    adapters=[FakeAdapter("trivy", TRIVY)], reachability_provider=None)
+    key = base.findings[0].dedup_key
+    s = record_suppression(scope=key, reason="r", provenance="alice", evidence="e",
+                           expiry="2099-12-31")
+    res = run_scan("/p", get_profile("quick"),
+                   adapters=[FakeAdapter("trivy", TRIVY)], reachability_provider=None,
+                   suppressions=[s], today="2026-06-27")
+    suppressed = [f for f in res.findings if f.suppression]
+    assert len(suppressed) == 1
+    assert res.suppressed_count == 1
+
+
+def test_run_scan_baseline_suppresses_known_findings():
+    base = run_scan("/p", get_profile("quick"),
+                    adapters=[FakeAdapter("trivy", TRIVY)], reachability_provider=None)
+    keys = {f.dedup_key for f in base.findings}
+    res = run_scan("/p", get_profile("quick"),
+                   adapters=[FakeAdapter("trivy", TRIVY)], reachability_provider=None,
+                   baseline_keys=keys)
+    assert res.suppressed_count == len(base.findings)  # 모두 baseline → 억제
 
 
 def test_profiles_build_expected_adapters():

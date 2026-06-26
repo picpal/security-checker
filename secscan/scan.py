@@ -13,6 +13,8 @@ from .normalize import to_findings
 from .orchestrator import scan as orchestrate
 from .reachability.engine import Budget, enrich_reachability
 from .secret.verify import verify_secrets_in_findings
+from .suppress.engine import apply_suppressions
+from .suppress.store import apply_baseline
 
 
 @dataclass
@@ -24,6 +26,8 @@ class ScanResult:
     partial_failures: list[RawResult] = field(default_factory=list)
     secret_policy: str = "off"
     secret_verified_count: int = 0
+    suppressed_count: int = 0
+    invalidated: list[str] = field(default_factory=list)
 
 
 def run_scan(
@@ -40,6 +44,9 @@ def run_scan(
     max_workers: int | None = None,
     secret_policy: str = "off",
     secret_runner=None,
+    suppressions=None,
+    baseline_keys=None,
+    today: str | None = None,
 ) -> ScanResult:
     raws = orchestrate(adapters, target, max_workers=max_workers)
     findings = to_findings(raws)
@@ -60,5 +67,15 @@ def run_scan(
         v = verify_secrets_in_findings(findings, target, policy=secret_policy, runner=secret_runner)
         findings, verified_count = v.findings, v.verified_count
 
+    # 억제 (사람이 확정한 것만). baseline → 명시 억제 순. 무효화는 invalidated 로 보고.
+    invalidated: list[str] = []
+    if baseline_keys:
+        findings = apply_baseline(findings, baseline_keys)
+    if suppressions:
+        s_out = apply_suppressions(findings, suppressions, today=today)
+        findings, invalidated = s_out.findings, s_out.invalidated
+    suppressed_count = sum(1 for f in findings if f.suppression is not None)
+
     partial = [r for r in raws if r.status != OK]
-    return ScanResult(findings, raws, ran, reason, partial, secret_policy, verified_count)
+    return ScanResult(findings, raws, ran, reason, partial, secret_policy,
+                      verified_count, suppressed_count, invalidated)

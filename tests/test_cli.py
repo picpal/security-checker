@@ -157,6 +157,17 @@ def test_main_scan_verify_secrets_sets_policy(monkeypatch, tmp_path):
     assert captured["secret_runner"] is not None  # opt-in 시 runner 전달
 
 
+def test_main_scan_write_baseline(monkeypatch, tmp_path):
+    findings = [_reach("commons-text", "CVE-1", "high", UNREACHABLE)]
+    monkeypatch.setattr(cli, "run_scan", lambda *a, **k: ScanResult(findings, [], False, "off", []))
+    bl = tmp_path / "baseline.json"
+    cli.main(["scan", "--target", "/p", "--profile", "quick",
+              "--out", str(tmp_path), "--write-baseline", str(bl)])
+    import json as _json
+    assert bl.exists()
+    assert "keys" in _json.loads(bl.read_text())
+
+
 def test_main_scan_network_off_forces_never_and_no_runner(monkeypatch, tmp_path):
     captured = {}
 

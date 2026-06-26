@@ -81,6 +81,19 @@ class Consensus:
 
 
 @dataclass
+class Suppression:
+    """억제 엔트리 (spec §12). 자동 생성 금지 — 사람이 증거를 확인해 확정한다."""
+
+    state: str  # suppressed | baseline | under_review
+    reason: str
+    provenance: str  # 누가/언제/왜
+    evidence: str  # 도달 불가 콜패스 등 근거
+    expiry: str | None  # ISO "YYYY-MM-DD" (만료되면 재표면)
+    scope: str  # 대상 finding 의 dedup_key (정확 매칭 → 버전 바뀌면 자동 무효)
+    basis: str = ""  # "unreachable" 등 — 도달성 변화 시 무효화 판단용
+
+
+@dataclass
 class Finding:
     category: str  # sca | sast | secret
     severity: str = UNKNOWN
@@ -96,6 +109,7 @@ class Finding:
     consensus: Consensus | None = None
     references: tuple[str, ...] = ()
     verified: bool | None = None  # secret 전용: None=미검증, True=라이브 확인, False=검증했으나 비활성
+    suppression: "Suppression | None" = None  # 사람이 확정한 억제 (자동 금지)
 
     @property
     def dedup_key(self) -> str:

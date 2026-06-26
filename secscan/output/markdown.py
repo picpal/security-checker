@@ -100,13 +100,17 @@ def to_markdown(findings: list[Finding], *, target: str | None = None, meta: dic
         L.append(_SAST_NOTE)
     L.append("")
 
+    # 억제된 항목은 별도 섹션으로 분리(우선/낮음에서 제외).
+    suppressed = [f for f in findings if f.suppression is not None]
+    active = [f for f in findings if f.suppression is None]
+
     # 낮은 우선순위 = 도달 불가로 판정된 SCA 만. 그 외(도달 가능/미상 SCA, 시크릿/SAST)는
     # 모두 우선 조치. (시크릿은 도달성 개념이 없어 강등 대상이 아니다.)
     def _is_low(f: Finding) -> bool:
         return f.category == "sca" and f.reachability.status == UNREACHABLE
 
-    low = [f for f in findings if _is_low(f)]
-    priority = [f for f in findings if not _is_low(f)]
+    low = [f for f in active if _is_low(f)]
+    priority = [f for f in active if not _is_low(f)]
 
     L.append("## 우선 조치")
     if priority:
@@ -122,6 +126,16 @@ def to_markdown(findings: list[Finding], *, target: str | None = None, meta: dic
             L.extend(_line(f))
     else:
         L.append("_해당 없음._")
+        L.append("")
+
+    if suppressed:
+        L.append("## 억제됨 (사람 확정)")
+        for f in suppressed:
+            s = f.suppression
+            subj = (f"{f.component.package}@{f.component.version}"
+                    if f.component else (f.location.file if f.location else f.rule_id))
+            L.append(f"- {f.rule_id} — {subj} · 사유: {s.reason} · 출처: {s.provenance}"
+                     + (f" · 만료: {s.expiry}" if s.expiry else ""))
         L.append("")
 
     return "\n".join(L)

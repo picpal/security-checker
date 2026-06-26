@@ -57,12 +57,26 @@ def _result(f: Finding) -> dict:
     if f.component:
         msg = f"{f.rule_id} in {f.component.package}@{f.component.version}"
 
+    # 억제는 사람이 확정한 것만 emit (자동 억제 없음, spec §12).
+    suppressions = []
+    if f.suppression is not None:
+        suppressions.append({
+            "kind": "external",
+            "justification": f.suppression.reason,
+            "properties": {
+                "provenance": f.suppression.provenance,
+                "evidence": f.suppression.evidence,
+                "expiry": f.suppression.expiry,
+                "state": f.suppression.state,
+            },
+        })
+
     return {
         "ruleId": f.rule_id,
         "level": _level(f.severity),
         "message": {"text": msg},
         "properties": props,
-        "suppressions": [],  # 자동 억제 금지 — 항상 비어있음(M4에서 사람이 확정)
+        "suppressions": suppressions,
     }
 
 

@@ -1,6 +1,6 @@
 # 진행 상황
 
-현재 마일스톤: **M4**
+현재 마일스톤: **M5**
 
 ## 인프라 (M0보다 먼저)
 - [x] CLAUDE.md 생성
@@ -44,12 +44,13 @@
 - [x] taint intraprocedural 한계 보고서 명시 (markdown _SAST_NOTE, spec §10.2)
 - [x] **게이트 통과**: SQL injection(CWE-89) 탐지 + typed 통합 (E2E, 125 tests). CE 한계로 인자경유 command injection 미탐지(문서화)
 
-## M4 — 억제
-- [ ] 억제 엔트리 (provenance / evidence / expiry / scope)
-- [ ] baseline
-- [ ] OpenVEX 루프
-- [ ] stale 무효화 (의존성 / 콜패스 / 룰셋 변경)
-- [ ] **게이트**: 억제 후 재발 억제 + 버전 변경 시 무효화
+## M4 — 억제 ✅
+- [x] 억제 엔트리 (provenance / evidence / expiry / scope 필수 검증)
+- [x] baseline (기존 이슈 일괄 억제, 신규만 알림)
+- [x] 영속화 JSON(OpenVEX 영감) + propose(제안만, 자동 억제 없음)
+- [x] stale 무효화 (만료 / 의존성 버전(dedup_key) / 도달성 unreachable→reachable)
+- [x] SARIF suppressions emit(사람 확정만) + markdown 억제 섹션 + cli 플래그
+- [x] **게이트 통과**: 재발 억제 + 버전/도달성 변경 무효화 + 제안만 (146 tests)
 
 ## M5 — deep (experimental)
 - [ ] SpotBugs + FindSecBugs 어댑터 (빌드 연동)

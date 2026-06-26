@@ -76,6 +76,18 @@ def test_sarif_does_not_auto_suppress_unreachable():
     assert res.get("suppressions", []) == []
 
 
+def test_sarif_human_confirmed_suppression_is_emitted():
+    from secscan.models import Suppression
+    f = _f()
+    f.suppression = Suppression(
+        state="suppressed", reason="도달 불가", provenance="alice",
+        evidence="미호출", expiry="2099-12-31", scope="k", basis="unreachable",
+    )
+    res = to_sarif([f])["runs"][0]["results"][0]
+    assert len(res["suppressions"]) == 1
+    assert res["suppressions"][0]["justification"] == "도달 불가"
+
+
 def test_sarif_is_json_serializable():
     json.dumps(to_sarif([_f()]))  # 예외 없어야 함
 
@@ -169,6 +181,19 @@ def _sast():
 def test_markdown_notes_sast_ce_taint_limitation_when_sast_present():
     md = to_markdown([_sast()])
     assert "intraprocedural" in md  # CE taint 한계 명시(spec §10.2)
+
+
+def test_markdown_suppressed_findings_go_to_separate_section():
+    from secscan.models import Suppression
+    f = _reachable()
+    f.suppression = Suppression(state="suppressed", reason="도달 불가 확정",
+                                provenance="alice", evidence="e", expiry="2099-12-31",
+                                scope="k", basis="unreachable")
+    md = to_markdown([f])
+    assert "억제됨" in md
+    assert "alice" in md  # provenance 노출(감사)
+    # 억제된 항목은 우선 조치에 중복 노출되지 않는다
+    assert md.count("CVE-2022-42889") == 1
 
 
 def test_markdown_omits_sast_note_when_no_sast():

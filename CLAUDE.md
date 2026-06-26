@@ -11,13 +11,13 @@
 4. `PROGRESS.md`
 5. `git log --oneline`
 
-## 현재 마일스톤: M4 (억제)
+## 현재 마일스톤: M5 (deep — SpotBugs+FindSecBugs, experimental)
 <!-- 진행하며 이 줄을 갱신한다 -->
-- **M0~M3 완료** (125 tests green):
-  - M0 doctor, M1 정확한 SCA(FP 89%↓, ground-truth 100%), M2 Secret(gitleaks+trufflehog 정책), M3 SAST(semgrep, CWE-89 탐지, CE taint 한계 명시).
-- **M4 다음 할 일**: 억제 안전장치(spec §12). 억제 엔트리 필수 필드 provenance/evidence/expiry/scope. baseline(기존 이슈 억제). OpenVEX 루프. stale 무효화(의존성 버전/콜패스/룰셋 변경 시). **Claude 자동 억제 금지 — 제안만, 사람이 확정.** 억제 적용은 normalize 단계에서 finding.suppression 세팅. SARIF emit 시 suppressions 채움(M1에선 항상 빈배열이었음 — 사람이 확정한 것만).
-- **아키텍처 메모**: 새 스캐너 = adapters/<tool>.py + normalize/<tool>.py + normalize._PARSERS 한 줄 + profiles + doctor REQUIREMENTS. 도달성/검증은 카테고리 전용(SCA/secret). 실제 스캔(네트워크)은 Bash dangerouslyDisableSandbox=true. Finding.dedup_key가 억제 매칭 키.
-- **모델**: Finding{category,severity,tool,rule_id,cwe,owasp,component,advisory,location,reachability,consensus,verified}. suppression 필드는 spec §6에 있으나 아직 모델에 미구현 → M4에서 추가.
+- **M0~M4 완료** (146 tests green):
+  - M0 doctor / M1 정확한 SCA(FP 89%↓, GT 100%) / M2 Secret(gitleaks+trufflehog 정책) / M3 SAST(semgrep, CE taint 한계) / M4 억제(provenance/evidence/expiry/scope, baseline, stale 무효화, 자동억제 금지).
+- **M5 다음 할 일**: SpotBugs + FindSecBugs 바이트코드 어댑터(experimental, spec §5/§9/§16). **빌드 필요**(.class) — 빌드 실패 시 partial 로 격리(게이트). FindSecBugs는 v1.14.0(2024) 정체 인지. deep 프로파일 = standard + spotbugs. 픽스처는 컴파일된 클래스 필요(maven 빌드). 빌드 안 되면 status=skipped/failed로 안전 처리하는 게 핵심.
+- **아키텍처 메모**: 새 스캐너 = adapters/<tool>.py + normalize/<tool>.py + normalize._PARSERS 한 줄 + profiles + doctor REQUIREMENTS. 카테고리 전용 처리(도달성=SCA, 검증=secret). 실제 스캔(네트워크/빌드)은 Bash dangerouslyDisableSandbox=true. Finding.dedup_key가 억제 매칭 키.
+- **모델**: Finding{category,severity,tool,rule_id,cwe,owasp,component,advisory,location,reachability,consensus,verified,suppression}. Suppression{state,reason,provenance,evidence,expiry,scope,basis}.
 
 ## 핵심 원칙 6 (위반 금지)
 1. **정확도 우선** — FP를 줄이는 레버를 모든 것에 우선.

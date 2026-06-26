@@ -10,6 +10,7 @@ import argparse
 import hashlib
 import json
 import shutil
+from datetime import date
 from pathlib import Path
 
 from .doctor import MISSING, OK, DoctorReport, run_doctor
@@ -23,6 +24,7 @@ from .reachability.engine import Budget
 from .scan import run_scan
 from .secret.trufflehog import trufflehog_runner
 from .secret.verify import resolve_secret_policy
+from .suppress.store import load_baseline, load_suppressions, save_baseline
 
 _KIND_LABEL = {"scanner": "스캐너", "runtime": "런타임", "resource": "자원"}
 _KIND_ORDER = ["scanner", "runtime", "resource"]
@@ -131,6 +133,10 @@ def render_scan_summary(result) -> str:
         lines.append(f"시크릿 검증: 적용됨 — 라이브 {result.secret_verified_count}건 확인")
     elif result.secret_policy == "never":
         lines.append("시크릿 검증: 차단됨 (network-off — 자격증명 미전송)")
+    if result.suppressed_count:
+        lines.append(f"억제됨: {result.suppressed_count}건 (사람 확정 — 보고서 별도 섹션)")
+    if result.invalidated:
+        lines.append(f"⚠️ 억제 무효화(재검토 필요): {len(result.invalidated)}건 — 만료/버전/도달성 변경")
     if result.partial_failures:
         names = ", ".join(f"{r.tool}({r.status})" for r in result.partial_failures)
         lines.append(f"⚠️ 부분 실패: {names} — 나머지 결과는 유효")
@@ -161,6 +167,9 @@ def _cmd_scan(args) -> int:
     # 안전: 'verify' 일 때만 네트워크 runner 를 건넨다. off/never 면 None (전송 불가능).
     secret_runner = trufflehog_runner if policy == "verify" else None
 
+    suppressions = load_suppressions(args.suppressions) if args.suppressions else None
+    baseline_keys = load_baseline(args.baseline) if args.baseline else None
+
     result = run_scan(
         args.target, profile,
         adapters=adapters,
@@ -170,7 +179,14 @@ def _cmd_scan(args) -> int:
         budget=Budget(allow_large=args.allow_large),
         secret_policy=policy,
         secret_runner=secret_runner,
+        suppressions=suppressions,
+        baseline_keys=baseline_keys,
+        today=date.today().isoformat(),
     )
+
+    if args.write_baseline:
+        save_baseline(args.write_baseline, result.findings)
+        print(f"baseline 저장: {args.write_baseline} ({len(result.findings)}건)\n")
 
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -210,6 +226,9 @@ def main(argv: list[str] | None = None) -> int:
                     help="TruffleHog 로 시크릿 라이브 검증 (자격증명을 제3자로 전송 — opt-in)")
     sp.add_argument("--network-off", action="store_true",
                     help="시크릿 검증 강제 차단 (--verify-secrets 보다 우선)")
+    sp.add_argument("--suppressions", help="사람이 확정한 억제 파일(JSON) 경로")
+    sp.add_argument("--baseline", help="baseline 파일(JSON) — 기존 이슈 억제, 신규만 알림")
+    sp.add_argument("--write-baseline", help="현재 findings 를 baseline 파일로 저장")
 
     args = parser.parse_args(argv)
     if args.command == "doctor":
