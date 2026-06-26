@@ -137,3 +137,11 @@ def test_profiles_build_expected_adapters():
     assert names == ["trivy", "osv-scanner"]
     assert get_profile("quick").reachability is False
     assert get_profile("accurate-sca").reachability is True
+
+
+def test_all_profiles_build_valid_adapters():
+    from secscan.profiles import PROFILES
+    for name in ("quick", "accurate-sca", "standard", "deep"):
+        assert name in PROFILES
+        adapters = build_adapters(get_profile(name))
+        assert adapters and all(hasattr(a, "run") for a in adapters)

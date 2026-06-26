@@ -60,5 +60,12 @@
 ## 프로파일
 - [ ] quick / accurate-sca / standard / deep
 
-## 전체 완료 기준
-- [ ] 자연어 "이 프로젝트 점검해줘" → 스택 감지 → 프로파일 선택 → typed findings → 보고서 시연
+## 전체 완료 기준 ✅
+- [x] M0~M5 각 검증 게이트 통과 (160 tests green)
+- [x] 프로파일(quick/accurate-sca/standard/deep) 동작
+- [x] 취약 픽스처 E2E + 도달성 정확도/비용 실측 리포트(docs/measurements/2026-06-27-m1-*)
+- [x] 정규화 골든 테스트 + 부분실패 테스트 green
+- [x] 자연어 "이 프로젝트 점검해줘" → 스택 감지(maven/java) → 프로파일(standard) → typed findings → 보고서 시연
+- [x] CLAUDE.md / PROGRESS.md 최종 갱신
+
+## 상태: M0~M5 전부 완료 (160 tests). 다음 사이클 후보 = 백로그(IaC/DAST/CI/주기점검/Opengrep/CodeQL).

@@ -11,13 +11,13 @@
 4. `PROGRESS.md`
 5. `git log --oneline`
 
-## 현재 마일스톤: M5 (deep — SpotBugs+FindSecBugs, experimental)
-<!-- 진행하며 이 줄을 갱신한다 -->
-- **M0~M4 완료** (146 tests green):
-  - M0 doctor / M1 정확한 SCA(FP 89%↓, GT 100%) / M2 Secret(gitleaks+trufflehog 정책) / M3 SAST(semgrep, CE taint 한계) / M4 억제(provenance/evidence/expiry/scope, baseline, stale 무효화, 자동억제 금지).
-- **M5 다음 할 일**: SpotBugs + FindSecBugs 바이트코드 어댑터(experimental, spec §5/§9/§16). **빌드 필요**(.class) — 빌드 실패 시 partial 로 격리(게이트). FindSecBugs는 v1.14.0(2024) 정체 인지. deep 프로파일 = standard + spotbugs. 픽스처는 컴파일된 클래스 필요(maven 빌드). 빌드 안 되면 status=skipped/failed로 안전 처리하는 게 핵심.
-- **아키텍처 메모**: 새 스캐너 = adapters/<tool>.py + normalize/<tool>.py + normalize._PARSERS 한 줄 + profiles + doctor REQUIREMENTS. 카테고리 전용 처리(도달성=SCA, 검증=secret). 실제 스캔(네트워크/빌드)은 Bash dangerouslyDisableSandbox=true. Finding.dedup_key가 억제 매칭 키.
-- **모델**: Finding{category,severity,tool,rule_id,cwe,owasp,component,advisory,location,reachability,consensus,verified,suppression}. Suppression{state,reason,provenance,evidence,expiry,scope,basis}.
+## 상태: M0~M5 전부 완료 ✅ (160 tests green, 2026-06-27)
+<!-- goal 의 모든 마일스톤·전체 완료 기준 충족. 다음은 백로그(별도 사이클). -->
+- **M0** doctor / **M1** 정확한 SCA(FP 89%↓, GT 100%) / **M2** Secret(gitleaks+trufflehog 정책) / **M3** SAST(semgrep, CE taint 한계) / **M4** 억제(provenance/evidence/expiry/scope, baseline, stale 무효화, 자동억제 금지) / **M5** deep(spotbugs+findsecbugs 바이트코드 — CE 놓친 CWE-78 탐지, 빌드실패 격리).
+- 프로파일 quick/accurate-sca/standard/deep 동작. `secscan detect|scan|doctor`. 자연어 점검 시연 완료.
+- **아키텍처**: 새 스캐너 = adapters/<tool>.py + normalize/<tool>.py + normalize._PARSERS 한 줄 + profiles + doctor REQUIREMENTS. 카테고리 전용(도달성=SCA, 검증=secret). 실제 스캔(네트워크/빌드)은 Bash dangerouslyDisableSandbox=true. Finding.dedup_key가 억제 매칭 키.
+- **모델**: Finding{category,severity,tool,rule_id,cwe,owasp,component,advisory,location,reachability,consensus,verified,suppression}.
+- **백로그(미착수)**: IaC/DAST/CI/주기점검/Dependency-Track/Opengrep/CodeQL(cross-function taint)/LSP.
 
 ## 핵심 원칙 6 (위반 금지)
 1. **정확도 우선** — FP를 줄이는 레버를 모든 것에 우선.

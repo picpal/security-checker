@@ -13,6 +13,7 @@ import shutil
 from datetime import date
 from pathlib import Path
 
+from .detect import detect_stack, suggest_profile
 from .doctor import MISSING, OK, DoctorReport, run_doctor
 from .measure import reachability_stats
 from .models import UNREACHABLE
@@ -203,6 +204,14 @@ def _cmd_scan(args) -> int:
     return 1 if _has_actionable(result.findings) else 0
 
 
+def _cmd_detect(args) -> int:
+    stack = detect_stack(args.target)
+    profile = suggest_profile(stack, intent=args.intent)
+    print(f"스택 감지: build={stack['build_tool']} · 언어={stack['languages']} · 모듈={stack['modules']}")
+    print(f"intent={args.intent} → 추천 프로파일: {profile}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="secscan",
@@ -210,6 +219,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     sub = parser.add_subparsers(dest="command")
     sub.add_parser("doctor", help="환경(스캐너·런타임·메모리) 점검")
+
+    dp = sub.add_parser("detect", help="스택/빌드도구 감지 + 프로파일 추천")
+    dp.add_argument("--target", required=True)
+    dp.add_argument("--intent", default="full",
+                    help="quick | patch | full | deep (자연어 해석 결과)")
 
     sp = sub.add_parser("scan", help="보안 점검 실행 (SCA + 도달성)")
     sp.add_argument("--target", required=True, help="점검 대상 프로젝트 경로")
@@ -233,6 +247,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.command == "doctor":
         return _cmd_doctor()
+    if args.command == "detect":
+        return _cmd_detect(args)
     if args.command == "scan":
         return _cmd_scan(args)
 
