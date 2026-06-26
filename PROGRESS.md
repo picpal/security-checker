@@ -15,16 +15,17 @@
 - [x] **게이트 통과**: 미설치 4종 정확 탐지 + Java21/Node/메모리 인식 (22 tests green)
 
 ## M1 — 정확한 SCA (★정확도 증명)
-- [ ] Trivy 어댑터
-- [ ] osv-scanner 어댑터
+- [x] Trivy 어댑터
+- [x] osv-scanner 어댑터 (v2 `scan source`, exit1=취약점발견)
+- [x] typed finding 모델 (spec §6) — secscan/models.py
+- [x] 정규화 raw→typed (골든 테스트: trivy/osv 실제 출력)
+- [x] 합의 dedup (Trivy ∪ osv + consensus score) — merge_consensus
+- [x] 취약 픽스처 (commons-text=도달가능 / snakeyaml=도달불가) + golden 캡처
 - [ ] 오케스트레이터 (병렬 · status · 자원 거버넌스)
-- [ ] typed finding 모델 (spec §6)
-- [ ] 정규화 raw→typed (골든 테스트 1순위)
-- [ ] 합의 dedup (Trivy ∪ osv + consensus score)
 - [ ] dep-scan 도달성 엔진 (4중 안전장치: 크기인지 자동 / 캐싱 / 예산+폴백 / doctor 점검)
 - [ ] SARIF 2.1.0 출력
 - [ ] Markdown 보고서 출력
-- [ ] 취약 픽스처 (도달 가능/불가 케이스 의도 배치)
+- [ ] scan CLI 커맨드 (profile/target → findings → 보고서)
 - [ ] 도달성 on/off FP 감소 + 비용 실측 리포트
 - [ ] **게이트**: unreachable 표기 + FP 감소 수치 + unknown 폴백 + 골든·부분실패 테스트 green
 

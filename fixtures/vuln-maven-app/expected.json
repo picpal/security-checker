@@ -1,0 +1,19 @@
+{
+  "description": "도달성 정확도 측정용 ground truth. reachable=진짜 위험(유지해야 함), unreachable=도달 불가(도달성으로 강등/억제 가능한 노이즈).",
+  "reachable": [
+    {
+      "package": "commons-text",
+      "version": "1.9",
+      "cve": "CVE-2022-42889",
+      "reason": "App.interpolate() 가 StringSubstitutor.createInterpolator().replace() 를 호출"
+    }
+  ],
+  "unreachable": [
+    {
+      "package": "snakeyaml",
+      "version": "1.30",
+      "cve": "CVE-2022-1471",
+      "reason": "pom 에 선언만, Yaml.load 등 취약 API 미호출"
+    }
+  ]
+}

@@ -1,0 +1,727 @@
+{
+  "SchemaVersion": 2,
+  "Trivy": {
+    "Version": "0.71.2"
+  },
+  "ReportID": "019f04c0-9c9e-7bd7-90e9-6db15992b680",
+  "CreatedAt": "2026-06-27T01:25:59.710777+09:00",
+  "ArtifactName": "fixtures/vuln-maven-app",
+  "ArtifactType": "filesystem",
+  "Results": [
+    {
+      "Target": "pom.xml",
+      "Class": "lang-pkgs",
+      "Type": "pom",
+      "Packages": [
+        {
+          "ID": "com.example:vuln-maven-app:1.0.0::32b20911",
+          "Name": "com.example:vuln-maven-app",
+          "Identifier": {
+            "PURL": "pkg:maven/com.example/vuln-maven-app@1.0.0",
+            "UID": "c4fdbf7fa67dc6ec"
+          },
+          "Version": "1.0.0",
+          "Relationship": "root",
+          "DependsOn": [
+            "org.apache.commons:commons-text:1.9::d182d6a1",
+            "org.yaml:snakeyaml:1.30::34fc1a83"
+          ],
+          "AnalyzedBy": "pom"
+        },
+        {
+          "ID": "org.apache.commons:commons-text:1.9::d182d6a1",
+          "Name": "org.apache.commons:commons-text",
+          "Identifier": {
+            "PURL": "pkg:maven/org.apache.commons/commons-text@1.9",
+            "UID": "d5c3fd5f59f34532"
+          },
+          "Version": "1.9",
+          "Licenses": [
+            "Apache-2.0"
+          ],
+          "Relationship": "direct",
+          "DependsOn": [
+            "org.apache.commons:commons-lang3:3.11::ad205954"
+          ],
+          "Locations": [
+            {
+              "StartLine": 20,
+              "EndLine": 24
+            }
+          ],
+          "AnalyzedBy": "pom"
+        },
+        {
+          "ID": "org.yaml:snakeyaml:1.30::34fc1a83",
+          "Name": "org.yaml:snakeyaml",
+          "Identifier": {
+            "PURL": "pkg:maven/org.yaml/snakeyaml@1.30",
+            "UID": "ce69723b7ef6f648"
+          },
+          "Version": "1.30",
+          "Licenses": [
+            "Apache-2.0"
+          ],
+          "Relationship": "direct",
+          "Locations": [
+            {
+              "StartLine": 27,
+              "EndLine": 31
+            }
+          ],
+          "AnalyzedBy": "pom"
+        },
+        {
+          "ID": "org.apache.commons:commons-lang3:3.11::ad205954",
+          "Name": "org.apache.commons:commons-lang3",
+          "Identifier": {
+            "PURL": "pkg:maven/org.apache.commons/commons-lang3@3.11",
+            "UID": "383c9bd1b8aac54e"
+          },
+          "Version": "3.11",
+          "Licenses": [
+            "Apache-2.0"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "AnalyzedBy": "pom"
+        }
+      ],
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2025-48924",
+          "VendorIDs": [
+            "GHSA-j288-q9x7-2f5v"
+          ],
+          "PkgID": "org.apache.commons:commons-lang3:3.11::ad205954",
+          "PkgName": "org.apache.commons:commons-lang3",
+          "PkgIdentifier": {
+            "PURL": "pkg:maven/org.apache.commons/commons-lang3@3.11",
+            "UID": "383c9bd1b8aac54e"
+          },
+          "InstalledVersion": "3.11",
+          "FixedVersion": "3.18.0",
+          "Status": "fixed",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2025-48924",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory Maven",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Amaven"
+          },
+          "Fingerprint": "sha256:d6f0ea41e905248117b58a0d5b5d2c0e33c5fcd8fe182d0caf765ae8397f31ec",
+          "Title": "commons-lang/commons-lang: org.apache.commons/commons-lang3: Uncontrolled Recursion vulnerability in Apache Commons Lang",
+          "Description": "Uncontrolled Recursion vulnerability in Apache Commons Lang.\n\nThis issue affects Apache Commons Lang: Starting with commons-lang:commons-lang 2.0 to 2.6, and, from org.apache.commons:commons-lang3 3.0 before 3.18.0.\n\nThe methods ClassUtils.getClass(...) can throw StackOverflowError on very long inputs. Because an Error is usually not handled by applications and libraries, a \nStackOverflowError could cause an application to stop.\n\nUsers are recommended to upgrade to version 3.18.0, which fixes the issue.",
+          "Severity": "MEDIUM",
+          "CweIDs": [
+            "CWE-674"
+          ],
+          "VendorSeverity": {
+            "amazon": 1,
+            "azure": 2,
+            "cbl-mariner": 2,
+            "ghsa": 2,
+            "redhat": 1,
+            "ubuntu": 2
+          },
+          "CVSS": {
+            "ghsa": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N",
+              "V3Score": 6.5
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:L",
+              "V3Score": 3.7
+            }
+          },
+          "References": [
+            "http://www.openwall.com/lists/oss-security/2025/07/11/1",
+            "https://access.redhat.com/security/cve/CVE-2025-48924",
+            "https://github.com/apache/commons-lang",
+            "https://github.com/apache/commons-lang/commit/b424803abdb2bec818e4fbcb251ce031c22aca53",
+            "https://lists.apache.org/thread/bgv0lpswokgol11tloxnjfzdl7yrc1g1",
+            "https://lists.debian.org/debian-lts-announce/2025/08/msg00000.html",
+            "https://lists.debian.org/debian-lts-announce/2025/08/msg00026.html",
+            "https://lists.debian.org/debian-lts-announce/2025/09/msg00032.html",
+            "https://lists.debian.org/debian-lts-announce/2025/09/msg00036.html",
+            "https://nvd.nist.gov/vuln/detail/CVE-2025-48924",
+            "https://ubuntu.com/security/notices/USN-8364-1",
+            "https://www.cve.org/CVERecord?id=CVE-2025-48924",
+            "https://www.openwall.com/lists/oss-security/2025/07/11/1"
+          ],
+          "PublishedDate": "2025-07-11T15:15:24.347Z",
+          "LastModifiedDate": "2026-06-17T09:30:29.473Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2022-42889",
+          "VendorIDs": [
+            "GHSA-599f-7c49-w659"
+          ],
+          "PkgID": "org.apache.commons:commons-text:1.9::d182d6a1",
+          "PkgName": "org.apache.commons:commons-text",
+          "PkgIdentifier": {
+            "PURL": "pkg:maven/org.apache.commons/commons-text@1.9",
+            "UID": "d5c3fd5f59f34532"
+          },
+          "InstalledVersion": "1.9",
+          "FixedVersion": "1.10.0",
+          "Status": "fixed",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2022-42889",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory Maven",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Amaven"
+          },
+          "Fingerprint": "sha256:b8e49644a9683d05d7ca3b9bd4fe162549dd43c8d8fda432ce87b86238eaf747",
+          "Title": "apache-commons-text: variable interpolation RCE",
+          "Description": "Apache Commons Text performs variable interpolation, allowing properties to be dynamically evaluated and expanded. The standard format for interpolation is \"${prefix:name}\", where \"prefix\" is used to locate an instance of org.apache.commons.text.lookup.StringLookup that performs the interpolation. Starting with version 1.5 and continuing through 1.9, the set of default Lookup instances included interpolators that could result in arbitrary code execution or contact with remote servers. These lookups are: - \"script\" - execute expressions using the JVM script execution engine (javax.script) - \"dns\" - resolve dns records - \"url\" - load values from urls, including from remote servers Applications using the interpolation defaults in the affected versions may be vulnerable to remote code execution or unintentional contact with remote servers if untrusted configuration values are used. Users are recommended to upgrade to Apache Commons Text 1.10.0, which disables the problematic interpolators by default.",
+          "Severity": "CRITICAL",
+          "CweIDs": [
+            "CWE-94"
+          ],
+          "VendorSeverity": {
+            "ghsa": 4,
+            "nvd": 4,
+            "redhat": 4,
+            "ubuntu": 2
+          },
+          "CVSS": {
+            "ghsa": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 9.8
+            },
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 9.8
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 9.8
+            }
+          },
+          "References": [
+            "http://packetstormsecurity.com/files/171003/OX-App-Suite-Cross-Site-Scripting-Server-Side-Request-Forgery.html",
+            "http://packetstormsecurity.com/files/176650/Apache-Commons-Text-1.9-Remote-Code-Execution.html",
+            "http://seclists.org/fulldisclosure/2023/Feb/3",
+            "http://www.openwall.com/lists/oss-security/2022/10/13/4",
+            "http://www.openwall.com/lists/oss-security/2022/10/18/1",
+            "https://access.redhat.com/security/cve/CVE-2022-42889",
+            "https://arxiv.org/pdf/2306.05534",
+            "https://blogs.apache.org/security/entry/cve-2022-42889",
+            "https://github.com/apache/commons-text",
+            "https://lists.apache.org/thread/n2bd4vdsgkqh2tm14l1wyc3jyol7s1om",
+            "https://nvd.nist.gov/vuln/detail/CVE-2022-42889",
+            "https://psirt.global.sonicwall.com/vuln-detail/SNWLID-2022-0022",
+            "https://seclists.org/oss-sec/2022/q4/22",
+            "https://security.gentoo.org/glsa/202301-05",
+            "https://security.netapp.com/advisory/ntap-20221020-0004",
+            "https://security.netapp.com/advisory/ntap-20221020-0004/",
+            "https://securitylab.github.com/advisories/GHSL-2022-018_Apache_Commons_Text",
+            "https://www.cve.org/CVERecord?id=CVE-2022-42889"
+          ],
+          "PublishedDate": "2022-10-13T13:15:10.113Z",
+          "LastModifiedDate": "2026-06-17T05:05:31.85Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2022-1471",
+          "VendorIDs": [
+            "GHSA-mjmj-j48q-9wg2"
+          ],
+          "PkgID": "org.yaml:snakeyaml:1.30::34fc1a83",
+          "PkgName": "org.yaml:snakeyaml",
+          "PkgIdentifier": {
+            "PURL": "pkg:maven/org.yaml/snakeyaml@1.30",
+            "UID": "ce69723b7ef6f648"
+          },
+          "InstalledVersion": "1.30",
+          "FixedVersion": "2.0",
+          "Status": "fixed",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2022-1471",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory Maven",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Amaven"
+          },
+          "Fingerprint": "sha256:3e14319021489ab57968e4bf06dbfdb7481c54a0b6eb083059d86299a2d71229",
+          "Title": "SnakeYaml: Constructor Deserialization Remote Code Execution",
+          "Description": "SnakeYaml's Constructor() class does not restrict types which can be instantiated during deserialization. Deserializing yaml content provided by an attacker can lead to remote code execution. We recommend using SnakeYaml's SafeConsturctor when parsing untrusted content to restrict deserialization. We recommend upgrading to version 2.0 and beyond.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-20",
+            "CWE-502"
+          ],
+          "VendorSeverity": {
+            "alma": 3,
+            "ghsa": 3,
+            "nvd": 4,
+            "oracle-oval": 3,
+            "redhat": 3,
+            "rocky": 3
+          },
+          "CVSS": {
+            "ghsa": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:L",
+              "V3Score": 8.3
+            },
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 9.8
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 9.8
+            }
+          },
+          "References": [
+            "http://packetstormsecurity.com/files/175095/PyTorch-Model-Server-Registration-Deserialization-Remote-Code-Execution.html",
+            "http://www.openwall.com/lists/oss-security/2023/11/19/1",
+            "https://access.redhat.com/errata/RHSA-2022:9058",
+            "https://access.redhat.com/security/cve/CVE-2022-1471",
+            "https://bitbucket.org/snakeyaml/snakeyaml",
+            "https://bitbucket.org/snakeyaml/snakeyaml/commits/5014df1a36f50aca54405bb8433bc99a8847f758",
+            "https://bitbucket.org/snakeyaml/snakeyaml/commits/acc44099f5f4af26ff86b4e4e4cc1c874e2dc5c4",
+            "https://bitbucket.org/snakeyaml/snakeyaml/issues/561/cve-2022-1471-vulnerability-in#comment-64581479",
+            "https://bitbucket.org/snakeyaml/snakeyaml/issues/561/cve-2022-1471-vulnerability-in#comment-64634374",
+            "https://bitbucket.org/snakeyaml/snakeyaml/issues/561/cve-2022-1471-vulnerability-in#comment-64876314",
+            "https://bitbucket.org/snakeyaml/snakeyaml/wiki/CVE-2022-1471",
+            "https://bugzilla.redhat.com/2150009",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2150009",
+            "https://confluence.atlassian.com/security/cve-2022-1471-snakeyaml-library-rce-vulnerability-in-multiple-products-1296171009.html",
+            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-1471",
+            "https://errata.almalinux.org/8/ALSA-2022-9058.html",
+            "https://errata.rockylinux.org/RLSA-2022:9058",
+            "https://github.com/google/security-research/security/advisories/GHSA-mjmj-j48q-9wg2",
+            "https://github.com/mbechler/marshalsec",
+            "https://groups.google.com/g/kubernetes-security-announce/c/mwrakFaEdnc",
+            "https://infosecwriteups.com/%EF%B8%8F-inside-the-160-comment-fight-to-fix-snakeyamls-rce-default-1a20c5ca4d4c",
+            "https://linux.oracle.com/cve/CVE-2022-1471.html",
+            "https://linux.oracle.com/errata/ELSA-2022-9058-1.html",
+            "https://nvd.nist.gov/vuln/detail/CVE-2022-1471",
+            "https://security.netapp.com/advisory/ntap-20230818-0015",
+            "https://security.netapp.com/advisory/ntap-20230818-0015/",
+            "https://security.netapp.com/advisory/ntap-20240621-0006",
+            "https://security.netapp.com/advisory/ntap-20240621-0006/",
+            "https://snyk.io/blog/unsafe-deserialization-snakeyaml-java-cve-2022-1471",
+            "https://www.cve.org/CVERecord?id=CVE-2022-1471",
+            "https://www.github.com/mbechler/marshalsec/blob/master/marshalsec.pdf?raw=true"
+          ],
+          "PublishedDate": "2022-12-01T11:15:10.553Z",
+          "LastModifiedDate": "2026-06-17T04:22:30.807Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2022-25857",
+          "VendorIDs": [
+            "GHSA-3mc7-4q67-w48m"
+          ],
+          "PkgID": "org.yaml:snakeyaml:1.30::34fc1a83",
+          "PkgName": "org.yaml:snakeyaml",
+          "PkgIdentifier": {
+            "PURL": "pkg:maven/org.yaml/snakeyaml@1.30",
+            "UID": "ce69723b7ef6f648"
+          },
+          "InstalledVersion": "1.30",
+          "FixedVersion": "1.31",
+          "Status": "fixed",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2022-25857",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory Maven",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Amaven"
+          },
+          "Fingerprint": "sha256:79d114ac332da0989d65b13e7a6e7f808e7abe83ed7eff8c92b95f61bdbec7a5",
+          "Title": "snakeyaml: Denial of Service due to missing nested depth limitation for collections",
+          "Description": "The package org.yaml:snakeyaml from 0 and before 1.31 are vulnerable to Denial of Service (DoS) due missing to nested depth limitation for collections.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-776"
+          ],
+          "VendorSeverity": {
+            "alma": 2,
+            "amazon": 3,
+            "ghsa": 3,
+            "nvd": 3,
+            "oracle-oval": 2,
+            "redhat": 3,
+            "rocky": 2,
+            "ubuntu": 1
+          },
+          "CVSS": {
+            "ghsa": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "V3Score": 7.5
+            },
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "V3Score": 7.5
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "V3Score": 7.5
+            }
+          },
+          "References": [
+            "https://access.redhat.com/errata/RHSA-2022:6820",
+            "https://access.redhat.com/security/cve/CVE-2022-25857",
+            "https://bitbucket.org/snakeyaml/snakeyaml/commits/fc300780da21f4bb92c148bc90257201220cf174",
+            "https://bitbucket.org/snakeyaml/snakeyaml/issues/525",
+            "https://bugzilla.redhat.com/2126789",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2126789",
+            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-25857",
+            "https://errata.almalinux.org/8/ALSA-2022-6820.html",
+            "https://errata.rockylinux.org/RLSA-2022:6820",
+            "https://github.com/snakeyaml/snakeyaml",
+            "https://github.com/snakeyaml/snakeyaml/commit/fc300780da21f4bb92c148bc90257201220cf174",
+            "https://linux.oracle.com/cve/CVE-2022-25857.html",
+            "https://linux.oracle.com/errata/ELSA-2022-6820.html",
+            "https://lists.debian.org/debian-lts-announce/2022/10/msg00001.html",
+            "https://nvd.nist.gov/vuln/detail/CVE-2022-25857",
+            "https://security.netapp.com/advisory/ntap-20240315-0010",
+            "https://security.netapp.com/advisory/ntap-20240315-0010/",
+            "https://security.snyk.io/vuln/SNYK-JAVA-ORGYAML-2806360",
+            "https://ubuntu.com/security/notices/USN-5944-1",
+            "https://www.cve.org/CVERecord?id=CVE-2022-25857"
+          ],
+          "PublishedDate": "2022-08-30T05:15:07.667Z",
+          "LastModifiedDate": "2026-06-17T04:34:24.11Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2022-38749",
+          "VendorIDs": [
+            "GHSA-c4r9-r8fh-9vj2"
+          ],
+          "PkgID": "org.yaml:snakeyaml:1.30::34fc1a83",
+          "PkgName": "org.yaml:snakeyaml",
+          "PkgIdentifier": {
+            "PURL": "pkg:maven/org.yaml/snakeyaml@1.30",
+            "UID": "ce69723b7ef6f648"
+          },
+          "InstalledVersion": "1.30",
+          "FixedVersion": "1.31",
+          "Status": "fixed",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2022-38749",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory Maven",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Amaven"
+          },
+          "Fingerprint": "sha256:c85de98e8a98d30b7914ae6de5d17a0c2741003aa1597e65d6058db4cdc909d9",
+          "Title": "snakeyaml: Uncaught exception in org.yaml.snakeyaml.composer.Composer.composeSequenceNode",
+          "Description": "Using snakeYAML to parse untrusted YAML files may be vulnerable to Denial of Service attacks (DOS). If the parser is running on user supplied input, an attacker may supply content that causes the parser to crash by stackoverflow.",
+          "Severity": "MEDIUM",
+          "CweIDs": [
+            "CWE-121",
+            "CWE-787"
+          ],
+          "VendorSeverity": {
+            "ghsa": 2,
+            "nvd": 2,
+            "redhat": 2,
+            "ubuntu": 2
+          },
+          "CVSS": {
+            "ghsa": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H",
+              "V3Score": 6.5
+            },
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H",
+              "V3Score": 6.5
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H",
+              "V3Score": 6.5
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2022-38749",
+            "https://arxiv.org/pdf/2306.05534.pdf",
+            "https://bitbucket.org/snakeyaml/snakeyaml",
+            "https://bitbucket.org/snakeyaml/snakeyaml/issues/525/got-stackoverflowerror-for-many-open",
+            "https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=47024",
+            "https://lists.debian.org/debian-lts-announce/2022/10/msg00001.html",
+            "https://nvd.nist.gov/vuln/detail/CVE-2022-38749",
+            "https://security.gentoo.org/glsa/202305-28",
+            "https://security.netapp.com/advisory/ntap-20240315-0010",
+            "https://security.netapp.com/advisory/ntap-20240315-0010/",
+            "https://ubuntu.com/security/notices/USN-5944-1",
+            "https://www.cve.org/CVERecord?id=CVE-2022-38749"
+          ],
+          "PublishedDate": "2022-09-05T10:15:09.673Z",
+          "LastModifiedDate": "2026-06-17T04:57:06.43Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2022-38750",
+          "VendorIDs": [
+            "GHSA-hhhw-99gj-p3c3"
+          ],
+          "PkgID": "org.yaml:snakeyaml:1.30::34fc1a83",
+          "PkgName": "org.yaml:snakeyaml",
+          "PkgIdentifier": {
+            "PURL": "pkg:maven/org.yaml/snakeyaml@1.30",
+            "UID": "ce69723b7ef6f648"
+          },
+          "InstalledVersion": "1.30",
+          "FixedVersion": "1.31",
+          "Status": "fixed",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2022-38750",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory Maven",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Amaven"
+          },
+          "Fingerprint": "sha256:1ea67a317c6d24f991ddc5dd23d7cd9d8e8fc42562f2bfb2cc43e3b0687917b7",
+          "Title": "snakeyaml: Uncaught exception in org.yaml.snakeyaml.constructor.BaseConstructor.constructObject",
+          "Description": "Using snakeYAML to parse untrusted YAML files may be vulnerable to Denial of Service attacks (DOS). If the parser is running on user supplied input, an attacker may supply content that causes the parser to crash by stackoverflow.",
+          "Severity": "MEDIUM",
+          "CweIDs": [
+            "CWE-121",
+            "CWE-787"
+          ],
+          "VendorSeverity": {
+            "amazon": 2,
+            "ghsa": 2,
+            "nvd": 2,
+            "redhat": 2,
+            "ubuntu": 2
+          },
+          "CVSS": {
+            "ghsa": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "V3Score": 5.5
+            },
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "V3Score": 5.5
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "V3Score": 5.5
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2022-38750",
+            "https://bitbucket.org/snakeyaml/snakeyaml",
+            "https://bitbucket.org/snakeyaml/snakeyaml/issues/526/stackoverflow-oss-fuzz-47027",
+            "https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=47027",
+            "https://lists.debian.org/debian-lts-announce/2022/10/msg00001.html",
+            "https://nvd.nist.gov/vuln/detail/CVE-2022-38750",
+            "https://security.gentoo.org/glsa/202305-28",
+            "https://security.netapp.com/advisory/ntap-20240315-0010",
+            "https://security.netapp.com/advisory/ntap-20240315-0010/",
+            "https://ubuntu.com/security/notices/USN-5944-1",
+            "https://www.cve.org/CVERecord?id=CVE-2022-38750"
+          ],
+          "PublishedDate": "2022-09-05T10:15:09.733Z",
+          "LastModifiedDate": "2026-06-17T04:57:06.537Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2022-38751",
+          "VendorIDs": [
+            "GHSA-98wm-3w3q-mw94"
+          ],
+          "PkgID": "org.yaml:snakeyaml:1.30::34fc1a83",
+          "PkgName": "org.yaml:snakeyaml",
+          "PkgIdentifier": {
+            "PURL": "pkg:maven/org.yaml/snakeyaml@1.30",
+            "UID": "ce69723b7ef6f648"
+          },
+          "InstalledVersion": "1.30",
+          "FixedVersion": "1.31",
+          "Status": "fixed",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2022-38751",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory Maven",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Amaven"
+          },
+          "Fingerprint": "sha256:9ded3c7e096f8a57534c06b89042e3c3e0deed35572389f8442b4d9152f8df94",
+          "Title": "snakeyaml: Uncaught exception in java.base/java.util.regex.Pattern$Ques.match",
+          "Description": "Using snakeYAML to parse untrusted YAML files may be vulnerable to Denial of Service attacks (DOS). If the parser is running on user supplied input, an attacker may supply content that causes the parser to crash by stackoverflow.",
+          "Severity": "MEDIUM",
+          "CweIDs": [
+            "CWE-121",
+            "CWE-787"
+          ],
+          "VendorSeverity": {
+            "amazon": 2,
+            "ghsa": 2,
+            "nvd": 2,
+            "redhat": 2,
+            "ubuntu": 2
+          },
+          "CVSS": {
+            "ghsa": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H",
+              "V3Score": 6.5
+            },
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H",
+              "V3Score": 6.5
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H",
+              "V3Score": 6.5
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2022-38751",
+            "https://bitbucket.org/snakeyaml/snakeyaml",
+            "https://bitbucket.org/snakeyaml/snakeyaml/issues/530/stackoverflow-oss-fuzz-47039",
+            "https://bitbucket.org/snakeyaml/snakeyaml/src/master/src/test/java/org/yaml/snakeyaml/issues/issue530/Fuzzy47039Test.java",
+            "https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=47039",
+            "https://lists.debian.org/debian-lts-announce/2022/10/msg00001.html",
+            "https://nvd.nist.gov/vuln/detail/CVE-2022-38751",
+            "https://security.gentoo.org/glsa/202305-28",
+            "https://security.netapp.com/advisory/ntap-20240315-0010",
+            "https://security.netapp.com/advisory/ntap-20240315-0010/",
+            "https://ubuntu.com/security/notices/USN-5944-1",
+            "https://www.cve.org/CVERecord?id=CVE-2022-38751"
+          ],
+          "PublishedDate": "2022-09-05T10:15:09.793Z",
+          "LastModifiedDate": "2026-06-17T04:57:06.653Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2022-38752",
+          "VendorIDs": [
+            "GHSA-9w3m-gqgf-c4p9"
+          ],
+          "PkgID": "org.yaml:snakeyaml:1.30::34fc1a83",
+          "PkgName": "org.yaml:snakeyaml",
+          "PkgIdentifier": {
+            "PURL": "pkg:maven/org.yaml/snakeyaml@1.30",
+            "UID": "ce69723b7ef6f648"
+          },
+          "InstalledVersion": "1.30",
+          "FixedVersion": "1.32",
+          "Status": "fixed",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2022-38752",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory Maven",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Amaven"
+          },
+          "Fingerprint": "sha256:dc15eef89f8979744347be29618e7979b9f19447e9bb16e2e6a328796f084228",
+          "Title": "snakeyaml: Uncaught exception in java.base/java.util.ArrayList.hashCode",
+          "Description": "Using snakeYAML to parse untrusted YAML files may be vulnerable to Denial of Service attacks (DOS). If the parser is running on user supplied input, an attacker may supply content that causes the parser to crash by stack-overflow.",
+          "Severity": "MEDIUM",
+          "CweIDs": [
+            "CWE-121",
+            "CWE-787"
+          ],
+          "VendorSeverity": {
+            "amazon": 2,
+            "ghsa": 2,
+            "nvd": 2,
+            "redhat": 2
+          },
+          "CVSS": {
+            "ghsa": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H",
+              "V3Score": 6.5
+            },
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H",
+              "V3Score": 6.5
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H",
+              "V3Score": 6.5
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2022-38752",
+            "https://bitbucket.org/snakeyaml/snakeyaml",
+            "https://bitbucket.org/snakeyaml/snakeyaml/issues/531/stackoverflow-oss-fuzz-47081",
+            "https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=47081",
+            "https://nvd.nist.gov/vuln/detail/CVE-2022-38752",
+            "https://security.gentoo.org/glsa/202305-28",
+            "https://security.netapp.com/advisory/ntap-20240315-0009",
+            "https://security.netapp.com/advisory/ntap-20240315-0009/",
+            "https://www.cve.org/CVERecord?id=CVE-2022-38752"
+          ],
+          "PublishedDate": "2022-09-05T10:15:09.847Z",
+          "LastModifiedDate": "2026-06-17T04:57:06.76Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2022-41854",
+          "VendorIDs": [
+            "GHSA-w37g-rhq8-7m4j"
+          ],
+          "PkgID": "org.yaml:snakeyaml:1.30::34fc1a83",
+          "PkgName": "org.yaml:snakeyaml",
+          "PkgIdentifier": {
+            "PURL": "pkg:maven/org.yaml/snakeyaml@1.30",
+            "UID": "ce69723b7ef6f648"
+          },
+          "InstalledVersion": "1.30",
+          "FixedVersion": "1.32",
+          "Status": "fixed",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2022-41854",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory Maven",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Amaven"
+          },
+          "Fingerprint": "sha256:32f7e5d02f5eb053551f746f4260ab9632f06fd64c5c9a96e85998d628180224",
+          "Title": "dev-java/snakeyaml: DoS via stack overflow",
+          "Description": "Those using Snakeyaml to parse untrusted YAML files may be vulnerable to Denial of Service attacks (DOS). If the parser is running on user supplied input, an attacker may supply content that causes the parser to crash by stack overflow. This effect may support a denial of service attack.",
+          "Severity": "MEDIUM",
+          "CweIDs": [
+            "CWE-121",
+            "CWE-787"
+          ],
+          "VendorSeverity": {
+            "amazon": 2,
+            "ghsa": 2,
+            "nvd": 2,
+            "redhat": 2
+          },
+          "CVSS": {
+            "ghsa": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "V3Score": 6.5
+            },
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "V3Score": 6.5
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "V3Score": 6.5
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2022-41854",
+            "https://bitbucket.org/snakeyaml/snakeyaml",
+            "https://bitbucket.org/snakeyaml/snakeyaml/commits/e230a1758842beec93d28eddfde568c21774780a",
+            "https://bitbucket.org/snakeyaml/snakeyaml/issues/531",
+            "https://bitbucket.org/snakeyaml/snakeyaml/issues/543/stackoverflow-oss-fuzz-50355",
+            "https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=50355",
+            "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/3DDXEXXWAZGF5AVHIPGFPXIWL6TSMKJE",
+            "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/3DDXEXXWAZGF5AVHIPGFPXIWL6TSMKJE/",
+            "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/7MKE4XWRXTH32757H7QJU4ACS67DYDCR",
+            "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/7MKE4XWRXTH32757H7QJU4ACS67DYDCR/",
+            "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/KSPAJ5Y45A4ZDION2KN5RDWLHK4XKY2J",
+            "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/KSPAJ5Y45A4ZDION2KN5RDWLHK4XKY2J/",
+            "https://nvd.nist.gov/vuln/detail/CVE-2022-41854",
+            "https://security.netapp.com/advisory/ntap-20240315-0009",
+            "https://security.netapp.com/advisory/ntap-20240315-0009/",
+            "https://security.netapp.com/advisory/ntap-20240621-0006",
+            "https://security.netapp.com/advisory/ntap-20240621-0006/",
+            "https://www.cve.org/CVERecord?id=CVE-2022-41854"
+          ],
+          "PublishedDate": "2022-11-11T13:15:11.003Z",
+          "LastModifiedDate": "2026-06-17T05:03:56.173Z"
+        }
+      ]
+    }
+  ]
+}
