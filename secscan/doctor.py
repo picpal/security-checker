@@ -6,7 +6,10 @@
 
 from __future__ import annotations
 
+import platform
 import re
+import shutil
+import subprocess
 from dataclasses import dataclass
 
 # 상태 상수
@@ -14,6 +17,7 @@ OK = "ok"
 OUTDATED = "outdated"
 MISSING = "missing"
 UNKNOWN = "unknown"  # 존재하나 min_version 요구를 확인할 수 없음 (보수적으로 미충족)
+LOW = "low"  # 자원(메모리)이 권장치 미달 (경고)
 
 
 @dataclass(frozen=True)
@@ -26,6 +30,7 @@ class Requirement:
     install_hint: str
     min_version: tuple[int, ...] | None = None
     version_regex: str | None = None
+    version_argv: tuple[str, ...] = ("--version",)
     optional: bool = False
 
 
@@ -92,3 +97,140 @@ def evaluate(requirements: list[Requirement], probes: dict[str, RawProbe]) -> Do
 
         statuses.append(ToolStatus(req, True, version, satisfies, state))
     return DoctorReport(statuses)
+
+
+# 메모리는 도구가 아니라 자원이라 별도 점검. dep-scan 도달성에만 영향을 주므로
+# optional(경고) — 부족해도 탐지는 진행되고 도달성만 폴백된다(spec 10.1 #3).
+MEMORY_REQ = Requirement(
+    name="memory",
+    kind="resource",
+    purpose="dep-scan 도달성 분석 (대형 코드베이스일수록 더 필요)",
+    install_hint="물리 메모리 증설, 또는 도달성 예산 제한/생략 프로파일 사용",
+    optional=True,
+)
+
+
+def memory_status(available_gb: float | None, recommended_gb: float = 8.0) -> ToolStatus:
+    if available_gb is None:
+        return ToolStatus(MEMORY_REQ, False, None, False, UNKNOWN, note="메모리 측정 실패")
+    detected = f"{available_gb:.1f}GB"
+    if available_gb >= recommended_gb:
+        return ToolStatus(MEMORY_REQ, True, detected, True, OK,
+                          note=f"권장 {recommended_gb:.0f}GB 충족")
+    return ToolStatus(MEMORY_REQ, True, detected, False, LOW,
+                      note=f"권장 {recommended_gb:.0f}GB 미만 — 도달성은 예산 폴백될 수 있음")
+
+
+# --- 메모리 파서 (순수) ---
+
+def _parse_sysctl_memsize(text: str) -> float | None:
+    """macOS `sysctl -n hw.memsize` 출력(바이트)을 GiB로."""
+    text = text.strip()
+    if text.isdigit():
+        return int(text) / (1024**3)
+    return None
+
+
+def _parse_meminfo(text: str) -> float | None:
+    """Linux /proc/meminfo 의 MemTotal(kB)을 GiB로."""
+    for line in text.splitlines():
+        if line.startswith("MemTotal:"):
+            parts = line.split()
+            if len(parts) >= 2 and parts[1].isdigit():
+                return int(parts[1]) / (1024**2)
+    return None
+
+
+# --- probe 레이어 (부수효과 — 의존성 주입으로 테스트 가능) ---
+
+def _run_version(req: Requirement) -> str:
+    """버전 명령을 실행해 stdout+stderr 합본을 돌려준다(java 는 stderr에 출력)."""
+    try:
+        r = subprocess.run(
+            [req.name, *req.version_argv],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        return (r.stdout or "") + (r.stderr or "")
+    except Exception:
+        return ""
+
+
+def probe_tool(req: Requirement, *, which=shutil.which, run=_run_version) -> RawProbe:
+    if which(req.name) is None:
+        return RawProbe(present=False)
+    return RawProbe(present=True, raw_version_output=run(req))
+
+
+def probe_memory_gb() -> float | None:
+    try:
+        if platform.system() == "Darwin":
+            out = subprocess.run(
+                ["sysctl", "-n", "hw.memsize"],
+                capture_output=True, text=True, timeout=5,
+            ).stdout
+            return _parse_sysctl_memsize(out)
+        with open("/proc/meminfo") as f:
+            return _parse_meminfo(f.read())
+    except Exception:
+        return None
+
+
+# --- M0 기본 점검 대상 (스캐너 4 + 런타임 2). secret/SAST 툴은 해당 마일스톤에서 추가 ---
+
+_SEMVER = r"(\d+\.\d+\.\d+)"
+
+REQUIREMENTS: list[Requirement] = [
+    Requirement(
+        name="trivy", kind="scanner",
+        purpose="SCA(의존성) 탐지 허브 — Maven/Gradle, VEX 소비",
+        install_hint="brew install trivy",
+        version_regex=r"Version:\s*v?" + _SEMVER,
+    ),
+    Requirement(
+        name="osv-scanner", kind="scanner",
+        purpose="SCA advisory 커버리지 보강(OSV.dev) — FN 감소",
+        install_hint="brew install osv-scanner",
+        version_regex=_SEMVER,
+    ),
+    Requirement(
+        name="depscan", kind="scanner",
+        purpose="JVM 도달성(reachability) 분석 코어 엔진 (OWASP dep-scan)",
+        install_hint="pipx install owasp-depscan  (또는 pip install owasp-depscan)",
+        version_regex=_SEMVER,
+    ),
+    Requirement(
+        name="atom", kind="scanner",
+        purpose="dep-scan 도달성용 콜그래프 슬라이서 (AppThreat atom, Node)",
+        install_hint="npm install -g @appthreat/atom",
+        version_regex=_SEMVER,
+    ),
+    Requirement(
+        name="java", kind="runtime",
+        purpose="dep-scan/atom 런타임 (Java 21 필요)",
+        install_hint="brew install openjdk@21",
+        min_version=(21,),
+        version_regex=r'version "?(\d+(?:\.\d+)*)',
+        version_argv=("-version",),
+    ),
+    Requirement(
+        name="node", kind="runtime",
+        purpose="atom(도달성) 런타임",
+        install_hint="brew install node",
+        version_regex=r"v?" + _SEMVER,
+    ),
+]
+
+
+def run_doctor(
+    requirements: list[Requirement] = REQUIREMENTS,
+    *,
+    probe=probe_tool,
+    mem=probe_memory_gb,
+) -> DoctorReport:
+    """probe(부수효과) + evaluate(순수) + 메모리 자원을 조립한 전체 진단."""
+    probes = {r.name: probe(r) for r in requirements}
+    report = evaluate(requirements, probes)
+    report.statuses.append(memory_status(mem()))
+    return report

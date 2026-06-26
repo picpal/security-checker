@@ -1,18 +1,18 @@
 # 진행 상황
 
-현재 마일스톤: **M0**
+현재 마일스톤: **M1**
 
 ## 인프라 (M0보다 먼저)
 - [x] CLAUDE.md 생성
 - [x] PROGRESS.md 생성
-- [ ] Python 패키지 스캐폴딩 (pyproject, secscan/, tests/, venv)
+- [x] Python 패키지 스캐폴딩 (pyproject, secscan/, tests/, venv)
 
-## M0 — doctor
-- [ ] 스캐너 설치 점검 (trivy / osv-scanner / depscan / atom)
-- [ ] 런타임 점검 (Java 21 / Node / 가용 메모리)
-- [ ] 누락 시 설치 가이드 출력
-- [ ] CLI `secscan doctor` 렌더링 + exit code
-- [ ] **게이트**: 환경 정확 진단 + 누락 안내
+## M0 — doctor ✅
+- [x] 스캐너 설치 점검 (trivy / osv-scanner / depscan / atom)
+- [x] 런타임 점검 (Java 21 / Node / 가용 메모리)
+- [x] 누락 시 설치 가이드 출력
+- [x] CLI `secscan doctor` 렌더링 + exit code (정상 0 / 문제 1)
+- [x] **게이트 통과**: 미설치 4종 정확 탐지 + Java21/Node/메모리 인식 (22 tests green)
 
 ## M1 — 정확한 SCA (★정확도 증명)
 - [ ] Trivy 어댑터

@@ -11,8 +11,10 @@
 4. `PROGRESS.md`
 5. `git log --oneline`
 
-## 현재 마일스톤: M0 (doctor)
+## 현재 마일스톤: M1 (정확한 SCA)
 <!-- 진행하며 이 줄을 갱신한다 -->
+- **M0 doctor 완료** (2026-06-27, 22 tests green): `secscan/doctor.py`(evaluate 순수 + probe DI), `secscan/cli.py`(render_doctor 순수 + main). 게이트 통과.
+- **M1 다음 할 일**: Trivy/osv 어댑터 → typed model 정규화(골든) → 합의 dedup → dep-scan 도달성(4중 안전장치) → SARIF+MD → 취약 픽스처 → FP 실측.
 
 ## 핵심 원칙 6 (위반 금지)
 1. **정확도 우선** — FP를 줄이는 레버를 모든 것에 우선.
