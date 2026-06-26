@@ -38,10 +38,11 @@ def render_doctor(report: DoctorReport) -> str:
             mark = _marker(s.state)
             if not s.present:
                 detail = f"(미설치) {s.req.purpose}"
-            elif s.satisfies and s.version:
-                detail = s.version
-            else:
-                detail = s.note or s.version or s.req.purpose
+            elif s.satisfies:
+                detail = s.version or "설치됨"
+            else:  # present 하나 문제(outdated/unknown/low): 감지값 + 사유
+                parts = [p for p in (s.version, s.note or s.req.purpose) if p]
+                detail = " — ".join(parts)
             lines.append(f"  {mark} {s.req.name:<13} {detail}")
             if not s.satisfies and s.req.install_hint:
                 lines.append(f"      → {s.req.install_hint}")

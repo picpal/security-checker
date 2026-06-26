@@ -51,6 +51,15 @@ def test_render_marks_ok_and_problem_distinctly():
     assert trivy_line.strip()[0] != depscan_line.strip()[0]
 
 
+def test_render_present_tool_without_version_shows_installed_not_purpose():
+    # atom 처럼 --version 출력이 없어 버전을 못 읽는 present 도구
+    report = DoctorReport([_status("atom", True, None, True, OK)])
+    out = cli.render_doctor(report)
+    line = next(l for l in out.splitlines() if "atom" in l)
+    assert "설치됨" in line
+    assert "atom 용도" not in line  # purpose 잡음을 상태줄에 노출하지 않음
+
+
 def test_main_doctor_returns_0_when_environment_ok(monkeypatch):
     ok_report = DoctorReport([_status("trivy", True, "0.50.0", True, OK)])
     monkeypatch.setattr(cli, "run_doctor", lambda: ok_report)
