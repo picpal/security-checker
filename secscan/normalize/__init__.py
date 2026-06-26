@@ -10,6 +10,7 @@ from .gitleaks import parse_gitleaks
 from .merge import merge_consensus
 from .osv import parse_osv
 from .semgrep import parse_semgrep
+from .spotbugs import parse_spotbugs_sarif
 from .trivy import parse_trivy
 
 # 도구명 → 파서. 새 스캐너 = 여기 한 줄 + 파서 모듈 추가.
@@ -18,6 +19,7 @@ _PARSERS = {
     "osv-scanner": parse_osv,
     "gitleaks": parse_gitleaks,
     "semgrep": parse_semgrep,
+    "spotbugs": parse_spotbugs_sarif,
 }
 
 

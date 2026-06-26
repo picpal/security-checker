@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from .adapters.gitleaks import GitleaksAdapter
 from .adapters.osv import OsvAdapter
 from .adapters.semgrep import SemgrepAdapter
+from .adapters.spotbugs import SpotBugsAdapter
 from .adapters.trivy import TrivyAdapter
 
 
@@ -25,6 +26,7 @@ PROFILES: dict[str, Profile] = {
     "quick": Profile("quick", ("trivy", "gitleaks"), False),
     "accurate-sca": Profile("accurate-sca", ("trivy", "osv-scanner"), True),
     "standard": Profile("standard", ("semgrep", "trivy", "osv-scanner", "gitleaks"), True),
+    "deep": Profile("deep", ("semgrep", "trivy", "osv-scanner", "gitleaks", "spotbugs"), True),
 }
 
 _ADAPTER_CLASSES = {
@@ -32,6 +34,7 @@ _ADAPTER_CLASSES = {
     "osv-scanner": OsvAdapter,
     "gitleaks": GitleaksAdapter,
     "semgrep": SemgrepAdapter,
+    "spotbugs": SpotBugsAdapter,
 }
 
 

@@ -1,6 +1,6 @@
 # 진행 상황
 
-현재 마일스톤: **M5**
+현재 마일스톤: **전체 완료 — 마무리 검증**
 
 ## 인프라 (M0보다 먼저)
 - [x] CLAUDE.md 생성
@@ -52,10 +52,10 @@
 - [x] SARIF suppressions emit(사람 확정만) + markdown 억제 섹션 + cli 플래그
 - [x] **게이트 통과**: 재발 억제 + 버전/도달성 변경 무효화 + 제안만 (146 tests)
 
-## M5 — deep (experimental)
-- [ ] SpotBugs + FindSecBugs 어댑터 (빌드 연동)
-- [ ] 빌드 실패 partial 격리
-- [ ] **게이트**: 바이트코드 탐지, 빌드 실패 안전 처리
+## M5 — deep (experimental) ✅
+- [x] SpotBugs + FindSecBugs 어댑터 (빌드 연동: mvn/gradle compile → 바이트코드)
+- [x] 빌드 실패 partial 격리 (예외도 skipped 로 안전 처리)
+- [x] **게이트 통과**: 바이트코드가 COMMAND_INJECTION(CWE-78, Semgrep CE 놓친 것)+SQL(CWE-89) 탐지 + 빌드실패 안전격리 (154 tests)
 
 ## 프로파일
 - [ ] quick / accurate-sca / standard / deep

@@ -16,5 +16,10 @@ venv/
 .secscan/
 /out/
 
+# JVM build artifacts (픽스처가 deep 분석용으로 컴파일됨)
+target/
+build/
+.gradle/
+
 # OS
 .DS_Store

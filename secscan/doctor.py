@@ -240,6 +240,14 @@ REQUIREMENTS: list[Requirement] = [
         version_regex=_SEMVER,
         optional=True,  # 검증은 기본 off → 없어도 차단 아님
     ),
+    Requirement(
+        name="spotbugs", kind="scanner",
+        purpose="바이트코드 SAST (deep, experimental — 빌드 필요)",
+        install_hint="brew install spotbugs (+ FindSecBugs 플러그인 jar)",
+        version_regex=_SEMVER,
+        version_argv=("-version",),
+        optional=True,  # deep 전용 → 없어도 기본 점검 차단 아님
+    ),
 ]
 
 
