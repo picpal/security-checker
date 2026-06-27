@@ -71,13 +71,27 @@ def _result(f: Finding) -> dict:
             },
         })
 
-    return {
+    result = {
         "ruleId": f.rule_id,
         "level": _level(f.severity),
         "message": {"text": msg},
         "properties": props,
         "suppressions": suppressions,
     }
+
+    # 위치형(secret/SAST)은 SARIF locations 를 채운다 → GitHub code scanning·IDE 연동.
+    if f.location is not None:
+        region: dict = {}
+        if f.location.start_line is not None:
+            region["startLine"] = f.location.start_line
+        if f.location.end_line is not None:
+            region["endLine"] = f.location.end_line
+        phys: dict = {"artifactLocation": {"uri": f.location.file}}
+        if region:
+            phys["region"] = region
+        result["locations"] = [{"physicalLocation": phys}]
+
+    return result
 
 
 def to_sarif(findings: list[Finding], tool_version: str = "0.0.1") -> dict:

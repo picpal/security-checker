@@ -88,8 +88,26 @@ def test_sarif_human_confirmed_suppression_is_emitted():
     assert res["suppressions"][0]["justification"] == "도달 불가"
 
 
+def test_sarif_location_based_finding_emits_locations():
+    f = Finding(category="secret", severity="high", rule_id="aws-access-token",
+                location=Location("config/app.properties", start_line=4, end_line=4))
+    res = to_sarif([f])["runs"][0]["results"][0]
+    assert "locations" in res
+    phys = res["locations"][0]["physicalLocation"]
+    assert phys["artifactLocation"]["uri"] == "config/app.properties"
+    assert phys["region"]["startLine"] == 4
+
+
+def test_sarif_component_finding_has_no_locations():
+    # SCA(component 기반)는 위치가 없으므로 locations 를 만들지 않는다(빈 리스트 아님)
+    res = to_sarif([_f()])["runs"][0]["results"][0]
+    assert "locations" not in res
+
+
 def test_sarif_is_json_serializable():
     json.dumps(to_sarif([_f()]))  # 예외 없어야 함
+    json.dumps(to_sarif([Finding(category="secret", severity="high", rule_id="x",
+                                 location=Location("a.txt", start_line=1))]))
 
 
 # --- Markdown 보고서 ---
