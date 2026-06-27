@@ -167,3 +167,16 @@ class Finding:
     def id(self) -> str:
         # 보안용이 아니라 안정적 식별자(dedup 키 해시)용. usedforsecurity=False 로 의도 명시.
         return hashlib.sha1(self.dedup_key.encode(), usedforsecurity=False).hexdigest()[:12]
+
+
+def sast_tier(f: Finding) -> str | None:
+    """SAST finding 의 신뢰도 등급. SCA·secret 은 None(기존 우선순위 로직 유지).
+
+    confidence(high/medium) + severity(critical/high/medium) 둘 다일 때만 actionable.
+    missing/unknown confidence 는 review — 검증 안 된 룰을 우선 버킷에 넣지 않는다(원칙1).
+    """
+    if f.category != "sast":
+        return None
+    if f.confidence in ("high", "medium") and f.severity in (CRITICAL, HIGH, MEDIUM):
+        return "actionable"
+    return "review"

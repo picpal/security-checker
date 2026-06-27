@@ -7,10 +7,12 @@
 
 from __future__ import annotations
 
-from ..models import REACHABLE, UNKNOWN, UNREACHABLE, Finding, severity_rank
+from ..models import REACHABLE, UNKNOWN, UNREACHABLE, Finding, sast_tier, severity_rank
 
 _REACH_RANK = {REACHABLE: 2, UNKNOWN: 1, UNREACHABLE: 0}
 _REACH_LABEL = {REACHABLE: "도달 가능", UNREACHABLE: "도달 불가", UNKNOWN: "도달성 미상"}
+# severity 출력 표기(coderay 정합). 내부 canonical 은 영문 유지(원칙3).
+_SEV_KO = {"critical": "심각", "high": "위험", "medium": "보통", "low": "일반", "unknown": "미상"}
 
 _BLIND_SPOT_NOTE = (
     "> ⚠️ **정적 분석 사각지대**: 도달성 판정은 리플렉션·DI(Spring proxy)·역직렬화·"
@@ -36,7 +38,7 @@ def _line(f: Finding) -> list[str]:
         subject = f.location.file if f.location else f.rule_id
         if f.location and f.location.start_line:
             subject += f":{f.location.start_line}"
-    out = [f"### [{f.severity.upper()}] {f.rule_id} — {subject}"]
+    out = [f"### [{_SEV_KO.get(f.severity, f.severity)}] {f.rule_id} — {subject}"]
 
     if f.category == "sca":
         reach = _REACH_LABEL.get(f.reachability.status, f.reachability.status)
@@ -91,7 +93,7 @@ def to_markdown(findings: list[Finding], *, target: str | None = None, meta: dic
     # 요약
     L.append("## 요약")
     sev_order = ["critical", "high", "medium", "low", "unknown"]
-    sev_str = ", ".join(f"{s} {by_sev[s]}" for s in sev_order if by_sev.get(s))
+    sev_str = ", ".join(f"{_SEV_KO.get(s, s)} {by_sev[s]}" for s in sev_order if by_sev.get(s))
     L.append(f"- 총 **{n}건** — {sev_str or '없음'}")
     L.append(
         f"- 도달성: 도달 가능 **{by_reach.get(REACHABLE, 0)}** · "
@@ -123,8 +125,12 @@ def to_markdown(findings: list[Finding], *, target: str | None = None, meta: dic
     def _is_low(f: Finding) -> bool:
         return f.category == "sca" and f.reachability.status == UNREACHABLE
 
-    low = [f for f in active if _is_low(f)]
-    priority = [f for f in active if not _is_low(f)]
+    def _is_review(f: Finding) -> bool:
+        return sast_tier(f) == "review"
+
+    review = [f for f in active if _is_review(f)]
+    low = [f for f in active if _is_low(f) and not _is_review(f)]
+    priority = [f for f in active if not _is_low(f) and not _is_review(f)]
 
     L.append("## 우선 조치")
     if priority:
@@ -132,6 +138,14 @@ def to_markdown(findings: list[Finding], *, target: str | None = None, meta: dic
             L.extend(_line(f))
     else:
         L.append("_조치 대상 없음._")
+        L.append("")
+
+    L.append("## 검토 후보 (낮은 신뢰)")
+    if review:
+        for f in review:
+            L.extend(_line(f))
+    else:
+        L.append("_해당 없음._")
         L.append("")
 
     L.append("## 낮은 우선순위 — 도달 불가 (SCA)")

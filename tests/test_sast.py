@@ -7,7 +7,8 @@ SAST 는 위치형 finding. CE 의 intraprocedural taint 한계는 보고서에 
 from pathlib import Path
 
 from secscan.adapters.semgrep import SemgrepAdapter
-from secscan.models import normalize_confidence
+from secscan.models import Finding, Location, normalize_confidence, sast_tier
+from secscan.normalize.merge import merge_consensus
 from secscan.normalize.semgrep import _cwe_codes, parse_semgrep
 
 GOLDEN = Path(__file__).parent / "golden" / "semgrep-sast-app.json"
@@ -81,3 +82,41 @@ def test_semgrep_adapter_includes_expanded_packs():
     argv = SemgrepAdapter().build_argv("/proj", {})
     assert any("p/owasp-top-ten" in a for a in argv)
     assert any("p/cwe-top-25" in a for a in argv)
+
+
+# --- B2: sast_tier (신뢰도 계층화) ---
+
+def _sast(sev, conf):
+    return Finding(category="sast", severity=sev, confidence=conf,
+                   location=Location("A.java", 1))
+
+
+def test_sast_tier_actionable_needs_conf_and_severity():
+    assert sast_tier(_sast("critical", "high")) == "actionable"
+    assert sast_tier(_sast("high", "medium")) == "actionable"
+    assert sast_tier(_sast("medium", "medium")) == "actionable"
+
+
+def test_sast_tier_low_or_unknown_confidence_is_review():
+    assert sast_tier(_sast("critical", "low")) == "review"
+    assert sast_tier(_sast("critical", "unknown")) == "review"  # missing→review (원칙1)
+
+
+def test_sast_tier_low_or_unknown_severity_is_review():
+    assert sast_tier(_sast("low", "high")) == "review"
+    assert sast_tier(_sast("unknown", "high")) == "review"
+
+
+def test_sast_tier_none_for_non_sast():
+    assert sast_tier(Finding(category="sca", severity="high", confidence="high")) is None
+    assert sast_tier(Finding(category="secret", severity="high")) is None
+
+
+def test_merge_takes_conservative_confidence():
+    # 같은 dedup_key 병합 시 더 낮은(불확실한) confidence 를 택한다 — 순서 비의존.
+    a = Finding(category="sast", severity="high", rule_id="r", confidence="high",
+                location=Location("A.java", 1))
+    b = Finding(category="sast", severity="high", rule_id="r", confidence="low",
+                location=Location("A.java", 1))
+    assert merge_consensus([a, b])[0].confidence == "low"
+    assert merge_consensus([b, a])[0].confidence == "low"  # 순서 바꿔도 동일

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from ..models import Advisory, Consensus, Finding, max_severity
+from ..models import Advisory, Consensus, Finding, max_severity, min_confidence
 
 
 def _uniq(*seqs) -> tuple:
@@ -35,6 +35,7 @@ def _combine(a: Finding, b: Finding) -> Finding:
     return replace(
         a,
         severity=max_severity(a.severity, b.severity),
+        confidence=min_confidence(a.confidence, b.confidence),
         cwe=_uniq(a.cwe, b.cwe),
         owasp=_uniq(a.owasp, b.owasp),
         references=_uniq(a.references, b.references),

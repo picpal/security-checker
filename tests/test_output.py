@@ -259,3 +259,31 @@ def test_markdown_summary_shows_compliance_rollup():
     f.compliance = map_compliance(f.cwe)
     md = to_markdown([f])
     assert "컴플라이언스" in md  # 요약 롤업
+
+
+# --- B2: severity 한글 + SAST 검토 후보 섹션 ---
+
+def test_markdown_uses_korean_severity_in_heading_and_summary():
+    md = to_markdown([_reachable()])  # critical
+    assert "심각" in md
+    assert "CRITICAL" not in md  # 영문 heading 사라짐
+    assert "critical" not in md  # 영문 요약 사라짐
+
+
+def test_markdown_sast_review_goes_to_review_section():
+    f = Finding(category="sast", severity="high", rule_id="weak-rule", confidence="low",
+                location=Location("A.java", start_line=1))
+    md = to_markdown([f])
+    assert "검토 후보" in md
+    assert "weak-rule" in md
+
+
+def test_markdown_separates_sast_actionable_and_review():
+    act = Finding(category="sast", severity="high", rule_id="ACT-RULE", confidence="high",
+                  location=Location("A.java", start_line=1))
+    rev = Finding(category="sast", severity="high", rule_id="REV-RULE", confidence="low",
+                  location=Location("B.java", start_line=2))
+    md = to_markdown([act, rev])
+    assert md.index("우선 조치") < md.index("검토 후보")
+    assert md.index("ACT-RULE") < md.index("검토 후보")  # actionable 은 우선 조치에
+    assert md.index("검토 후보") < md.index("REV-RULE")  # review 는 검토 후보 섹션에
