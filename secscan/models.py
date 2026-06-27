@@ -80,6 +80,23 @@ class Consensus:
     score: int = 0
 
 
+@dataclass(frozen=True)
+class KisaWeakness:
+    """KISA 소프트웨어 보안약점(49개 중 1개). code 는 내부 식별자(공식 번호 아님)."""
+
+    code: str  # 내부 ID 예: "IV-01" (카테고리약자-순번)
+    category: str  # 7대 분류 예: "입력데이터 검증 및 표현"
+    name: str  # 약점명 예: "SQL 삽입"
+
+
+@dataclass(frozen=True)
+class Compliance:
+    """CWE 에서 파생한 컴플라이언스 뷰(KISA·PCI). 결정적 매핑 — 판정이 아니라 분류."""
+
+    kisa: tuple[KisaWeakness, ...] = ()
+    pci: tuple[str, ...] = ()  # PCI-DSS v4.0.1 §6.2.4 공격유형 라벨
+
+
 @dataclass
 class Suppression:
     """억제 엔트리 (spec §12). 자동 생성 금지 — 사람이 증거를 확인해 확정한다."""
@@ -111,6 +128,7 @@ class Finding:
     references: tuple[str, ...] = ()
     verified: bool | None = None  # secret 전용: None=미검증, True=라이브 확인, False=검증했으나 비활성
     suppression: "Suppression | None" = None  # 사람이 확정한 억제 (자동 금지)
+    compliance: "Compliance | None" = None  # CWE 에서 파생한 KISA/PCI 매핑 (결정적)
 
     @property
     def dedup_key(self) -> str:
