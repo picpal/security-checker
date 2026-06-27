@@ -57,8 +57,18 @@
 - [x] 빌드 실패 partial 격리 (예외도 skipped 로 안전 처리)
 - [x] **게이트 통과**: 바이트코드가 COMMAND_INJECTION(CWE-78, Semgrep CE 놓친 것)+SQL(CWE-89) 탐지 + 빌드실패 안전격리 (154 tests)
 
+## M5+ — 실전 강화 (post-spec, 도그푸딩 + 실프로젝트 message-gate 기반)
+- [x] detect: fixtures/vendor/build/VCS 제외 + root-first build_tool (자기 스캔 오탐 수정)
+- [x] exclude.py: 기본 제외(build/target/.git/node_modules…) + `.gitignore` 존중
+      (#1 precision — message-gate 빌드 노이즈 41건 제거)
+- [x] BOM 기반 SCA: cdxgen BOM → `trivy sbom` (#2 recall — 락파일 없는 gradle SCA **0→34건**)
+- [x] SARIF locations emit (도그푸딩으로 발견한 자체 버그 수정)
+- [x] **컴플라이언스 매핑**: CWE→KISA49(7분류)/PCI-DSS 6.2.4 — compliance.py 순수 매핑,
+      scan enrich + markdown 라벨/롤업 + SARIF properties + CLI 요약. 결정적 파생(판정 아님).
+      message-gate 실증: KISA 7건·PCI 7건(역직렬화/경로조작/SSRF/인가/TOCTOU) 매핑.
+
 ## 프로파일
-- [ ] quick / accurate-sca / standard / deep
+- [x] quick / accurate-sca / standard / deep
 
 ## 전체 완료 기준 ✅
 - [x] M0~M5 각 검증 게이트 통과 (160 tests green)
@@ -68,4 +78,6 @@
 - [x] 자연어 "이 프로젝트 점검해줘" → 스택 감지(maven/java) → 프로파일(standard) → typed findings → 보고서 시연
 - [x] CLAUDE.md / PROGRESS.md 최종 갱신
 
-## 상태: M0~M5 전부 완료 (160 tests). 다음 사이클 후보 = 백로그(IaC/DAST/CI/주기점검/Opengrep/CodeQL).
+## 상태: M0~M5 + post-M5 강화(exclude/BOM-SCA/컴플라이언스 매핑) 완료 (**203 tests green**).
+SAST 커버리지 격차(Semgrep CE 함수간 taint 한계)는 남음 → 백로그(Opengrep/CodeQL).
+다음 사이클 후보 = 백로그(IaC/DAST/CI/주기점검/Opengrep/CodeQL).

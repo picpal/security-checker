@@ -131,6 +131,10 @@ def render_scan_summary(result) -> str:
         )
     else:
         lines.append(f"도달성: 미적용 ({result.reachability_reason})")
+    kisa_n = sum(1 for f in result.findings if f.compliance and f.compliance.kisa)
+    pci_n = sum(1 for f in result.findings if f.compliance and f.compliance.pci)
+    if kisa_n or pci_n:
+        lines.append(f"컴플라이언스: KISA 약점 {kisa_n}건 · PCI-DSS 6.2.4 {pci_n}건")
     if result.secret_policy == "verify":
         lines.append(f"시크릿 검증: 적용됨 — 라이브 {result.secret_verified_count}건 확인")
     elif result.secret_policy == "never":

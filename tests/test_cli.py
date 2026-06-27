@@ -104,6 +104,18 @@ def test_render_scan_summary_shows_counts_and_reachability():
     assert "2" in out
 
 
+def test_render_scan_summary_shows_compliance_count():
+    from secscan.compliance import map_compliance
+    from secscan.models import Finding, Location
+
+    f = Finding(category="sast", severity="high", rule_id="x",
+                location=Location("A.java", start_line=1), cwe=("CWE-89",))
+    f.compliance = map_compliance(f.cwe)
+    out = cli.render_scan_summary(ScanResult(findings=[f], raw_results=[]))
+    assert "컴플라이언스" in out
+    assert "KISA" in out
+
+
 def test_render_scan_summary_reports_partial_failures():
     res = ScanResult(
         findings=[], raw_results=[],
