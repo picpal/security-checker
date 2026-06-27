@@ -131,6 +131,26 @@ def test_min_version_required_but_unparseable_is_not_silently_ok():
     assert report.ok is False
 
 
+def test_require_version_fails_when_unextractable():
+    # require_version 도구(semgrep)는 버전 추출 실패 시 미충족 — 런타임 손상 감지(codex P2⑪).
+    from secscan.doctor import RawProbe, Requirement, evaluate
+
+    req = Requirement(name="semgrep", kind="scanner", purpose="p", install_hint="h",
+                      version_regex=r"(\d+\.\d+\.\d+)", require_version=True)
+    report = evaluate([req], {"semgrep": RawProbe(present=True,
+                                                  raw_version_output="CA trust anchor error")})
+    s = report.statuses[0]
+    assert s.satisfies is False
+    assert s.state == UNKNOWN
+
+
+def test_semgrep_requirement_requires_version():
+    from secscan.doctor import REQUIREMENTS
+
+    semgrep = next(r for r in REQUIREMENTS if r.name == "semgrep")
+    assert semgrep.require_version is True
+
+
 # --- 메모리 자원 점검 (dep-scan 도달성용 — 경고일 뿐 전체를 깨지 않음) ---
 
 def test_sufficient_memory_is_ok():

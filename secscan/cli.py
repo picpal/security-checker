@@ -16,7 +16,7 @@ from pathlib import Path
 from .detect import detect_stack, suggest_profile
 from .doctor import MISSING, OK, DoctorReport, run_doctor
 from .measure import reachability_stats
-from .models import UNREACHABLE
+from .models import UNREACHABLE, sast_tier
 from .output.markdown import to_markdown
 from .output.sarif import to_sarif
 from .profiles import build_adapters, get_profile
@@ -135,6 +135,10 @@ def render_scan_summary(result) -> str:
     pci_n = sum(1 for f in result.findings if f.compliance and f.compliance.pci)
     if kisa_n or pci_n:
         lines.append(f"컴플라이언스: KISA 약점 {kisa_n}건 · PCI-DSS 6.2.4 {pci_n}건")
+    sast = [f for f in result.findings if f.category == "sast"]
+    if sast:
+        act = sum(1 for f in sast if sast_tier(f) == "actionable")
+        lines.append(f"SAST: 우선 {act} · 검토후보 {len(sast) - act}")
     if result.secret_policy == "verify":
         lines.append(f"시크릿 검증: 적용됨 — 라이브 {result.secret_verified_count}건 확인")
     elif result.secret_policy == "never":
@@ -152,8 +156,18 @@ def render_scan_summary(result) -> str:
 
 
 def _has_actionable(findings) -> bool:
-    # 도달 불가가 아닌 finding(도달 가능/미상)이 하나라도 있으면 조치 대상
-    return any(f.reachability.status != UNREACHABLE for f in findings)
+    # exit code 게이트(P1③): SAST 는 actionable tier 만, SCA 는 도달 가능/미상,
+    # secret 은 항상. SAST review 와 도달 불가 SCA 는 CI 를 막지 않는다.
+    for f in findings:
+        if f.category == "sast":
+            if sast_tier(f) == "actionable":
+                return True
+        elif f.category == "sca":
+            if f.reachability.status != UNREACHABLE:
+                return True
+        else:  # secret 등
+            return True
+    return False
 
 
 def _cmd_scan(args) -> int:

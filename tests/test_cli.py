@@ -116,6 +116,34 @@ def test_render_scan_summary_shows_compliance_count():
     assert "KISA" in out
 
 
+def test_has_actionable_gates_by_sast_tier_and_reachability():
+    from secscan.models import UNREACHABLE, Finding, Location, Reachability
+
+    review = Finding(category="sast", severity="high", confidence="low",
+                     location=Location("A.java", start_line=1))
+    actionable = Finding(category="sast", severity="high", confidence="high",
+                         location=Location("B.java", start_line=1))
+    secret = Finding(category="secret", severity="high", location=Location("c", start_line=1))
+    unreach_sca = Finding(category="sca", severity="high",
+                          reachability=Reachability(UNREACHABLE))
+    assert cli._has_actionable([review]) is False       # review SAST 비게이트(P1③)
+    assert cli._has_actionable([actionable]) is True    # actionable SAST 게이트
+    assert cli._has_actionable([secret]) is True        # secret 게이트
+    assert cli._has_actionable([unreach_sca]) is False  # 도달 불가 SCA 비게이트
+    assert cli._has_actionable([review, actionable]) is True
+
+
+def test_render_scan_summary_shows_sast_tiers():
+    from secscan.models import Finding, Location
+
+    act = Finding(category="sast", severity="high", confidence="high",
+                  location=Location("A.java", start_line=1))
+    rev = Finding(category="sast", severity="high", confidence="low",
+                  location=Location("B.java", start_line=2))
+    out = cli.render_scan_summary(ScanResult(findings=[act, rev], raw_results=[]))
+    assert "검토후보" in out
+
+
 def test_render_scan_summary_reports_partial_failures():
     res = ScanResult(
         findings=[], raw_results=[],

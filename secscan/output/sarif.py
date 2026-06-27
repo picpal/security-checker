@@ -6,7 +6,7 @@ SCA 전용 필드(package/version/fixedVersions/reachability/consensus)는 SARIF
 
 from __future__ import annotations
 
-from ..models import CRITICAL, HIGH, LOW, MEDIUM, Finding
+from ..models import CRITICAL, HIGH, LOW, MEDIUM, Finding, sast_tier
 
 _LEVEL = {CRITICAL: "error", HIGH: "error", MEDIUM: "warning", LOW: "note"}
 _SECURITY_SEVERITY = {CRITICAL: "9.0", HIGH: "7.0", MEDIUM: "5.0", LOW: "3.0"}
@@ -59,6 +59,12 @@ def _result(f: Finding) -> dict:
                      for w in f.compliance.kisa],
             "pci": list(f.compliance.pci),
         }
+    # SAST 신뢰도 신호 — 출력 전용 properties.
+    if f.confidence and f.confidence != "unknown":
+        props["confidence"] = f.confidence
+    _tier = sast_tier(f)
+    if _tier:
+        props["sastTier"] = _tier
 
     msg = f.title or f.rule_id
     if f.component:

@@ -32,6 +32,7 @@ class Requirement:
     version_regex: str | None = None
     version_argv: tuple[str, ...] = ("--version",)
     optional: bool = False
+    require_version: bool = False  # True 면 버전 추출 실패 시 미충족(런타임 손상 감지)
 
 
 @dataclass(frozen=True)
@@ -87,7 +88,11 @@ def evaluate(requirements: list[Requirement], probes: dict[str, RawProbe]) -> Do
 
         satisfies = True
         state = OK
-        if req.min_version:
+        if req.require_version and version is None:
+            # 버전 출력은 됐는데 패턴 매칭 실패 = 런타임 손상 의심(CA 에러 등). "정상" 위장 금지.
+            satisfies = False
+            state = UNKNOWN
+        elif req.min_version:
             if version is None:
                 satisfies = False
                 state = UNKNOWN
@@ -236,9 +241,10 @@ REQUIREMENTS: list[Requirement] = [
     ),
     Requirement(
         name="semgrep", kind="scanner",
-        purpose="SAST(소스 패턴) — taint 는 intraprocedural 한계(spec §10.2)",
+        purpose="SAST(소스 패턴, 레지스트리 팩 — 최초 네트워크). taint intraprocedural 한계(§10.2)",
         install_hint="brew install semgrep",
         version_regex=_SEMVER,
+        require_version=True,  # 버전 추출 실패 = 런타임 손상(CA 에러 등) 감지
     ),
     Requirement(
         name="trufflehog", kind="scanner",

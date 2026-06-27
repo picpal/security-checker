@@ -287,3 +287,22 @@ def test_markdown_separates_sast_actionable_and_review():
     assert md.index("우선 조치") < md.index("검토 후보")
     assert md.index("ACT-RULE") < md.index("검토 후보")  # actionable 은 우선 조치에
     assert md.index("검토 후보") < md.index("REV-RULE")  # review 는 검토 후보 섹션에
+
+
+def test_sarif_carries_confidence_and_sast_tier():
+    f = Finding(category="sast", severity="high", confidence="high", rule_id="x",
+                location=Location("A.java", start_line=1))
+    props = to_sarif([f])["runs"][0]["results"][0]["properties"]
+    assert props["confidence"] == "high"
+    assert props["sastTier"] == "actionable"
+
+
+def test_sarif_no_confidence_or_tier_for_non_sast():
+    props = to_sarif([_f()])["runs"][0]["results"][0]["properties"]  # SCA, confidence unknown
+    assert "confidence" not in props
+    assert "sastTier" not in props
+
+
+def test_markdown_sast_note_mentions_ce_and_kotlin_limits():
+    md = to_markdown([_sast()])
+    assert "Pro" in md or "Kotlin" in md

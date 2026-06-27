@@ -22,8 +22,9 @@ _BLIND_SPOT_NOTE = (
 
 _SAST_NOTE = (
     "> ℹ️ **SAST(Semgrep CE) 주의**: taint 분석이 **intraprocedural**(함수 내)로 제한되어 "
-    "함수·파일 경계를 넘는 데이터 흐름은 놓칠 수 있습니다(spec §10.2). 깊은 cross-function "
-    "분석은 향후 Opengrep/CodeQL 로 보강 예정."
+    "함수·파일 경계를 넘는 데이터 흐름은 놓칠 수 있습니다(spec §10.2). CE 에서는 일부 Pro "
+    "전용·프레임워크 룰이 발화하지 않으며, Kotlin 커버리지는 Java 보다 약합니다(못 잡는 것을 "
+    "숨기지 않습니다). 깊은 cross-function 분석은 향후 CodeQL(C)로 보강 예정."
 )
 
 
