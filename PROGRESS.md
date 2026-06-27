@@ -66,6 +66,12 @@
 - [x] **컴플라이언스 매핑**: CWE→KISA49(7분류)/PCI-DSS 6.2.4 — compliance.py 순수 매핑,
       scan enrich + markdown 라벨/롤업 + SARIF properties + CLI 요약. 결정적 파생(판정 아님).
       message-gate 실증: KISA 7건·PCI 7건(역직렬화/경로조작/SSRF/인가/TOCTOU) 매핑.
+- [x] **SAST 룰 확대 + 신뢰도 계층화 (B)** — spec/goal 2026-06-27. Semgrep 팩 확대
+      (owasp-top-ten/cwe-top-25) + confidence 추출·정규화 + sast_tier(actionable/review,
+      missing→review 원칙1) + severity 한글(심각/위험/보통/일반/미상) + exit-code 게이팅
+      (review 비차단) + merge 보수적 + doctor 런타임 점검. **codex 검토(P1×4,P2×8) 전량 반영.**
+      실증: message-gate SAST 0(잘 짜인 Spring→패턴 SAST 무효 = C 필요 음성증거),
+      sast-app E2E(actionable·exit 1·KISA SQL삽입 코드레벨 매핑).
 
 ## 프로파일
 - [x] quick / accurate-sca / standard / deep
@@ -78,6 +84,6 @@
 - [x] 자연어 "이 프로젝트 점검해줘" → 스택 감지(maven/java) → 프로파일(standard) → typed findings → 보고서 시연
 - [x] CLAUDE.md / PROGRESS.md 최종 갱신
 
-## 상태: M0~M5 + post-M5 강화(exclude/BOM-SCA/컴플라이언스 매핑) 완료 (**203 tests green**).
-SAST 커버리지 격차(Semgrep CE 함수간 taint 한계)는 남음 → 백로그(Opengrep/CodeQL).
-다음 사이클 후보 = 백로그(IaC/DAST/CI/주기점검/Opengrep/CodeQL).
+## 상태: M0~M5 + post-M5(exclude/BOM-SCA/컴플라이언스/**SAST 확대 B**) 완료 (**222 tests green**).
+함수간 taint(C=CodeQL)는 미착수 — message-gate 격차의 본질, 별도 spec.
+다음 사이클 후보 = C(CodeQL taint) + 백로그(IaC/DAST/CI/주기점검).
