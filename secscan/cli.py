@@ -135,6 +135,8 @@ def render_scan_summary(result) -> str:
         lines.append(f"시크릿 검증: 적용됨 — 라이브 {result.secret_verified_count}건 확인")
     elif result.secret_policy == "never":
         lines.append("시크릿 검증: 차단됨 (network-off — 자격증명 미전송)")
+    if result.excluded_count:
+        lines.append(f"제외됨: {result.excluded_count}건 (기본 제외/build/.gitignore)")
     if result.suppressed_count:
         lines.append(f"억제됨: {result.suppressed_count}건 (사람 확정 — 보고서 별도 섹션)")
     if result.invalidated:
@@ -185,6 +187,8 @@ def _cmd_scan(args) -> int:
         baseline_keys=baseline_keys,
         today=date.today().isoformat(),
         exclude=args.exclude,
+        use_default_excludes=not args.no_default_excludes,
+        respect_gitignore=not args.scan_ignored,
     )
 
     if args.write_baseline:
@@ -247,6 +251,10 @@ def main(argv: list[str] | None = None) -> int:
                     help="시크릿 검증 강제 차단 (--verify-secrets 보다 우선)")
     sp.add_argument("--exclude", action="append", metavar="GLOB",
                     help="경로 제외(반복 가능). 예: --exclude fixtures --exclude '*/test/*'")
+    sp.add_argument("--no-default-excludes", action="store_true",
+                    help="기본 제외(build/target/.git/node_modules 등) 끄기")
+    sp.add_argument("--scan-ignored", action="store_true",
+                    help=".gitignore 된 파일도 스캔(기본은 제외)")
     sp.add_argument("--suppressions", help="사람이 확정한 억제 파일(JSON) 경로")
     sp.add_argument("--baseline", help="baseline 파일(JSON) — 기존 이슈 억제, 신규만 알림")
     sp.add_argument("--write-baseline", help="현재 findings 를 baseline 파일로 저장")

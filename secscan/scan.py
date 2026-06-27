@@ -8,7 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from .adapters.base import OK, RawResult
-from .exclude import exclude_findings
+from .exclude import DEFAULT_EXCLUDES, exclude_findings, filter_gitignored
 from .models import Finding
 from .normalize import to_findings
 from .orchestrator import scan as orchestrate
@@ -29,6 +29,7 @@ class ScanResult:
     secret_verified_count: int = 0
     suppressed_count: int = 0
     invalidated: list[str] = field(default_factory=list)
+    excluded_count: int = 0  # 기본제외+gitignore 로 걸러진 finding 수
 
 
 def run_scan(
@@ -49,11 +50,22 @@ def run_scan(
     baseline_keys=None,
     today: str | None = None,
     exclude=None,
+    use_default_excludes: bool = True,
+    respect_gitignore: bool = True,
 ) -> ScanResult:
     raws = orchestrate(adapters, target, max_workers=max_workers)
     findings = to_findings(raws)
-    if exclude:
-        findings = exclude_findings(findings, exclude)
+
+    # 경로 제외: 기본(build/target/.git/...) + 사용자 지정. 그 후 .gitignore 존중.
+    before = len(findings)
+    patterns = set(exclude or [])
+    if use_default_excludes:
+        patterns |= set(DEFAULT_EXCLUDES)
+    if patterns:
+        findings = exclude_findings(findings, patterns)
+    if respect_gitignore:
+        findings, _ = filter_gitignored(target, findings)
+    excluded_count = before - len(findings)
 
     ran, reason = False, "off"
     if profile.reachability and reachability_provider is not None:
@@ -82,4 +94,4 @@ def run_scan(
 
     partial = [r for r in raws if r.status != OK]
     return ScanResult(findings, raws, ran, reason, partial, secret_policy,
-                      verified_count, suppressed_count, invalidated)
+                      verified_count, suppressed_count, invalidated, excluded_count)
