@@ -52,6 +52,13 @@ def _result(f: Finding) -> dict:
         props["reachabilitySource"] = f.reachability.source
     if f.consensus:
         props["consensus"] = {"tools": list(f.consensus.tools), "score": f.consensus.score}
+    # 컴플라이언스(CWE→KISA/PCI)는 properties bag 에 — 출력 전용, 직렬화 가능 형태로.
+    if f.compliance and (f.compliance.kisa or f.compliance.pci):
+        props["compliance"] = {
+            "kisa": [{"code": w.code, "category": w.category, "name": w.name}
+                     for w in f.compliance.kisa],
+            "pci": list(f.compliance.pci),
+        }
 
     msg = f.title or f.rule_id
     if f.component:

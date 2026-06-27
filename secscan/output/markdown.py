@@ -58,6 +58,15 @@ def _line(f: Finding) -> list[str]:
         meta.append(f"탐지: {'+'.join(f.consensus.tools)} (합의 {f.consensus.score})")
     if meta:
         out.append(f"- {' · '.join(meta)}")
+
+    if f.compliance and (f.compliance.kisa or f.compliance.pci):
+        parts = []
+        if f.compliance.kisa:
+            parts.append("KISA " + ", ".join(w.name for w in f.compliance.kisa))
+        if f.compliance.pci:
+            parts.append(" · ".join(f.compliance.pci))
+        out.append(f"- 컴플라이언스: {' · '.join(parts)}")
+
     out.append("")
     return out
 
@@ -93,6 +102,11 @@ def to_markdown(findings: list[Finding], *, target: str | None = None, meta: dic
         L.append(
             f"- ℹ️ 도달 불가 {by_reach[UNREACHABLE]}건은 우선순위가 낮습니다(노이즈 후보)."
         )
+    kisa_n = sum(1 for f in findings if f.compliance and f.compliance.kisa)
+    pci_n = sum(1 for f in findings if f.compliance and f.compliance.pci)
+    if kisa_n or pci_n:
+        L.append(f"- 컴플라이언스: KISA 약점 매핑 **{kisa_n}건** · "
+                 f"PCI-DSS 6.2.4 관련 **{pci_n}건**")
     L.append("")
     L.append(_BLIND_SPOT_NOTE)
     if any(f.category == "sast" for f in findings):

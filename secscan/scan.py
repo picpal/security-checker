@@ -8,6 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from .adapters.base import OK, RawResult
+from .compliance import enrich_compliance
 from .exclude import DEFAULT_EXCLUDES, exclude_findings, filter_gitignored
 from .models import Finding
 from .normalize import to_findings
@@ -66,6 +67,9 @@ def run_scan(
     if respect_gitignore:
         findings, _ = filter_gitignored(target, findings)
     excluded_count = before - len(findings)
+
+    # 컴플라이언스 매핑: CWE → KISA/PCI (결정적·무비용 — 항상 적용).
+    enrich_compliance(findings)
 
     ran, reason = False, "off"
     if profile.reachability and reachability_provider is not None:

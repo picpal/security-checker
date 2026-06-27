@@ -120,6 +120,16 @@ def test_run_scan_exclude_drops_findings_by_path():
     assert len(out.findings) == 0
 
 
+def test_run_scan_enriches_compliance_from_cwe():
+    # 골든 SCA(snakeyaml CVE-2022-1471 = CWE-502 역직렬화)는 KISA/PCI 로 매핑된다.
+    res = run_scan("/p", get_profile("quick"),
+                   adapters=[FakeAdapter("trivy", TRIVY)], reachability_provider=None)
+    deser = _by_cve(res.findings, "CVE-2022-1471")
+    assert deser.compliance is not None
+    assert any(w.name == "신뢰할 수 없는 데이터의 역직렬화" for w in deser.compliance.kisa)
+    assert any("injection" in p for p in deser.compliance.pci)
+
+
 def test_run_scan_applies_human_confirmed_suppression():
     base = run_scan("/p", get_profile("quick"),
                     adapters=[FakeAdapter("trivy", TRIVY)], reachability_provider=None)

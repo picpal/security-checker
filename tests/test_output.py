@@ -104,6 +104,22 @@ def test_sarif_component_finding_has_no_locations():
     assert "locations" not in res
 
 
+def test_sarif_carries_compliance_in_properties():
+    from secscan.compliance import map_compliance
+
+    f = _f()  # CWE-94 코드삽입
+    f.compliance = map_compliance(f.cwe)
+    props = to_sarif([f])["runs"][0]["results"][0]["properties"]
+    assert any(w["name"] == "코드 삽입" for w in props["compliance"]["kisa"])
+    assert any("injection" in p for p in props["compliance"]["pci"])
+    json.dumps(props)  # dict/list/str 만 — 직렬화 가능
+
+
+def test_sarif_no_compliance_key_when_unmapped():
+    props = to_sarif([_f()])["runs"][0]["results"][0]["properties"]  # compliance None
+    assert "compliance" not in props
+
+
 def test_sarif_is_json_serializable():
     json.dumps(to_sarif([_f()]))  # 예외 없어야 함
     json.dumps(to_sarif([Finding(category="secret", severity="high", rule_id="x",
@@ -217,3 +233,29 @@ def test_markdown_suppressed_findings_go_to_separate_section():
 def test_markdown_omits_sast_note_when_no_sast():
     md = to_markdown([_reachable()])
     assert "intraprocedural" not in md
+
+
+def test_markdown_shows_kisa_and_pci_labels_for_mapped_finding():
+    from secscan.compliance import map_compliance
+
+    f = _sast()  # CWE-89
+    f.compliance = map_compliance(f.cwe)
+    md = to_markdown([f])
+    assert "SQL 삽입" in md
+    assert "KISA" in md
+    assert "PCI-DSS 6.2.4" in md
+
+
+def test_markdown_omits_compliance_when_unmapped():
+    md = to_markdown([_secret()])  # cwe 없음 → compliance None
+    assert "KISA" not in md
+    assert "컴플라이언스" not in md
+
+
+def test_markdown_summary_shows_compliance_rollup():
+    from secscan.compliance import map_compliance
+
+    f = _sast()
+    f.compliance = map_compliance(f.cwe)
+    md = to_markdown([f])
+    assert "컴플라이언스" in md  # 요약 롤업
