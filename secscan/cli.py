@@ -208,6 +208,9 @@ def _cmd_detect(args) -> int:
     stack = detect_stack(args.target)
     profile = suggest_profile(stack, intent=args.intent)
     print(f"스택 감지: build={stack['build_tool']} · 언어={stack['languages']} · 모듈={stack['modules']}")
+    if not stack["is_jvm"]:
+        print("⚠️ JVM 프로젝트로 보이지 않습니다 — secscan 은 JVM(Java/Kotlin) 타깃입니다.")
+        print("   (SCA/SAST/도달성은 거의 적용되지 않고 secret 점검만 의미 있습니다.)")
     print(f"intent={args.intent} → 추천 프로파일: {profile}")
     return 0
 

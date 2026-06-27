@@ -57,6 +57,18 @@ def test_gitleaks_adapter_build_argv():
     assert "/tmp/r.json" in argv
 
 
+def test_gitleaks_adapter_uses_repo_config_when_present(tmp_path):
+    (tmp_path / ".gitleaks.toml").write_text("title = 'x'\n")
+    argv = GitleaksAdapter().build_argv(str(tmp_path), "/tmp/r.json")
+    assert "--config" in argv
+    assert str(tmp_path / ".gitleaks.toml") in argv
+
+
+def test_gitleaks_adapter_no_config_flag_when_absent(tmp_path):
+    argv = GitleaksAdapter().build_argv(str(tmp_path), "/tmp/r.json")
+    assert "--config" not in argv
+
+
 def test_gitleaks_adapter_real_scan_offline():
     # gitleaks 는 네트워크 불필요(파일만) → 샌드박스에서 실제 실행 가능
     fixture = Path(__file__).parent.parent / "fixtures" / "secret-app"

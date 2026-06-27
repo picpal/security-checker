@@ -10,6 +10,7 @@ from __future__ import annotations
 import os
 import subprocess
 import tempfile
+from pathlib import Path
 
 from .base import FAILED, OK, SKIPPED, TIMEOUT, RawResult, _subprocess_runner
 
@@ -21,13 +22,18 @@ class GitleaksAdapter:
     default_timeout = 300.0
 
     def build_argv(self, target, report_path) -> list[str]:
-        return [
+        argv = [
             "gitleaks", "dir", str(target),
             "--report-format", "json",
             "--report-path", str(report_path),
             "--no-banner",
             "--exit-code", "1",
         ]
+        # 대상 프로젝트의 gitleaks 설정(allowlist 등)을 존중한다.
+        cfg = Path(target) / ".gitleaks.toml"
+        if cfg.exists():
+            argv += ["--config", str(cfg)]
+        return argv
 
     def run(self, target, options=None, *, run=_subprocess_runner, timeout=None) -> RawResult:
         t = timeout or self.default_timeout

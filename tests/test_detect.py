@@ -36,3 +36,21 @@ def test_suggest_profile_quick_and_deep():
     s = {"build_tool": "maven", "languages": ["java"]}
     assert suggest_profile(s, intent="quick") == "quick"
     assert suggest_profile(s, intent="deep") == "deep"
+
+
+def test_detect_excludes_fixtures_and_vendor_dirs():
+    # 이 repo 루트: 실제 코드는 Python. fixtures/ 의 .java·pom 에 속으면 안 된다.
+    repo = Path(__file__).parent.parent
+    s = detect_stack(repo)
+    assert s["build_tool"] is None
+    assert "java" not in s["languages"]
+    assert s["is_jvm"] is False
+
+
+def test_detect_respects_excluded_dir_names(tmp_path):
+    (tmp_path / "fixtures").mkdir()
+    (tmp_path / "fixtures" / "Vuln.java").write_text("class Vuln {}")
+    (tmp_path / "node_modules").mkdir()
+    (tmp_path / "node_modules" / "x.kt").write_text("")
+    s = detect_stack(tmp_path)
+    assert s["languages"] == []  # 제외 디렉토리만 있으면 언어 미감지

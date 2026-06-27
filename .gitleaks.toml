@@ -1,0 +1,13 @@
+# gitleaks 설정 — 기본 룰셋을 확장하되, 의도적 취약 픽스처/골든의 "가짜" 시크릿은
+# 허용목록 처리한다(실제 자격증명 아님). 이 파일이 없을 때의 기본 동작은 그대로다.
+title = "secscan repo gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "의도적 보안 테스트 픽스처·골든 캡처 (가짜 시크릿, 실제 자격증명 아님)"
+paths = [
+  '''fixtures/secret-app/.*''',
+  '''tests/golden/.*''',
+]
