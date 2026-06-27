@@ -8,19 +8,26 @@ from __future__ import annotations
 
 import json
 
-from ..models import HIGH, LOW, MEDIUM, Consensus, Finding, Location
+from ..models import HIGH, LOW, MEDIUM, Consensus, Finding, Location, normalize_confidence
 
 _SEV = {"ERROR": HIGH, "WARNING": MEDIUM, "INFO": LOW}
 
 
 def _cwe_codes(raw) -> tuple[str, ...]:
-    # ["CWE-89: Improper ..."] -> ("CWE-89",)
+    # list/string/missing 모두 방어. ["CWE-89: ..."] 또는 "CWE-89: ..." -> ("CWE-89",)
+    # 문자열을 char 단위로 쪼개지 않도록 단일 문자열은 리스트로 감싼다.
+    if raw is None:
+        return ()
+    if isinstance(raw, str):
+        raw = [raw]
     out = []
-    for item in raw or ():
+    for item in raw:
+        if not isinstance(item, str):
+            continue
         code = item.split(":", 1)[0].strip()
         if code.startswith("CWE-"):
             out.append(code)
-    return tuple(out)
+    return tuple(dict.fromkeys(out))  # 순서 보존 dedup
 
 
 def parse_semgrep(payload: str, tool_version: str | None = None) -> list[Finding]:
@@ -41,6 +48,7 @@ def parse_semgrep(payload: str, tool_version: str | None = None) -> list[Finding
                 rule_id=check_id,
                 cwe=_cwe_codes(md.get("cwe")),
                 owasp=tuple(md.get("owasp") or ()),
+                confidence=normalize_confidence(md.get("confidence")),
                 location=Location(
                     file=r.get("path", ""),
                     start_line=(r.get("start") or {}).get("line"),

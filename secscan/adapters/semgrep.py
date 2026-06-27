@@ -19,6 +19,8 @@ class SemgrepAdapter(CommandAdapter):
             "semgrep",
             "--config", "p/java",
             "--config", "p/security-audit",
+            "--config", "p/owasp-top-ten",
+            "--config", "p/cwe-top-25",
             "--json",
             "--quiet",
             "--disable-version-check",

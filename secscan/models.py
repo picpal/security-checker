@@ -35,6 +35,23 @@ def max_severity(a: str, b: str) -> str:
     return a if severity_rank(a) >= severity_rank(b) else b
 
 
+# --- confidence 정규화 (semgrep 등 SAST 메타는 대문자 HIGH/MEDIUM/LOW) ---
+_CONF = frozenset({"high", "medium", "low"})
+_CONF_RANK = {"unknown": 0, "low": 1, "medium": 2, "high": 3}
+
+
+def normalize_confidence(raw: str | None) -> str:
+    if not raw:
+        return "unknown"
+    r = raw.strip().lower()
+    return r if r in _CONF else "unknown"
+
+
+def min_confidence(a: str, b: str) -> str:
+    """병합 시 보수적 집계 — 더 낮은(불확실한) confidence 를 택한다."""
+    return a if _CONF_RANK.get(a, 0) <= _CONF_RANK.get(b, 0) else b
+
+
 # --- reachability 상태 ---
 REACHABLE = "reachable"
 UNREACHABLE = "unreachable"
@@ -119,6 +136,7 @@ class Finding:
     rule_id: str = ""  # SCA: advisory id, SAST: 룰 id
     cwe: tuple[str, ...] = ()
     owasp: tuple[str, ...] = ()
+    confidence: str = "unknown"  # SAST 신뢰도(semgrep 메타) — high/medium/low/unknown
     component: Component | None = None  # SCA
     advisory: Advisory | None = None  # SCA
     location: Location | None = None  # SAST/secret
