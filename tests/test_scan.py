@@ -145,8 +145,9 @@ def test_run_scan_baseline_suppresses_known_findings():
 
 
 def test_profiles_build_expected_adapters():
+    # accurate-sca 는 BOM 기반 SCA (tool name 은 trivy, parse_trivy 재사용)
     names = [a.name for a in build_adapters(get_profile("accurate-sca"))]
-    assert names == ["trivy", "osv-scanner"]
+    assert names == ["trivy"]
     assert get_profile("quick").reachability is False
     assert get_profile("accurate-sca").reachability is True
 

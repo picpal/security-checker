@@ -189,10 +189,17 @@ REQUIREMENTS: list[Requirement] = [
         version_regex=r"Version:\s*v?" + _SEMVER,
     ),
     Requirement(
+        name="cdxgen", kind="scanner",
+        purpose="SBOM 생성(전이 의존성 해석) — BOM 기반 SCA 의 핵심(recall)",
+        install_hint="npm install -g @cyclonedx/cdxgen",
+        version_regex=_SEMVER,
+    ),
+    Requirement(
         name="osv-scanner", kind="scanner",
-        purpose="SCA advisory 커버리지 보강(OSV.dev) — FN 감소",
+        purpose="SCA advisory 보강(OSV.dev) — 현재 기본 프로파일 미사용(opt)",
         install_hint="brew install osv-scanner",
         version_regex=_SEMVER,
+        optional=True,
     ),
     Requirement(
         name="depscan", kind="scanner",

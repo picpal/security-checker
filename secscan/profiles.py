@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .adapters.bom_sca import BomScaAdapter
 from .adapters.gitleaks import GitleaksAdapter
 from .adapters.osv import OsvAdapter
 from .adapters.semgrep import SemgrepAdapter
@@ -22,15 +23,18 @@ class Profile:
     reachability: bool
 
 
+# 정확/풀스캔 프로파일은 BOM 기반 SCA(bom-sca)로 전이 의존성을 해석한다(recall).
+# quick 은 속도 우선이라 fs trivy(빌드/BOM 없이) 사용.
 PROFILES: dict[str, Profile] = {
     "quick": Profile("quick", ("trivy", "gitleaks"), False),
-    "accurate-sca": Profile("accurate-sca", ("trivy", "osv-scanner"), True),
-    "standard": Profile("standard", ("semgrep", "trivy", "osv-scanner", "gitleaks"), True),
-    "deep": Profile("deep", ("semgrep", "trivy", "osv-scanner", "gitleaks", "spotbugs"), True),
+    "accurate-sca": Profile("accurate-sca", ("bom-sca",), True),
+    "standard": Profile("standard", ("semgrep", "bom-sca", "gitleaks"), True),
+    "deep": Profile("deep", ("semgrep", "bom-sca", "gitleaks", "spotbugs"), True),
 }
 
 _ADAPTER_CLASSES = {
     "trivy": TrivyAdapter,
+    "bom-sca": BomScaAdapter,
     "osv-scanner": OsvAdapter,
     "gitleaks": GitleaksAdapter,
     "semgrep": SemgrepAdapter,
