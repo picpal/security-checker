@@ -8,6 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from .adapters.base import OK, RawResult
+from .exclude import exclude_findings
 from .models import Finding
 from .normalize import to_findings
 from .orchestrator import scan as orchestrate
@@ -47,9 +48,12 @@ def run_scan(
     suppressions=None,
     baseline_keys=None,
     today: str | None = None,
+    exclude=None,
 ) -> ScanResult:
     raws = orchestrate(adapters, target, max_workers=max_workers)
     findings = to_findings(raws)
+    if exclude:
+        findings = exclude_findings(findings, exclude)
 
     ran, reason = False, "off"
     if profile.reachability and reachability_provider is not None:

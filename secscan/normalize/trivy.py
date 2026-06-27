@@ -24,6 +24,7 @@ def parse_trivy(payload: str, tool_version: str | None = None) -> list[Finding]:
     data = json.loads(payload)
     findings: list[Finding] = []
     for res in data.get("Results", []) or []:
+        target = res.get("Target", "")
         for v in res.get("Vulnerabilities") or []:
             cve = v.get("VulnerabilityID", "")
             purl = (v.get("PkgIdentifier") or {}).get("PURL")
@@ -34,6 +35,7 @@ def parse_trivy(payload: str, tool_version: str | None = None) -> list[Finding]:
                     title=v.get("Title") or cve,
                     tool="trivy",
                     rule_id=cve,
+                    source=target,
                     cwe=tuple(v.get("CweIDs") or ()),
                     component=Component(
                         _ecosystem_from_purl(purl),

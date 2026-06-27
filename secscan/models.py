@@ -105,6 +105,7 @@ class Finding:
     component: Component | None = None  # SCA
     advisory: Advisory | None = None  # SCA
     location: Location | None = None  # SAST/secret
+    source: str = ""  # finding 출처 파일(SCA 매니페스트 등) — 경로 기반 제외용
     reachability: Reachability = field(default_factory=Reachability)
     consensus: Consensus | None = None
     references: tuple[str, ...] = ()
@@ -128,4 +129,5 @@ class Finding:
 
     @property
     def id(self) -> str:
-        return hashlib.sha1(self.dedup_key.encode()).hexdigest()[:12]
+        # 보안용이 아니라 안정적 식별자(dedup 키 해시)용. usedforsecurity=False 로 의도 명시.
+        return hashlib.sha1(self.dedup_key.encode(), usedforsecurity=False).hexdigest()[:12]

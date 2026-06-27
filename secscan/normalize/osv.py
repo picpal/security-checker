@@ -38,6 +38,7 @@ def parse_osv(payload: str, tool_version: str | None = None) -> list[Finding]:
     data = json.loads(payload)
     findings: list[Finding] = []
     for res in data.get("results", []) or []:
+        source = (res.get("source", {}) or {}).get("path", "")
         for p in res.get("packages", []) or []:
             pkg = p.get("package", {}) or {}
             eco = (pkg.get("ecosystem") or "").lower()
@@ -54,6 +55,7 @@ def parse_osv(payload: str, tool_version: str | None = None) -> list[Finding]:
                         title=v.get("summary") or canonical,
                         tool="osv-scanner",
                         rule_id=canonical,
+                        source=source,
                         cwe=tuple(db.get("cwe_ids") or ()),
                         component=Component(eco, pkg.get("name", ""), pkg.get("version", "")),
                         advisory=Advisory(

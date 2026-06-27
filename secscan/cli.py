@@ -102,7 +102,8 @@ def count_source_loc(target) -> int:
 
 
 def source_hash(target) -> str:
-    h = hashlib.sha1()
+    # 캐시 키(식별자)용 — 보안 해시 아님. usedforsecurity=False 로 의도 명시.
+    h = hashlib.sha1(usedforsecurity=False)
     files = sorted(p for g in _SRC_GLOBS for p in Path(target).rglob(g))
     for p in files:
         try:
@@ -183,6 +184,7 @@ def _cmd_scan(args) -> int:
         suppressions=suppressions,
         baseline_keys=baseline_keys,
         today=date.today().isoformat(),
+        exclude=args.exclude,
     )
 
     if args.write_baseline:
@@ -243,6 +245,8 @@ def main(argv: list[str] | None = None) -> int:
                     help="TruffleHog 로 시크릿 라이브 검증 (자격증명을 제3자로 전송 — opt-in)")
     sp.add_argument("--network-off", action="store_true",
                     help="시크릿 검증 강제 차단 (--verify-secrets 보다 우선)")
+    sp.add_argument("--exclude", action="append", metavar="GLOB",
+                    help="경로 제외(반복 가능). 예: --exclude fixtures --exclude '*/test/*'")
     sp.add_argument("--suppressions", help="사람이 확정한 억제 파일(JSON) 경로")
     sp.add_argument("--baseline", help="baseline 파일(JSON) — 기존 이슈 억제, 신규만 알림")
     sp.add_argument("--write-baseline", help="현재 findings 를 baseline 파일로 저장")

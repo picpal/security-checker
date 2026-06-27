@@ -108,6 +108,18 @@ def test_run_scan_off_policy_never_calls_secret_runner():
     assert all(f.verified is None for f in res.findings if f.category == "secret")
 
 
+def test_run_scan_exclude_drops_findings_by_path():
+    # trivy 골든의 SCA 출처는 pom.xml. --exclude 로 그 경로를 빼면 SCA 가 사라진다.
+    base = run_scan("/p", get_profile("quick"),
+                    adapters=[FakeAdapter("trivy", TRIVY)], reachability_provider=None)
+    assert len(base.findings) > 0
+    src = base.findings[0].source  # "pom.xml"
+    out = run_scan("/p", get_profile("quick"),
+                   adapters=[FakeAdapter("trivy", TRIVY)], reachability_provider=None,
+                   exclude=[src])
+    assert len(out.findings) == 0
+
+
 def test_run_scan_applies_human_confirmed_suppression():
     base = run_scan("/p", get_profile("quick"),
                     adapters=[FakeAdapter("trivy", TRIVY)], reachability_provider=None)
