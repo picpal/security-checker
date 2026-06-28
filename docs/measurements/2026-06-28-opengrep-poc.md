@@ -36,6 +36,27 @@ secscan 어댑터를 만들기 전에 실효성을 PoC로 검증했다. 결론: 
 - **C 본 구현 우선순위는 coderay 격차의 정체를 확인한 뒤 판단**하는 것이 합리적
   (cross-file이면 OSS 무의미 / intra-file·룰 문제면 Opengrep·룰 추가로 해결 가능).
 
-## 설치물 (정리 대상)
-PoC용 `~/.opengrep`, `~/.local/bin/opengrep`, scratchpad `opengrep-rules`는 repo에 커밋하지
-않음. C 본 구현 결정 시 doctor REQUIREMENTS + 어댑터로 정식 편입.
+## 후속 전수 검증 — 격차 = 룰, C 불필요 확정
+
+사용자 제안으로 message-gate 보안 수정 PR의 **취약 커밋 시점**을 `clone --local`로 꺼내
+secscan 으로 스캔(ground-truth = coderay 수정 내역과 대조).
+
+| CWE (PR) | 취약 패턴 | semgrep(B) | 원인 | 해결 |
+|---|---|---|---|---|
+| #305 SQLi | MyBatis `FROM ..._${month}` | 0 | 룰 부재 | 커스텀 룰 (실증 3건 탐지) |
+| #259 하드코딩 | `PASSWORD = "loadtest-pw"` | 0 | 룰 부재/낮은 엔트로피 | 커스텀 룰 |
+| #760 zero salt | `SALT_B64 = "AAAA..."` | 0 | 특화 취약(일반 룰 없음) | 커스텀 룰 |
+| #476/754/404 | 빈/광범위 catch·리소스 | 0 | spotbugs(deep) 영역 | deep 활용 |
+
+**결론**: 5개 CWE 중 cross-function taint가 필요한 것 **0개**. coderay 격차의 정체는
+**룰 커버리지 + deep(spotbugs) 미활용**이지 taint 가 아니다 → **C(Opengrep/CodeQL)
+불필요 확정.** 진짜 경로 = 커스텀 룰셋(MyBatis/하드코딩/zero-salt 등) + deep 프로파일.
+
+**검증 워크플로우 확립**(재사용): `취약 커밋 clone --local → secscan → coderay diff 대조`.
+ground-truth 공짜, 재현 가능 — message-gate "이미 수정됨" 부적합 문제를 우회한다.
+
+**미확정**: #259(gitleaks)·#476(spotbugs deep)은 다른 secscan 도구 재검증이 남음(semgrep
+단독 0/5 만 확인). 정확한 갭 지도엔 gitleaks/deep 재검증 필요.
+
+**정리**: C 불필요 확정으로 PoC용 opengrep(`~/.opengrep`, `~/.local/bin/opengrep`)은 제거함.
+향후 검증·구현은 semgrep + 커스텀 룰로 충분.
