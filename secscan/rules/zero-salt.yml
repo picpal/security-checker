@@ -1,0 +1,21 @@
+rules:
+  - id: zero-salt
+    languages: [java]
+    severity: ERROR
+    message: >-
+      고정/예측 가능한 salt 입니다(CWE-760). 계정·항목별로 SecureRandom 으로 생성한
+      salt 를 사용하세요.
+    metadata:
+      cwe:
+        - "CWE-760"
+      confidence: HIGH
+      owasp:
+        - "A02:2021 - Cryptographic Failures"
+    patterns:
+      - pattern-either:
+          - pattern: $T $S = "...";
+          - pattern: $T $S = "...".getBytes(...);
+      - metavariable-regex:
+          metavariable: $S
+          regex: (?i)salt
+      - pattern-not: $T $S = "";
