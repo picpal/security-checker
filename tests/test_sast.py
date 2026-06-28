@@ -84,6 +84,12 @@ def test_semgrep_adapter_includes_expanded_packs():
     assert any("p/cwe-top-25" in a for a in argv)
 
 
+def test_semgrep_adapter_loads_custom_rules_dir():
+    # D2: secscan/rules/ (커스텀 룰)이 --config 로 기본 팩과 함께 로드되어야 한다
+    argv = SemgrepAdapter().build_argv("/proj", {})
+    assert any(a.rstrip("/").endswith("/rules") for a in argv)
+
+
 # --- B2: sast_tier (신뢰도 계층화) ---
 
 def _sast(sev, conf):

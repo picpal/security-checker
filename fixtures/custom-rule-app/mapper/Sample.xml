@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.SampleMapper">
+
+  <!-- 양성: 값 위치 치환 (actionable) -->
+  <select id="findByName" resultType="Row">
+    SELECT * FROM users WHERE name = '${name}'
+  </select>
+
+  <!-- 양성: 식별자 위치 치환 - 테이블명/정렬컬럼 (review) -->
+  <select id="findMonthly" resultType="Row">
+    SELECT * FROM logs_${month} ORDER BY ${sortCol}
+  </select>
+
+  <!-- 음성: 파라미터 바인딩 - 안전 (탐지되면 FP) -->
+  <select id="findSafe" resultType="Row">
+    SELECT * FROM users WHERE id = #{id} AND status = #{status}
+  </select>
+
+</mapper>

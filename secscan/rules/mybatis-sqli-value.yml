@@ -1,0 +1,19 @@
+rules:
+  - id: mybatis-sqli-value
+    languages: [generic]
+    paths:
+      include:
+        - "*.xml"
+    severity: ERROR
+    message: >-
+      MyBatis ${}는 문자열 직접 치환이라 SQL 인젝션 위험입니다(CWE-89). 값 위치는
+      #{} 파라미터 바인딩으로 교체하세요.
+    metadata:
+      cwe:
+        - "CWE-89"
+      confidence: HIGH
+      owasp:
+        - "A03:2021 - Injection"
+    patterns:
+      # 값 위치 = 작은따옴표 안의 ${} (SQL 문자열 리터럴 컨텍스트). #{} 바인딩으로 교체 가능.
+      - pattern: "'${...}'"

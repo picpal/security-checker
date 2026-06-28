@@ -1,0 +1,21 @@
+rules:
+  - id: mybatis-sqli-identifier
+    languages: [generic]
+    paths:
+      include:
+        - "*.xml"
+    severity: WARNING
+    message: >-
+      MyBatis 식별자 위치 ${} 치환(CWE-89). 테이블/컬럼명은 #{} 바인딩이 구조적으로
+      불가하므로, 입력 화이트리스트 검증 관문이 있는지 확인하세요(#305 패턴).
+    metadata:
+      cwe:
+        - "CWE-89"
+      confidence: LOW
+      owasp:
+        - "A03:2021 - Injection"
+    patterns:
+      # 식별자 위치 = 따옴표 밖의 ${} (테이블/컬럼명 치환). 문자열 리터럴('...') 안의
+      # ${}(값 위치)는 value 룰이 담당하므로 not-inside 로 제외한다.
+      - pattern: "${...}"
+      - pattern-not-inside: "'...'"
