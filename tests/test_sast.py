@@ -7,7 +7,7 @@ SAST 는 위치형 finding. CE 의 intraprocedural taint 한계는 보고서에 
 from pathlib import Path
 
 from secscan.adapters.semgrep import SemgrepAdapter
-from secscan.models import Finding, Location, normalize_confidence, sast_tier
+from secscan.models import Finding, Location, is_test_path, normalize_confidence, sast_tier
 from secscan.normalize.merge import merge_consensus
 from secscan.normalize.semgrep import _cwe_codes, parse_semgrep
 
@@ -120,3 +120,37 @@ def test_merge_takes_conservative_confidence():
                 location=Location("A.java", 1))
     assert merge_consensus([a, b])[0].confidence == "low"
     assert merge_consensus([b, a])[0].confidence == "low"  # 순서 바꿔도 동일
+
+
+# --- D1: is_test_path + sast_tier test 경로 강등 ---
+
+
+def test_is_test_path_patterns():
+    assert is_test_path("src/test/java/Foo.java")
+    assert is_test_path("module/src/androidTest/java/Bar.java")
+    assert is_test_path("com/example/FooTest.java")
+    assert is_test_path("com/example/FooTests.java")
+    assert is_test_path("com/example/FooIT.java")
+    assert is_test_path("src/main/java/loadtest/Seeder.java")
+    assert is_test_path("src/main/java/com/x/LoadtestSeederConfig.java")  # 파일명 loadtest
+    # main 소스/리소스/유사단어는 아님
+    assert not is_test_path("src/main/java/com/example/Service.java")
+    assert not is_test_path("src/main/resources/app.yml")
+    assert not is_test_path("com/example/audit.java")  # 'IT' 대문자 경계 — 오분류 방지
+    assert not is_test_path("")
+    assert not is_test_path(None)
+
+
+def test_sast_tier_demotes_test_path_to_review():
+    main_f = Finding(category="sast", severity="high", confidence="high",
+                     location=Location("src/main/java/Svc.java", 10))
+    assert sast_tier(main_f) == "actionable"
+    test_f = Finding(category="sast", severity="high", confidence="high",
+                     location=Location("src/test/java/SvcTest.java", 10))
+    assert sast_tier(test_f) == "review"  # 같은 신호여도 test 경로면 강등
+
+
+def test_sast_tier_no_location_is_safe():
+    # location 없는 SAST 도 강등 로직이 터지지 않는다
+    f = Finding(category="sast", severity="high", confidence="high")
+    assert sast_tier(f) == "actionable"

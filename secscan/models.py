@@ -8,6 +8,7 @@ SAST/secret(location 중심)을 한 모델로 담고, dedup·도달성·합의·
 from __future__ import annotations
 
 import hashlib
+import re
 from dataclasses import dataclass, field
 
 # --- severity 정규화 ---
@@ -169,14 +170,30 @@ class Finding:
         return hashlib.sha1(self.dedup_key.encode(), usedforsecurity=False).hexdigest()[:12]
 
 
+# test/loadtest 경로 판정 — 디렉토리(/test/·/androidTest/·loadtest, 대소문자 무시)와
+# 파일 접미사(*Test/*Tests/*IT.java|.kt, 대문자 경계로 audit.java 등 오분류 방지)를 본다.
+_TEST_DIR_RE = re.compile(r"(^|/)(test|androidtest)/|loadtest", re.IGNORECASE)
+_TEST_FILE_RE = re.compile(r"(?:Test|Tests|IT)\.(?:java|kt)$")
+
+
+def is_test_path(path: str | None) -> bool:
+    """경로가 테스트/로드테스트 코드인가 — SAST tier 강등 판정용(순수 함수)."""
+    if not path:
+        return False
+    return bool(_TEST_DIR_RE.search(path) or _TEST_FILE_RE.search(path))
+
+
 def sast_tier(f: Finding) -> str | None:
     """SAST finding 의 신뢰도 등급. SCA·secret 은 None(기존 우선순위 로직 유지).
 
     confidence(high/medium) + severity(critical/high/medium) 둘 다일 때만 actionable.
     missing/unknown confidence 는 review — 검증 안 된 룰을 우선 버킷에 넣지 않는다(원칙1).
+    test/loadtest 경로 finding 은 신호와 무관하게 review 강등(우선 버킷 오염 방지).
     """
     if f.category != "sast":
         return None
+    if f.location and is_test_path(f.location.file):
+        return "review"
     if f.confidence in ("high", "medium") and f.severity in (CRITICAL, HIGH, MEDIUM):
         return "actionable"
     return "review"
