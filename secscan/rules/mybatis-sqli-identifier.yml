@@ -2,8 +2,10 @@ rules:
   - id: mybatis-sqli-identifier
     languages: [generic]
     paths:
+      # MyBatis mapper XML 만 (logback/spring 설정의 ${}·"${}" 오발화 방지 — 원칙1)
       include:
-        - "*.xml"
+        - "*Mapper.xml"
+        - "**/mapper/**"
     severity: WARNING
     message: >-
       MyBatis 식별자 위치 ${} 치환(CWE-89). 테이블/컬럼명은 #{} 바인딩이 구조적으로

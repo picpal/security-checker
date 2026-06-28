@@ -88,3 +88,22 @@ def test_credential_and_salt_negatives_not_flagged():
     assert creds == {5, 6}                      # 9(env)·12(empty) 미포함
     hashing = {f.location.start_line for f in fs if f.location.file.endswith("Hashing.java")}
     assert hashing == {7, 8}                    # freshSalt(SecureRandom) 미포함
+
+
+# --- D4: 컴플라이언스 자동 매핑 (룰의 CWE → KISA/PCI, 코어 무변경) ---
+
+
+def test_custom_rule_cwes_enrich_to_compliance():
+    from secscan.compliance import enrich_compliance
+
+    by_rule = {}
+    for f in enrich_compliance(_findings()):
+        by_rule.setdefault(f.rule_id.split(".")[-1], f)
+    # CWE-89 → KISA "SQL 삽입"
+    sqli = by_rule["mybatis-sqli-value"]
+    assert sqli.compliance and any(w.name == "SQL 삽입" for w in sqli.compliance.kisa)
+    # CWE-798/259(하드코딩)·CWE-760(salt)도 KISA/PCI 로 자동 매핑
+    cred = by_rule["hardcoded-credential"]
+    assert cred.compliance and (cred.compliance.kisa or cred.compliance.pci)
+    salt = by_rule["zero-salt"]
+    assert salt.compliance and (salt.compliance.kisa or salt.compliance.pci)

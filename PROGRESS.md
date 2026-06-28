@@ -72,6 +72,12 @@
       (review 비차단) + merge 보수적 + doctor 런타임 점검. **codex 검토(P1×4,P2×8) 전량 반영.**
       실증: message-gate SAST 0(잘 짜인 Spring→패턴 SAST 무효 = C 필요 음성증거),
       sast-app E2E(actionable·exit 1·KISA SQL삽입 코드레벨 매핑).
+- [x] **커스텀 룰셋 (D)** — spec/goal 2026-06-28~29. semgrep 커스텀 룰 3종(secscan/rules/):
+      MyBatis ${} value(actionable)/identifier(review) 위치분기 + 하드코딩 자격증명(CWE-798/259)
+      + zero-salt(CWE-760). `--config` 통합(코어무변경) + is_test_path 경로강등(test/loadtest→
+      review, 전 SAST) + 외부repo비의존 픽스처(fixtures/custom-rule-app) 회귀게이트(양성+음성 FP0).
+      d4a1ded 취약시점 대조로 갭 3종 실증(gitleaks/semgrep 미탐→커스텀룰 탐지).
+      logback FP는 mapper paths 한정으로 제거.
 
 ## 프로파일
 - [x] quick / accurate-sca / standard / deep
@@ -84,10 +90,11 @@
 - [x] 자연어 "이 프로젝트 점검해줘" → 스택 감지(maven/java) → 프로파일(standard) → typed findings → 보고서 시연
 - [x] CLAUDE.md / PROGRESS.md 최종 갱신
 
-## 상태: M0~M5 + post-M5(exclude/BOM-SCA/컴플라이언스/**SAST 확대 B**) 완료 (**222 tests green**).
+## 상태: M0~M5 + post-M5 + **D(커스텀 룰셋)** 완료 (**234 tests green**, 2026-06-29).
 **갭 지도 완성(2026-06-28)** — `docs/measurements/2026-06-28-gap-map.md`. message-gate 취약
 커밋 부모를 clone→secscan→coderay 대조로 전수 검증. 결론: coderay 격차 = (1) injection/secret/
 crypto 안티패턴 → **커스텀 룰(D)** (3종: MyBatis `${}`/하드코딩/zero-salt), (2) broad-catch 등
 코드 스멜 → **IDE 인스펙션 고유 영역**(억지 룰화 시 FP). **C(함수간 taint) 불필요 재확정**
 — spotbugs 가 빌드·실행돼도 CWE-476/754/404 미탐(범주 공백, taint 아님).
-다음 사이클 = **D: 3종 커스텀 룰 + 취약커밋 회귀 게이트** / 백로그(IaC/DAST/CI/주기점검).
+**D 완료(2026-06-29)**: coderay 격차의 커스텀룰 영역 3종 메움(d4a1ded 실증).
+다음 = 백로그(IaC/DAST/CI/주기점검) 또는 IDE 인스펙션 통합(broad-catch 코드스멜 = coderay 잔여격차).

@@ -2,8 +2,10 @@ rules:
   - id: mybatis-sqli-value
     languages: [generic]
     paths:
+      # MyBatis mapper XML 만 (logback/spring 설정의 ${}·"${}" 오발화 방지 — 원칙1)
       include:
-        - "*.xml"
+        - "*Mapper.xml"
+        - "**/mapper/**"
     severity: ERROR
     message: >-
       MyBatis ${}는 문자열 직접 치환이라 SQL 인젝션 위험입니다(CWE-89). 값 위치는

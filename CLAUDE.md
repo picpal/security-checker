@@ -11,15 +11,15 @@
 4. `PROGRESS.md`
 5. `git log --oneline`
 
-## 상태: M0~M5 + post-M5 강화 완료 ✅ (222 tests green, 2026-06-27)
+## 상태: M0~M5 + post-M5 + D(커스텀 룰셋) 완료 ✅ (234 tests green, 2026-06-29)
 <!-- goal 의 모든 마일스톤·전체 완료 기준 충족. 이후 도그푸딩/실프로젝트 기반 강화. -->
-- **post-M5**: detect 노이즈제외 / exclude(기본제외+`.gitignore`) / **BOM-SCA**(cdxgen→trivy sbom, 락파일없는 gradle SCA 0→34) / SARIF locations / **컴플라이언스 매핑**(compliance.py: CWE→KISA49/PCI6.2.4) / **SAST 확대(B)**: Semgrep 팩 확대 + confidence 계층화(sast_tier actionable/review, missing→review) + severity 한글 + exit-code 게이팅(review 비차단) + merge 보수적 + doctor 런타임점검. **C(CodeQL 함수간 taint)는 미착수 — message-gate 격차 본질, 별도 spec.**
+- **post-M5**: detect 노이즈제외 / exclude(기본제외+`.gitignore`) / **BOM-SCA**(cdxgen→trivy sbom, 락파일없는 gradle SCA 0→34) / SARIF locations / **컴플라이언스 매핑**(compliance.py: CWE→KISA49/PCI6.2.4) / **SAST 확대(B)**: Semgrep 팩 확대 + confidence 계층화(sast_tier actionable/review, missing→review) + severity 한글 + exit-code 게이팅(review 비차단) + merge 보수적 + doctor 런타임점검. / **D(커스텀 룰셋)**: semgrep 룰 3종(secscan/rules/: MyBatis ${} value=actionable·identifier=review 위치분기 / 하드코딩 자격증명 / zero-salt) + `--config` 통합(코어무변경) + is_test_path 경로강등(test/loadtest→review, 전 SAST) + 외부repo비의존 픽스처(fixtures/custom-rule-app) 회귀게이트(양성+음성 FP0). d4a1ded 취약시점 대조로 갭 3종 실증(gitleaks/semgrep 미탐→커스텀룰 탐지). **C(함수간 taint) 불필요 확정** — spotbugs 실행돼도 CWE-476/754/404 미탐(IDE 인스펙션 범주, taint 아님). docs/measurements/2026-06-28-gap-map.md.
 - **M0** doctor / **M1** 정확한 SCA(FP 89%↓, GT 100%) / **M2** Secret(gitleaks+trufflehog 정책) / **M3** SAST(semgrep, CE taint 한계) / **M4** 억제(provenance/evidence/expiry/scope, baseline, stale 무효화, 자동억제 금지) / **M5** deep(spotbugs+findsecbugs 바이트코드 — CE 놓친 CWE-78 탐지, 빌드실패 격리).
 - 프로파일 quick/accurate-sca/standard/deep 동작. `secscan detect|scan|doctor`. 자연어 점검 시연 완료.
-- **아키텍처**: 새 스캐너 = adapters/<tool>.py + normalize/<tool>.py + normalize._PARSERS 한 줄 + profiles + doctor REQUIREMENTS. 카테고리 전용(도달성=SCA, 검증=secret). 실제 스캔(네트워크/빌드)은 Bash dangerouslyDisableSandbox=true. Finding.dedup_key가 억제 매칭 키.
+- **아키텍처**: 새 스캐너 = adapters/<tool>.py + normalize/<tool>.py + normalize._PARSERS 한 줄 + profiles + doctor REQUIREMENTS. 카테고리 전용(도달성=SCA, 검증=secret). 실제 스캔(네트워크/빌드)은 Bash dangerouslyDisableSandbox=true. Finding.dedup_key가 억제 매칭 키. **커스텀 룰 추가 = secscan/rules/<rule>.yml(semgrep; metadata.cwe/confidence 필수 → tier/compliance 자동) + fixtures/custom-rule-app 픽스처 + 골든.**
 - **모델**: Finding{category,severity,tool,rule_id,cwe,owasp,component,advisory,location,reachability,consensus,verified,suppression,compliance}. compliance=CWE에서 파생한 KISA/PCI 분류(판정 아님). cwe 형식은 전 도구 "CWE-NNN" 통일.
 - **컴플라이언스**: KISA·PCI 둘 다 공식 기계가독 룰셋 없음(가이드+CWE매핑만) → CWE 허브로 역매핑. 새 표준 추가 = compliance.py 테이블 한 줄.
-- **백로그(미착수)**: IaC/DAST/CI/주기점검/Dependency-Track/Opengrep/CodeQL(cross-function taint — coderay 격차의 본질)/LSP.
+- **백로그(미착수)**: IaC/DAST/CI/주기점검/Dependency-Track/IDE 인스펙션 통합(broad-catch 등 코드스멜 = coderay 잔여격차)/LSP. (Opengrep/CodeQL 함수간 taint = 갭 지도로 **불필요 확정**.)
 
 ## 핵심 원칙 6 (위반 금지)
 1. **정확도 우선** — FP를 줄이는 레버를 모든 것에 우선.
