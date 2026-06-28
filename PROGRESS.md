@@ -85,5 +85,9 @@
 - [x] CLAUDE.md / PROGRESS.md 최종 갱신
 
 ## 상태: M0~M5 + post-M5(exclude/BOM-SCA/컴플라이언스/**SAST 확대 B**) 완료 (**222 tests green**).
-함수간 taint(C=CodeQL)는 미착수 — message-gate 격차의 본질, 별도 spec.
-다음 사이클 후보 = C(CodeQL taint) + 백로그(IaC/DAST/CI/주기점검).
+**갭 지도 완성(2026-06-28)** — `docs/measurements/2026-06-28-gap-map.md`. message-gate 취약
+커밋 부모를 clone→secscan→coderay 대조로 전수 검증. 결론: coderay 격차 = (1) injection/secret/
+crypto 안티패턴 → **커스텀 룰(D)** (3종: MyBatis `${}`/하드코딩/zero-salt), (2) broad-catch 등
+코드 스멜 → **IDE 인스펙션 고유 영역**(억지 룰화 시 FP). **C(함수간 taint) 불필요 재확정**
+— spotbugs 가 빌드·실행돼도 CWE-476/754/404 미탐(범주 공백, taint 아님).
+다음 사이클 = **D: 3종 커스텀 룰 + 취약커밋 회귀 게이트** / 백로그(IaC/DAST/CI/주기점검).

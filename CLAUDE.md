@@ -39,9 +39,9 @@
 - 백로그 손대기: IaC/DAST/CI/주기점검/패치 모니터링/Opengrep/CodeQL/LSP.
 - Claude 자동 억제 / 상용·계정 종속 툴(Snyk, ggshield) / SARIF를 내부 모델로 사용.
 
-## 환경 (2026-06-27 확인)
-- Python 3.14.5 · Java 21.0.10 ✓ · Node v24.5.0 ✓ · go 없음
-- 스캐너: trivy / osv-scanner / depscan / atom / semgrep / gitleaks / trufflehog **전부 미설치** (M0 doctor 테스트 대상)
+## 환경 (2026-06-28 확인)
+- Python 3.14.5 · Java 21.0.10 ✓ · Node v24.5.0 ✓ · gradle 9.5.1 ✓ · go 없음
+- 스캐너: trivy / cdxgen / osv-scanner / depscan / atom / semgrep / gitleaks / trufflehog / spotbugs **전부 설치됨**(brew/npm/pipx) → 실스캔 가능. (M0 doctor 의 미설치 분기는 테스트로만 검증)
 
 ## 명령어
 - 테스트: `.venv/bin/pytest` (또는 `python3 -m pytest`)

@@ -55,8 +55,12 @@ secscan 으로 스캔(ground-truth = coderay 수정 내역과 대조).
 **검증 워크플로우 확립**(재사용): `취약 커밋 clone --local → secscan → coderay diff 대조`.
 ground-truth 공짜, 재현 가능 — message-gate "이미 수정됨" 부적합 문제를 우회한다.
 
-**미확정**: #259(gitleaks)·#476(spotbugs deep)은 다른 secscan 도구 재검증이 남음(semgrep
-단독 0/5 만 확인). 정확한 갭 지도엔 gitleaks/deep 재검증 필요.
+**해소됨(2026-06-28)**: #259(gitleaks)·#476(spotbugs deep) 재검증 완료 →
+`docs/measurements/2026-06-28-gap-map.md`. 요약: gitleaks 는 Java 저엔트로피
+하드코딩·zero-salt 미탐(룰 부재), spotbugs 는 **빌드·실행됐으나** CWE-476/754/404
+미탐(broad-catch 등 IDE 인스펙션 영역 = 범주 공백). "도구 미활용" 가설 기각, 갭의
+정체는 **커스텀 룰로 메울 3종(injection/secret/crypto) + IDE 인스펙션 고유 영역**으로
+확정.
 
 **정리**: C 불필요 확정으로 PoC용 opengrep(`~/.opengrep`, `~/.local/bin/opengrep`)은 제거함.
 향후 검증·구현은 semgrep + 커스텀 룰로 충분.
