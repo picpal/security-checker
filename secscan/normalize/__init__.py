@@ -23,14 +23,22 @@ _PARSERS = {
 }
 
 
-def to_findings(raw_results: list[RawResult]):
-    """성공한 RawResult 만 정규화·병합. 실패/타임아웃은 건너뛴다(부분 실패는 별도 보고)."""
-    findings = []
+def normalize_each(raw_results: list[RawResult]) -> dict[str, list]:
+    """도구별 정규화(병합 전). 성공한 RawResult 만. 추적기·골든 비교용."""
+    out: dict[str, list] = {}
     for r in raw_results:
         if r.status != OK:
             continue
         parser = _PARSERS.get(r.tool)
         if parser:
-            findings.extend(parser(r.payload, tool_version=r.version))
+            out.setdefault(r.tool, []).extend(parser(r.payload, tool_version=r.version))
+    return out
+
+
+def to_findings(raw_results: list[RawResult]):
+    """성공한 RawResult 만 정규화·병합. 실패/타임아웃은 건너뛴다(부분 실패는 별도 보고)."""
+    findings = []
+    for fs in normalize_each(raw_results).values():
+        findings.extend(fs)
     return merge_consensus(findings)
 

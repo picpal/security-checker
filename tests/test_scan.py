@@ -168,3 +168,36 @@ def test_all_profiles_build_valid_adapters():
         assert name in PROFILES
         adapters = build_adapters(get_profile(name))
         assert adapters and all(hasattr(a, "run") for a in adapters)
+
+
+# --- V0: TraceSink ---
+from secscan.scan import TraceSink
+
+
+def test_trace_sink_records_stage_order_and_counts():
+    sink = TraceSink()
+    run_scan(
+        "/proj", get_profile("accurate-sca"),
+        adapters=[FakeAdapter("trivy", TRIVY), FakeAdapter("osv-scanner", OSV),
+                  FakeAdapter("gitleaks", "", status=FAILED)],
+        reachability_provider=_depscan_provider,
+        env_ok=lambda: True, count_loc=lambda t: 10,
+        trace=sink,
+    )
+    raw_tools = {(r["tool"], r["status"]) for r in sink.raw}
+    assert ("gitleaks", FAILED) in raw_tools and ("trivy", OK) in raw_tools
+    names = [s["stage"] for s in sink.stages]
+    assert names[:2] == sorted(names[:2]) and all(n.startswith("normalize:") for n in names[:2])
+    assert names[2:] == ["merge", "exclude", "compliance", "reachability", "final"]
+    merge = next(s for s in sink.stages if s["stage"] == "merge")
+    assert merge["count"] == len(merge["keys"]) > 0
+    d = sink.to_dict()
+    assert set(d) == {"raw", "stages"}
+
+
+def test_run_scan_without_trace_is_unchanged():
+    a = run_scan("/proj", get_profile("accurate-sca"),
+                 adapters=[FakeAdapter("trivy", TRIVY)], reachability_provider=None)
+    b = run_scan("/proj", get_profile("accurate-sca"),
+                 adapters=[FakeAdapter("trivy", TRIVY)], reachability_provider=None, trace=TraceSink())
+    assert [f.dedup_key for f in a.findings] == [f.dedup_key for f in b.findings]
