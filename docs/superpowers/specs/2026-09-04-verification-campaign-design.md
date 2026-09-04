@@ -23,9 +23,10 @@ secscan 의 각 탐지 프로세스(SCA·도달성·Secret·SAST·deep·병합·
 2. 측정 하네스(`tools/verify/`) + `run_scan` 단계 추적기 + `measure.match_ground_truth`
 3. 측정 8축(§5)과 게이트, 측정 문서 `docs/measurements/2026-09-xx-message-gate-verification.md`
 4. 모델·출력 확장: occurrences / CVSS source map / 스캐너 status 메타 / `findings.json`(lossless) / 포맷별 projection 계약
-5. xlsx 출력 어댑터(`secscan/output/xlsx.py`, openpyxl extra, CSV 폴백)
-6. 변이 픽스처(도달성 쌍·secret 3종·전이 CVE·억제 전이·gradlew/빌드실패)
-7. 우선순위 백로그
+5. **판정 단계(H) 신설**(§7.4): disposition·tier·compliance 를 한 곳에서 계산해 Finding 에 저장, exit code 와 모든 출력이 그 필드만 읽음
+6. xlsx 출력 어댑터(`secscan/output/xlsx.py`, openpyxl extra, CSV 폴백)
+7. 변이 픽스처(도달성 쌍·secret 3종·전이 CVE·억제 전이·gradlew/빌드실패)
+8. 우선순위 백로그(§13 에 초기 항목)
 
 **비범위**
 - 측정에서 드러난 갭의 **수정**(별도 사이클, 갭 지도 → D 와 같은 방식). 단 §7 의 모델·출력 확장은 이 캠페인의 전제이므로 포함.
@@ -105,7 +106,7 @@ secscan 의 각 탐지 프로세스(SCA·도달성·Secret·SAST·deep·병합·
 - 스냅샷별 기록: 커밋, 도구 버전(trivy/cdxgen/semgrep/gitleaks/spotbugs/java/gradle), trivy DB `UpdatedAt`, Java DB 버전, 실행 명령, 소요 시간, 피크 메모리(`/usr/bin/time -l`).
 
 ### 4.2 단계 추적기 (제품 변경, 기본 무동작)
-`run_scan(..., trace: TraceSink | None = None)`. 각 단계 뒤 `(stage, count, dedup_keys)` 를 기록: `raw:<tool>` → `normalize:<tool>` → `merge` → `exclude` → `compliance` → `reachability` → `secret_verify` → `baseline` → `suppress` → `final` (실제 `scan.py` 순서. 컴플라이언스는 도달성보다 앞서 항상 실행되고, SAST tier 는 파이프라인 단계가 아니라 출력 시 순수 함수로 계산된다). 하네스는 이를 **attrition 표**로 렌더해 "스캐너가 못 잡음" vs "정규화/제외가 버림"을 구분한다. `trace=None` 이면 동작·성능 변화 없음(테스트로 고정).
+`run_scan(..., trace: TraceSink | None = None)`. 각 단계 뒤 `(stage, count, dedup_keys)` 를 기록: `raw:<tool>` → `normalize:<tool>` → `merge` → `exclude` → `compliance` → `reachability` → `secret_verify` → `baseline` → `suppress` → `final` (실제 `scan.py` 순서. 컴플라이언스는 도달성보다 앞서 항상 실행되고, SAST tier 는 파이프라인 단계가 아니라 출력 시 순수 함수로 계산된다). 하네스는 이를 **attrition 표**로 렌더해 "스캐너가 못 잡음" vs "정규화/제외가 버림"을 구분한다. `trace=None` 이면 동작·성능 변화 없음(테스트로 고정). V4 이후에는 `suppress` 뒤에 `disposition` 단계(§7.4)가 추가된다. V1 증거 동결은 현행 바이너리 기준이므로 이 단계 없이 기록하고, V4 회귀 시 두 추적을 나란히 둔다.
 
 ### 4.3 대조기 (`secscan/measure.py` 확장)
 - `match_ground_truth(findings, manifest) -> MatchReport`. 매칭 순서: ① advisory id 정확 일치 + 패키지 정확 일치 + 설치버전 문자열 일치 → `exact`; ② id 는 같고 버전 표기만 다름 → `version-mismatch`(별도 집계, mssql 류); ③ alias(OSV 어댑터 출력의 aliases 에서만 유도, 수동 매핑 금지) 경유 → `alias`; ④ 미매칭 → `missed`. 기대 `absent` 항목이 매칭되면 `false-positive`.
@@ -131,9 +132,20 @@ secscan 의 각 탐지 프로세스(SCA·도달성·Secret·SAST·deep·병합·
 | 5 | 입력면 교차 | 같은 스냅샷 | (a) `./gradlew bootJar` → `trivy fs build/libs`(중첩 jar) (b) cdxgen BOM → `trivy sbom`. 인벤토리(purl 집합) 차·탐지 차·해석 버전 vs 보안팀 `Installed Versions` | 인벤토리 차 전건 원인 특정, 해석 버전 불일치 0 |
 | 6 | 도달성 | 사람 negative 18 + 픽스처 | (a) 18건 **판정 근거 비교표**(우리: 패키지 prefix 존재 / 사람: 활성화 조건) — 일치율은 산출하지 않음 (b) 픽스처 `fixtures/reach-app`: 취약 API 사용(기대 reachable) / 같은 라이브러리 안전 API 만(현 엔진 reachable = 알려진 과대판정, 기록) / **프레임워크 활성화 라이브러리 앱 미참조**(기대: unreachable 금지 → unknown 또는 reachable) (c) unknown 기권 비율 | **false-unreachable = 0** (프레임워크 활성화 케이스 포함). 현 엔진은 (b)-3 에서 unreachable 을 낼 것으로 예상 → 백로그 P1 |
 | 7 | GT-A differential | GT-A | 취약 스냅샷에서 기대 룰 출현 ∧ 수정 커밋에서 소멸. 탐지 recall 과 actionable recall(tier·exit code) 분리 | 범주 내 출현·소멸 100%. `measure-then-classify` 는 결과 기록만 |
-| 8 | 보고서 충실성 | typed findings | `findings.json` 왕복 동일성; md/SARIF/xlsx 는 projection 계약(포함 필드·손실 필드 명시) 대비 검사; 부분 실패·스캐너 status 가 xlsx Meta 시트에 존재 | 손실 0(계약 외 필드), id 집합 동일, 결정성(2회 실행 semantic 동일) |
+| 8 | 보고서 충실성 | typed findings | `findings.json` 왕복 동일성; md/SARIF/xlsx 는 projection 계약(포함 필드·손실 필드 명시) 대비 검사; 부분 실패·스캐너 status 가 xlsx Meta 시트에 존재; **exit code·md·SARIF·xlsx 의 조치 판정(disposition) 일치** | 손실 0(계약 외 필드), id 집합 동일, 결정성(2회 실행 semantic 동일), **판정 불일치 0**(억제된 finding 이 exit code 를 올리지 않음 — 현행 결함 §7.4) |
 
 부수 측정(게이트 없음): 스냅샷별 소요 시간·피크 메모리·캐시 cold/warm, 억제 전이(만료→invalidated / 버전 상향→재노출 / 도달성 변화→invalidated), 컴플라이언스 매핑 누락 CWE 목록.
+
+### 5.1 축 ↔ 파이프라인 단계 대응
+
+| 축 | 걸리는 단계(현행 `scan.py`) | V4 이후 |
+|---|---|---|
+| 1 프로파일 계약 | 어댑터 구성 · 병렬 실행(status) | 동일 |
+| 2~4 SCA | 병렬 실행(bom-sca) · 정규화·병합 | 동일 |
+| 5 입력면 | 병렬 실행 입력(jar vs BOM) | 동일 |
+| 6 도달성 | 도달성 보강 | 동일 |
+| 7 GT-A differential | 정규화·병합 · 출력(tier·exit code) | 판정 단계(H) |
+| 8 보고서 충실성 | 출력 | 판정 단계(H) + 출력 projection |
 
 ## 6. 변이 픽스처 (외부 repo 비의존, `fixtures/`)
 
@@ -160,6 +172,20 @@ secscan 의 각 탐지 프로세스(SCA·도달성·Secret·SAST·deep·병합·
 ### 7.3 projection 계약
 `docs/output-contracts.md` 에 포맷별 포함/손실 필드 표. markdown 은 finding 줄에 `id`(12 hex) 를 추가한다(억제 스코프 지정에 필요). SARIF 손실 필드(aliases, references 일부, source, verified, suppression basis)를 명시한다.
 
+### 7.4 판정 단계(H) — 파이프라인 재구성 (V4 범위)
+
+**동기.** "조치 대상인가"가 현재 세 곳에서 따로 계산된다: exit code(`cli._has_actionable`), markdown 버킷(priority/review/low), SARIF `sastTier`. 이미 어긋나 있다 — markdown 은 억제된 finding 을 `active` 에서 제외하지만 `_has_actionable` 은 `suppression` 을 보지 않아 **사람이 확정한 억제된 secret 이 있어도 exit 1** 이다(테스트 없음). compliance 는 파이프라인 중간에서 저장되고 tier 는 출력 시 매번 계산·미저장이라 `findings.json` 에 tier 가 빠진다.
+
+**변경.** 억제 다음에 결정적 단계 H 를 두고 Finding 에 저장한다.
+
+- `Finding.disposition: str` — `actionable` / `review` / `demoted`(도달 불가 SCA) / `suppressed`. 규칙은 현행 `_has_actionable` + markdown 버킷을 그대로 옮기되 **억제를 먼저 본다**: `suppression is not None → suppressed`; SAST 는 `sast_tier`; SCA 는 `reachability != unreachable → actionable` 아니면 `demoted`; secret 은 `actionable`.
+- `Finding.tier: str | None` — `sast_tier()` 결과를 저장(함수는 유지, H 에서만 호출).
+- compliance 계산을 H 로 이동(결과 동일, 위치만 통일). `enrich_compliance` 의 in-place 변경도 다른 단계처럼 새 리스트 반환으로 맞춘다.
+- exit code = `any(f.disposition == "actionable")`. markdown·SARIF·xlsx 는 `disposition`/`tier` 필드만 읽는다(재계산 금지). `_has_actionable` 은 disposition 을 읽는 얇은 함수로 축소.
+- 재구성 후 단계: 입력 정책 → 수집 → 정규화 → 제외 → 병합 → 보강(도달성 ‖ 시크릿 검증) → 억제 → **판정(H)** → 출력. 제외를 병합 앞으로 옮기는 것과 어댑터에 제외 패턴을 전달하는 것은 §13 백로그(성능, 결과 불변).
+
+**테스트.** (1) 억제된 secret 만 있을 때 exit 0. (2) 네 출력의 actionable 집합 동일(축 8). (3) 현행 골든 결과(V1 증거) 재입력 시 disposition 이 markdown 버킷과 1:1 일치 — 억제 케이스만 차이(결함 수정으로 인정). (4) `findings.json` 에 disposition·tier 포함.
+
 ## 8. xlsx 출력 (`secscan/output/xlsx.py`)
 
 - 의존성: `pip install secscan[xlsx]` → openpyxl. 미설치 시 시트별 CSV 번들(`findings-xlsx/<sheet>.csv`) + 경고 1줄. 코어 의존성은 0 유지.
@@ -177,7 +203,7 @@ secscan 의 각 탐지 프로세스(SCA·도달성·Secret·SAST·deep·병합·
 | V1 | 격리 스냅샷 러너 + 단계 추적기(`trace`) + 증거 동결(현행 바이너리) | `tools/verify/`, `docs/verification/evidence/` |
 | V2 | 축 1~5 측정(프로파일 계약·SCA 46·mssql 3단계·초과분·입력면) | 측정 표 |
 | V3 | 축 6·7(도달성 재정의 + `reach-app` / GT-A differential) | 픽스처·측정 표 |
-| V4 | 모델 확장 + `findings.json` + projection 계약 + 정렬 (증거 재입력 회귀) | 코드·tests·`docs/output-contracts.md` |
+| V4 | 모델 확장 + **판정 단계 H**(disposition·tier 저장, compliance 이동, exit code 결함 수정) + `findings.json` + projection 계약 + 정렬 (증거 재입력 회귀) | 코드·tests·`docs/output-contracts.md` |
 | V5 | xlsx 어댑터 + CSV 폴백 + 방어 + 골든 | 코드·tests |
 | V6 | 변이 픽스처 나머지(secret 3종·억제 전이·deep gradlew) + 축 8 | 픽스처·tests |
 | V7 | 최종 실스캔 1회 → 측정 문서 + 백로그(P1: 안전성·재현성·FN 순) | `docs/measurements/…`, PROGRESS/CLAUDE 갱신 |
@@ -189,7 +215,7 @@ secscan 의 각 탐지 프로세스(SCA·도달성·Secret·SAST·deep·병합·
 | 원칙 | 적용 |
 |---|---|
 | 1 정확도 우선 | false-unreachable = 0 게이트, 탐지/actionable recall 분리, 초과분 강제 분류 금지 |
-| 2 결정적/LLM 경계 | Claude 층 비범위. 대조기·추적기·xlsx 전부 결정적 |
+| 2 결정적/LLM 경계 | Claude 층 비범위. 대조기·추적기·판정(H)·xlsx 전부 결정적. LLM 개입 후보는 §13 규칙 아래 별도 사이클 |
 | 3 typed 모델 canonical | `findings.json` 은 내부 모델 직렬화, SARIF 는 출력 전용 유지 |
 | 4 자동 억제 금지 | 억제 전이 측정만, 제안·자동 억제 없음 |
 | 5 부분 실패 정상 | 스캐너 status 를 Meta 시트·md 에 명시, 구성값 대신 실제 status |
@@ -222,3 +248,29 @@ secscan 의 각 탐지 프로세스(SCA·도달성·Secret·SAST·deep·병합·
 | GT-A 매니페스트·detection/actionable 분리·differential | §3.3, §5 축 7 |
 | 억제 변이 기대값 | §6 |
 | partial failure 보고·프로파일 드리프트·BOM 캐시·격리 실행·게이트 수치·증거 동결 순서 | §4.1, §4.4, §5 축 1, §7.1 |
+
+## 13. 백로그 (이 캠페인 비범위 — 초기 항목)
+
+캠페인 종료 시 측정 결과로 우선순위를 다시 매긴다. 여기 항목은 설계 과정에서 확정된 것만 적는다.
+
+### 13.1 LLM 개입 후보
+
+원칙 2 를 지키는 형태는 하나다: **LLM 이 검사를 작성하고, 결정적 파이프라인이 실행한다.** 공통 규칙 — (a) 핫패스 밖: 파이프라인 종료 후 `findings.json` 을 입력으로, 배치·캐시(키 = advisory 또는 dedup_key × 코드 해시). (b) 결정적 산출물(json·SARIF·xlsx·exit code)에 LLM 텍스트를 섞지 않는다 — 별도 파일에 출처 표기. (c) 방향 제약: 위험을 **올리는** 쪽(reachable, 검토 필요)만 단독 작용, 내리는 쪽(unreachable, 억제)은 사람 확정.
+
+| 우선 | 후보 | 형태 | 근거 |
+|---|---|---|---|
+| 1 | **도달성 전제조건 검사** | advisory 본문 → 전제조건(polymorphic typing 활성화, HTTP/2, SiftingAppender, log4j-core 존재 등) → grep/semgrep/설정 키 **쿼리** 생성 → 파이프라인이 실행. 증거 = (쿼리, 결과, file:line). 발견 → reachable, 미발견 → unknown + 증거. `Reachability.source="claude"` 자리 | message-gate 사람 판정 18건이 전부 이 유형. 축 6 이 "config-gated = unknown" 으로 끝나면 다음 사이클 1순위 |
+| 2 | **review tier 삼각측량** | 룰 × 싱크 패턴 단위 클러스터로 1회 평가 + 사이트 샘플링. 산출 = FP 가능 사유·인용·정렬 순서. tier·건수·노출 불변 | deep review 355건(CRLF 163)이 실제 병목 |
+| 3 | **조치 회신 문서 초안** | `findings.json` + 증거로 message-gate `03_취약점조치결과` 형식 초안. 별도 `summary.md` | 개발팀이 손으로 쓴 문서를 대체 |
+| 4 | 부분 실패 진단 | deep 빌드 실패·스캐너 stderr → 원인·조치 제안(gradlew, JDK 불일치). 조언만 | deep 스킵 1순위 원인 |
+| — | 금지 | 정규화·병합·제외·판정(H)·시크릿 검증에는 넣지 않는다(FN·비결정성) | |
+
+### 13.2 파이프라인 재구성 잔여 (성능·위생, 결과 불변)
+- 제외를 병합 앞으로 이동 + 어댑터에 제외 패턴 전달(semgrep `--exclude`, trivy `--skip-dirs`, gitleaks 설정). 현재는 build/·node_modules 까지 스캔 후 버림.
+- BOM 캐시 키를 경로 해시에서 content-addressed 로(§4.1).
+- 억제 stale 사유에 "버전 변경" 명시 보고(현재는 조용히 미매칭).
+- 원 spec §8 프로파일 표를 구현(bom-sca)에 맞게 갱신, osv 어댑터 처리 결정(프로파일 편입 또는 제거).
+- `secscan/adapters/spotbugs.py` 의 시스템 gradle 호출 → `gradlew` 우선(갭 지도 부수 발견).
+
+### 13.3 알려진 결함
+- exit code 가 억제를 무시(§7.4) — **V4 에서 해소**. 캠페인 전 실스캔·CI 게이트 해석 시 유의.
