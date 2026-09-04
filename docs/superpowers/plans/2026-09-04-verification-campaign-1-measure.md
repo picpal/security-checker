@@ -1933,7 +1933,7 @@ git commit -m "docs(V2): 입력면 교차 실측 — jar vs BOM 인벤토리·�
 
 **Interfaces:**
 - Consumes: `decide_reachability(findings, invoked)`, `parse_invoked_symbols(json)` (depscan), `Finding`.
-- 케이스 3: (a) 취약 API 사용 → reachable, (b) 같은 라이브러리 안전 API 만 → 현 엔진 reachable(패키지 단위 과대판정, 기록), (c) 프레임워크 활성화 라이브러리(앱 코드 미참조) → **unreachable 금지**(현 엔진은 unreachable 을 낼 것 → `xfail(strict=True)` 로 갭을 고정).
+- 케이스 3: (a) 취약 API 사용 → reachable, (b) 같은 라이브러리 안전 API 만(jackson `ObjectMapper.readValue`) → 앱이 **실제로 사용**하므로 unreachable 이면 false-unreachable. 사전 확인 결과 현 엔진의 `package_prefixes("com.fasterxml.jackson.core:jackson-databind")` 는 `com.fasterxml.jackson.core.jackson.databind` 만 내놓아 실제 패키지 `com.fasterxml.jackson.databind` 와 불일치 → **unreachable 을 낸다**(Maven 좌표→Java 패키지 추정 실패). (c) 프레임워크 활성화 라이브러리(앱 코드 미참조) → unreachable 금지. (b)(c) 둘 다 현 엔진이 unreachable 을 내므로 `xfail(strict=True)` 로 갭을 고정하고, 현 동작을 별도 테스트로 명시한다.
 
 - [ ] **Step 1: 픽스처 작성**
 
@@ -1992,11 +1992,9 @@ public class App {
   "reachable": [
     {"package": "commons-text", "version": "1.9", "cve": "CVE-2022-42889", "reason": "App.interpolate → StringSubstitutor.createInterpolator().replace"}
   ],
-  "package_level_overapprox": [
-    {"package": "jackson-databind", "version": "2.13.0", "cve": "CVE-2022-42003", "reason": "readValue 단순 POJO 만 사용 — 현 엔진은 패키지 단위라 reachable(과대판정, 기록만)"}
-  ],
   "must_not_be_unreachable": [
-    {"package": "tomcat-embed-core", "version": "9.0.46", "cve": "CVE-2021-41079", "reason": "spring-boot-starter-web 이 런타임에 항상 기동. 앱 코드 미참조 → 현 엔진 unreachable = false-unreachable"}
+    {"package": "jackson-databind", "version": "2.13.0", "cve": "CVE-2022-42003", "reason": "App.parse 가 ObjectMapper.readValue 를 직접 호출(실사용). 현 엔진은 Maven 좌표→패키지 prefix 추정(com.fasterxml.jackson.core.jackson.databind)이 실제 패키지(com.fasterxml.jackson.databind)와 어긋나 unreachable = false-unreachable(원인: prefix 휴리스틱)"},
+    {"package": "tomcat-embed-core", "version": "9.0.46", "cve": "CVE-2021-41079", "reason": "spring-boot-starter-web 이 런타임에 항상 기동. 앱 코드 미참조 → 현 엔진 unreachable = false-unreachable(원인: 프레임워크 활성화 미인지)"}
   ]
 }
 ```
@@ -2069,10 +2067,9 @@ def test_vulnerable_api_use_is_reachable():
     assert _verdicts()["org.apache.commons:commons-text@1.9"] == REACHABLE
 
 
-def test_safe_api_only_is_package_level_overapprox_recorded():
-    # 기록용: 현 엔진은 패키지 단위라 reachable. 과소판정(unreachable)만 아니면 된다.
-    assert _verdicts()["com.fasterxml.jackson.core:jackson-databind@2.13.0"] == REACHABLE
-    assert EXPECTED["package_level_overapprox"][0]["package"] == "jackson-databind"
+@pytest.mark.xfail(strict=True, reason="백로그 P1: Maven 좌표→Java 패키지 prefix 추정 실패(jackson-databind 실사용인데 unreachable) — false-unreachable")
+def test_used_library_with_mismatched_prefix_must_not_be_unreachable():
+    assert _verdicts()["com.fasterxml.jackson.core:jackson-databind@2.13.0"] != UNREACHABLE
 
 
 @pytest.mark.xfail(strict=True, reason="백로그 P1: 프레임워크 활성화 라이브러리(앱 미참조)를 unreachable 로 판정 — false-unreachable")
@@ -2080,21 +2077,25 @@ def test_framework_activated_library_must_not_be_unreachable():
     assert _verdicts()["org.apache.tomcat.embed:tomcat-embed-core@9.0.46"] != UNREACHABLE
 
 
-def test_current_engine_marks_framework_library_unreachable_documented():
-    # 위 xfail 의 반대 진술 — 갭이 실재함을 명시적으로 고정(수정되면 둘 다 갱신).
-    assert _verdicts()["org.apache.tomcat.embed:tomcat-embed-core@9.0.46"] == UNREACHABLE
+def test_current_engine_false_unreachable_modes_documented():
+    # 위 두 xfail 의 반대 진술 — 갭이 실재함을 명시적으로 고정(엔진이 고쳐지면 셋 다 갱신).
+    v = _verdicts()
+    assert v["com.fasterxml.jackson.core:jackson-databind@2.13.0"] == UNREACHABLE
+    assert v["org.apache.tomcat.embed:tomcat-embed-core@9.0.46"] == UNREACHABLE
+    assert EXPECTED["must_not_be_unreachable"][0]["package"] == "jackson-databind"
+    assert EXPECTED["must_not_be_unreachable"][1]["package"] == "tomcat-embed-core"
 ```
 
 - [ ] **Step 3: 실행 확인**
 
 Run: `.venv/bin/pytest tests/test_reach_app.py -v`
-Expected: 3 PASS + 1 XFAIL (strict). `test_vulnerable_api_use_is_reachable` 이 실패하면 골든 슬라이스의 `resolvedMethod` 접두가 `package_prefixes("org.apache.commons:commons-text")` 결과(`org.apache.commons.text`)와 일치하는지 확인.
+Expected: 2 PASS + 2 XFAIL (strict). `test_vulnerable_api_use_is_reachable` 이 실패하면 골든 슬라이스의 `resolvedMethod` 접두가 `package_prefixes("org.apache.commons:commons-text")` 결과(`org.apache.commons.text`)와 일치하는지 확인.
 
 - [ ] **Step 4: 커밋**
 
 ```bash
 git add fixtures/reach-app tests/golden/atom-usages-reach-app.json tests/test_reach_app.py
-git commit -m "test(V3): reach-app 도달성 쌍 픽스처 — 취약 API reachable / 안전 API 과대판정 기록 / 프레임워크 활성화 false-unreachable xfail(strict)
+git commit -m "test(V3): reach-app 도달성 쌍 픽스처 — 취약 API reachable / prefix 불일치·프레임워크 활성화 false-unreachable xfail(strict) 2종
 
 다음: GT-A differential 도구"
 ```
