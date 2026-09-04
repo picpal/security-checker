@@ -5,10 +5,14 @@ from __future__ import annotations
 import json
 import subprocess
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from secscan.output.json_io import to_json
 from secscan.output.markdown import to_markdown
 from secscan.output.sarif import to_sarif
+
+if TYPE_CHECKING:
+    from secscan.scan import ScanResult, TraceSink
 
 _VERSION_CMDS = {
     "trivy": ["trivy", "--version"],
@@ -46,7 +50,7 @@ def tool_versions(*, run=subprocess.run) -> dict[str, str]:
     return out
 
 
-def write_evidence(out_dir, *, result, trace, meta: dict) -> list[Path]:
+def write_evidence(out_dir, *, result: ScanResult, trace: TraceSink | None, meta: dict) -> list[Path]:
     out = Path(out_dir)
     (out / "raw").mkdir(parents=True, exist_ok=True)
     written: list[Path] = []

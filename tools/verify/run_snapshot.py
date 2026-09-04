@@ -22,7 +22,7 @@ from secscan.reachability.engine import Budget
 from secscan.scan import TraceSink, run_scan
 
 from .evidence import tool_versions, write_evidence
-from .snapshot import isolated_env, prepare_snapshot
+from .snapshot import apply_isolated_env, prepare_snapshot
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -40,7 +40,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     scratch = Path(args.scratch)
-    os.environ.update(isolated_env(scratch, args.sha))  # 이후 subprocess 전부 상속
+    apply_isolated_env(scratch, args.sha)  # os.environ 을 실제로 clear+재적용 — 이후 subprocess 전부 상속
     repo_dir = prepare_snapshot(Path(args.repo), args.sha, scratch)
 
     profile = get_profile(args.profile)

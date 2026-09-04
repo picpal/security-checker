@@ -1,12 +1,15 @@
 """tools/verify — 스냅샷 격리·증거 작성기(부수효과는 runner 주입으로 결정적 검증)."""
 
 import json
+import os
 from pathlib import Path
+
+import pytest
 
 from secscan.adapters.base import FAILED, OK, RawResult
 from secscan.scan import ScanResult, TraceSink
 from tools.verify.evidence import redact_gitleaks, tool_versions, write_evidence
-from tools.verify.snapshot import isolated_env, prepare_snapshot
+from tools.verify.snapshot import apply_isolated_env, isolated_env, prepare_snapshot
 
 GOLDEN = Path(__file__).parent / "golden"
 
@@ -18,17 +21,91 @@ def test_prepare_snapshot_clones_local_and_checks_out(tmp_path):
         calls.append(argv)
         if argv[:2] == ["git", "clone"]:
             Path(argv[-1]).mkdir(parents=True)
-        class R: returncode = 0
+        class R:
+            returncode = 0
+            stdout = "abc123\n"  # 재사용 검증(rev-parse HEAD)에서 사용
+            stderr = ""
         return R()
 
     dest = prepare_snapshot(Path("/repo"), "abc123", tmp_path, run=fake_run)
     assert dest == tmp_path / "abc123" / "repo"
     assert calls[0] == ["git", "clone", "--local", "--no-checkout", "/repo", str(dest)]
     assert calls[1] == ["git", "-C", str(dest), "checkout", "--detach", "abc123"]
-    # 두 번째 호출은 재사용(clone 없음)
+    # 두 번째 호출은 재사용하되 HEAD 를 검증한다(clone/checkout 없음, rev-parse 만)
     calls.clear()
     prepare_snapshot(Path("/repo"), "abc123", tmp_path, run=fake_run)
-    assert calls == []
+    assert calls == [["git", "-C", str(dest), "rev-parse", "HEAD"]]
+
+
+def test_prepare_snapshot_checkout_failure_removes_partial_clone(tmp_path):
+    def fake_run(argv, **kw):
+        if argv[:2] == ["git", "clone"]:
+            Path(argv[-1]).mkdir(parents=True)
+            class R:
+                returncode = 0
+                stderr = ""
+            return R()
+        # checkout 호출은 실패(예: 잘못된 sha)
+        class R:
+            returncode = 1
+            stderr = "unknown revision"
+        return R()
+
+    dest = tmp_path / "abc123" / "repo"
+    with pytest.raises(RuntimeError):
+        prepare_snapshot(Path("/repo"), "abc123", tmp_path, run=fake_run)
+    assert not dest.exists()  # 부분 클론이 남아 재사용되면 안 됨
+
+
+def test_prepare_snapshot_reuse_with_matching_head_returns_without_clone(tmp_path):
+    dest = tmp_path / "abc123" / "repo"
+    dest.mkdir(parents=True)
+    calls = []
+
+    def fake_run(argv, **kw):
+        calls.append(argv)
+        class R:
+            returncode = 0
+            stdout = "abc123\n"
+            stderr = ""
+        return R()
+
+    got = prepare_snapshot(Path("/repo"), "abc123", tmp_path, run=fake_run)
+    assert got == dest
+    assert calls == [["git", "-C", str(dest), "rev-parse", "HEAD"]]
+
+
+def test_prepare_snapshot_reuse_with_mismatching_head_raises(tmp_path):
+    dest = tmp_path / "abc123" / "repo"
+    dest.mkdir(parents=True)
+
+    def fake_run(argv, **kw):
+        class R:
+            returncode = 0
+            stdout = "deadbeef\n"  # 요청한 sha 와 다른 커밋에 체크아웃돼 있음
+            stderr = ""
+        return R()
+
+    with pytest.raises(RuntimeError):
+        prepare_snapshot(Path("/repo"), "abc123", tmp_path, run=fake_run)
+
+
+def test_apply_isolated_env_clears_credentials_from_process_environ(tmp_path, monkeypatch):
+    # os.environ.clear() 를 실제로 수행하므로, monkeypatch 가 추적하지 못하는 다른 환경변수까지
+    # 지워질 위험이 있다 — 테스트가 끝나면 전체를 원상복구해 다른 테스트로 상태가 새지 않게 한다.
+    saved = dict(os.environ)
+    try:
+        monkeypatch.setenv("GITHUB_TOKEN", "leaked")
+        monkeypatch.setenv("PATH", "/bin:/usr/bin")
+        env = apply_isolated_env(tmp_path, "abc123")
+        assert "GITHUB_TOKEN" not in os.environ
+        assert "GITHUB_TOKEN" not in env
+        assert os.environ["PATH"] == "/bin:/usr/bin"
+        assert os.environ["GRADLE_USER_HOME"] == str(tmp_path / "abc123" / "gradle-home")
+        assert env["GRADLE_USER_HOME"] == str(tmp_path / "abc123" / "gradle-home")
+    finally:
+        os.environ.clear()
+        os.environ.update(saved)
 
 
 def test_isolated_env_strips_credentials_and_sets_gradle_home(tmp_path):
