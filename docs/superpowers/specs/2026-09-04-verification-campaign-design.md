@@ -105,7 +105,7 @@ secscan 의 각 탐지 프로세스(SCA·도달성·Secret·SAST·deep·병합·
 - 스냅샷별 기록: 커밋, 도구 버전(trivy/cdxgen/semgrep/gitleaks/spotbugs/java/gradle), trivy DB `UpdatedAt`, Java DB 버전, 실행 명령, 소요 시간, 피크 메모리(`/usr/bin/time -l`).
 
 ### 4.2 단계 추적기 (제품 변경, 기본 무동작)
-`run_scan(..., trace: TraceSink | None = None)`. 각 단계 뒤 `(stage, count, dedup_keys)` 를 기록: `raw:<tool>` → `normalize:<tool>` → `merge` → `exclude` → `reachability` → `secret_verify` → `suppress` → `final`. 하네스는 이를 **attrition 표**로 렌더해 "스캐너가 못 잡음" vs "정규화/제외가 버림"을 구분한다. `trace=None` 이면 동작·성능 변화 없음(테스트로 고정).
+`run_scan(..., trace: TraceSink | None = None)`. 각 단계 뒤 `(stage, count, dedup_keys)` 를 기록: `raw:<tool>` → `normalize:<tool>` → `merge` → `exclude` → `compliance` → `reachability` → `secret_verify` → `baseline` → `suppress` → `final` (실제 `scan.py` 순서. 컴플라이언스는 도달성보다 앞서 항상 실행되고, SAST tier 는 파이프라인 단계가 아니라 출력 시 순수 함수로 계산된다). 하네스는 이를 **attrition 표**로 렌더해 "스캐너가 못 잡음" vs "정규화/제외가 버림"을 구분한다. `trace=None` 이면 동작·성능 변화 없음(테스트로 고정).
 
 ### 4.3 대조기 (`secscan/measure.py` 확장)
 - `match_ground_truth(findings, manifest) -> MatchReport`. 매칭 순서: ① advisory id 정확 일치 + 패키지 정확 일치 + 설치버전 문자열 일치 → `exact`; ② id 는 같고 버전 표기만 다름 → `version-mismatch`(별도 집계, mssql 류); ③ alias(OSV 어댑터 출력의 aliases 에서만 유도, 수동 매핑 금지) 경유 → `alias`; ④ 미매칭 → `missed`. 기대 `absent` 항목이 매칭되면 `false-positive`.
