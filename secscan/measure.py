@@ -172,3 +172,104 @@ def load_gt_manifest(path) -> GtManifest:
         entries = tuple(parsed)
     return GtManifest(kind=kind, snapshot=data.get("snapshot"),
                       scan_date=data.get("scan_date"), entries=entries, raw_entries=raw)
+
+
+# --- V0: 대조기 (spec §4.3) ---
+
+
+@dataclass
+class Match:
+    entry: GtEntry
+    kind: str  # exact | version-mismatch | alias | missed | false-positive | absent-ok
+    finding_key: str | None = None
+    got_version: str | None = None
+
+
+@dataclass
+class MatchReport:
+    matches: list[Match]
+    extras: list[Finding]
+
+    def by_kind(self) -> dict[str, int]:
+        out: dict[str, int] = {}
+        for m in self.matches:
+            if m.kind in ("absent-ok",):
+                continue
+            out[m.kind] = out.get(m.kind, 0) + 1
+        return out
+
+    def _present(self) -> list[Match]:
+        return [m for m in self.matches if m.entry.expected == "present"]
+
+    def recall_cve(self) -> tuple[int, int]:
+        total = {m.entry.advisory for m in self._present()}
+        hit = {m.entry.advisory for m in self._present()
+               if m.kind in ("exact", "alias", "version-mismatch")}
+        return (len(hit), len(total))
+
+    def recall_entry(self, *, strict: bool = True) -> tuple[int, int]:
+        ok = ("exact", "alias") if strict else ("exact", "alias", "version-mismatch")
+        pres = self._present()
+        return (sum(1 for m in pres if m.kind in ok), len(pres))
+
+    def missed(self) -> list[Match]:
+        return [m for m in self.matches if m.kind == "missed"]
+
+    def false_positives(self) -> list[Match]:
+        return [m for m in self.matches if m.kind == "false-positive"]
+
+
+def _ids(f: Finding) -> set[str]:
+    if not f.advisory:
+        return set()
+    return {f.advisory.id, *f.advisory.aliases}
+
+
+def match_ground_truth(findings: list[Finding], manifest: GtManifest) -> MatchReport:
+    sca = [f for f in findings if f.category == "sca" and f.component and f.advisory]
+    used: set[str] = set()
+    matches: list[Match] = []
+    for e in manifest.entries:
+        cands = [f for f in sca if f.component.package == e.package
+                 and (e.advisory in _ids(f) or any(a in _ids(f) for a in e.aliases))]
+        if e.expected == "absent":
+            if cands:
+                used.update(f.dedup_key for f in cands)
+                matches.append(Match(e, "false-positive", cands[0].dedup_key, cands[0].component.version))
+            else:
+                matches.append(Match(e, "absent-ok"))
+            continue
+        if not cands:
+            matches.append(Match(e, "missed"))
+            continue
+        exact = [f for f in cands if f.component.version == e.installed]
+        f = exact[0] if exact else cands[0]
+        used.add(f.dedup_key)
+        if f.component.version != e.installed:
+            kind = "version-mismatch"
+        elif e.advisory in _ids(f):
+            kind = "exact"
+        else:
+            kind = "alias"
+        matches.append(Match(e, kind, f.dedup_key, f.component.version))
+    extras = [f for f in sca if f.dedup_key not in used]
+    return MatchReport(matches, extras)
+
+
+def classify_extras(extras: list[Finding], manifest: GtManifest,
+                    published: dict[str, str]) -> dict[str, str]:
+    """초과 탐지 자동 분류. our-fp 는 자동 판정 불가 — 사람이 triage 파일로 덮어쓴다."""
+    inv = manifest.packages()
+    scan_date = manifest.scan_date or ""
+    out: dict[str, str] = {}
+    for f in extras:
+        date = next((published[i] for i in _ids(f) if i in published), None)
+        if f.component.package not in inv:
+            out[f.dedup_key] = "inventory-diff"
+        elif date is None:
+            out[f.dedup_key] = "unknown-date"
+        elif date[:10] > scan_date:
+            out[f.dedup_key] = "db-drift"
+        else:
+            out[f.dedup_key] = "team-missed"
+    return out
