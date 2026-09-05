@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 from ..models import ACTIONABLE, DEMOTED, REACHABLE, REVIEW, SUPPRESSED, UNKNOWN, UNREACHABLE, Finding, severity_rank
+from ._status import status_rows
 
 _REACH_RANK = {REACHABLE: 2, UNKNOWN: 1, UNREACHABLE: 0}
 _REACH_LABEL = {REACHABLE: "도달 가능", UNREACHABLE: "도달 불가", UNKNOWN: "도달성 미상"}
@@ -89,12 +90,11 @@ def to_markdown(findings: list[Finding], *, target: str | None = None, meta: dic
         L.append(f"- 대상: `{target}`")
     if meta and meta.get("scanner_status"):
         parts = []
-        for s in meta["scanner_status"]:
-            name = s.get("name") or s.get("tool", "")
-            extra = [x for x in (s.get("tool_version"), f"{s['duration_s']}s" if s.get("duration_s") is not None else None) if x]
-            if s.get("message"):
+        for s in status_rows(meta):
+            extra = [x for x in (s["tool_version"], f"{s['duration_s']}s" if s["duration_s"] is not None else None) if x]
+            if s["message"]:
                 extra.append(s["message"])
-            parts.append(f"{name} {s['status']}" + (f" ({', '.join(extra)})" if extra else ""))
+            parts.append(f"{s['tool']} {s['status']}" + (f" ({', '.join(extra)})" if extra else ""))
         L.append(f"- 스캐너: {' · '.join(parts)}")
     elif meta and meta.get("scanners"):
         L.append(f"- 스캐너: {', '.join(meta['scanners'])}")

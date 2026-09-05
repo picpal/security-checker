@@ -314,11 +314,20 @@ def test_markdown_sast_note_mentions_ce_and_kotlin_limits():
 
 def test_markdown_renders_actual_scanner_status_not_configured_names():
     md = to_markdown([], meta={"scanner_status": [
-        {"name": "trivy", "status": "ok", "tool_version": "0.71.2", "duration_s": 8.5},
-        {"name": "spotbugs", "status": "skipped", "message": "빌드 실패"},
+        {"tool": "trivy", "status": "ok", "tool_version": "0.71.2", "duration_s": 8.5},
+        {"tool": "spotbugs", "status": "skipped", "message": "빌드 실패"},
     ]})
     line = next(l for l in md.splitlines() if l.startswith("- 스캐너:"))
     assert "trivy ok (0.71.2, 8.5s)" in line and "spotbugs skipped (빌드 실패)" in line
+
+
+def test_markdown_scanner_status_legacy_and_new_key_shapes_render_identically():
+    """I2(최종 리뷰) — `tool`/`message`(정본, `asdict(ScannerStatus)`)와 옛 `name`/`error`
+    표기(V1 초기 write_evidence)는 같은 헬퍼(`secscan.output._status.status_rows`)를 거쳐
+    같은 markdown 을 낸다."""
+    legacy = to_markdown([], meta={"scanner_status": [{"name": "trivy", "status": "ok", "error": "x"}]})
+    new = to_markdown([], meta={"scanner_status": [{"tool": "trivy", "status": "ok", "message": "x"}]})
+    assert legacy == new
 
 
 # --- Task 5: 출력이 disposition/tier 만 읽는다 ---

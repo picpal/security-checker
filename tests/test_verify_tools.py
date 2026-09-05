@@ -160,9 +160,13 @@ def test_write_evidence_layout_and_redaction(tmp_path):
         assert not any(s in text for s in secret_values), p
     meta = json.loads((tmp_path / "meta.json").read_text())
     assert meta["snapshot"] == "abc"
-    assert meta["scanner_status"] == [{"tool": "trivy", "status": "ok"},
-                                      {"tool": "gitleaks", "status": "ok"},
-                                      {"tool": "semgrep", "status": "failed", "error": "exit 2"}]
+    # I2(최종 리뷰) — scanner_status 없이 만든 ScanResult 는 raw_results 에서 같은 5키(tool/status/
+    # tool_version/duration_s/message)로 폴백한다("error" 전용 키는 없다).
+    assert meta["scanner_status"] == [
+        {"tool": "trivy", "status": "ok", "tool_version": None, "duration_s": None, "message": ""},
+        {"tool": "gitleaks", "status": "ok", "tool_version": None, "duration_s": None, "message": ""},
+        {"tool": "semgrep", "status": "failed", "tool_version": None, "duration_s": None, "message": "exit 2"},
+    ]
 
 
 def test_run_snapshot_parser_defaults():
@@ -835,7 +839,9 @@ def test_write_evidence_meta_carries_scanner_status_fields(tmp_path):
     res = ScanResult(findings=[], raw_results=[r], scanner_status=[ScannerStatus("trivy", OK, "0.71.2", 1.25, "")])
     write_evidence(tmp_path, result=res, trace=None, meta={"snapshot": "x"})
     meta = json.loads((tmp_path / "meta.json").read_text())
-    assert meta["scanner_status"] == [{"tool": "trivy", "status": "ok", "tool_version": "0.71.2", "duration_s": 1.25}]
+    # I2(최종 리뷰) — 정본 직렬화는 `asdict(ScannerStatus)` 그대로: 5키 항상 전부(message="" 도 포함).
+    assert meta["scanner_status"] == [
+        {"tool": "trivy", "status": "ok", "tool_version": "0.71.2", "duration_s": 1.25, "message": ""}]
 
 
 def _fidelity_evidence(tmp_path, findings, meta=None):

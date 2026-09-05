@@ -80,6 +80,13 @@ def write_evidence(out_dir, *, result: ScanResult, trace: TraceSink | None, meta
     (out / "raw").mkdir(parents=True, exist_ok=True)
     written: list[Path] = []
     findings = _relativize(result.findings, Path(repo_root)) if repo_root is not None else result.findings
+    # I2(최종 리뷰) — 정본 직렬화는 asdict(ScannerStatus) 하나(tool/status/tool_version/duration_s/
+    # message 5키). scanner_status 가 비어 있으면(트레이스 없이 만든 합성 ScanResult 등) raw_results
+    # 에서 같은 5키로 재구성한다 — "error" 전용 키는 어디에도 쓰지 않는다.
+    scanner_status_rows = [asdict(s) for s in result.scanner_status] or [
+        {"tool": r.tool, "status": r.status, "tool_version": r.version, "duration_s": r.duration_s, "message": r.error}
+        for r in result.raw_results
+    ]
     for r in result.raw_results:
         if not r.payload:
             continue
@@ -94,17 +101,13 @@ def write_evidence(out_dir, *, result: ScanResult, trace: TraceSink | None, meta
     written.append(p)
     p = out / "report.md"
     p.write_text(to_markdown(findings, target=meta.get("snapshot"),
-                             meta={"scanner_status": [asdict(s) for s in result.scanner_status]}), encoding="utf-8")
+                             meta={"scanner_status": scanner_status_rows}), encoding="utf-8")
     written.append(p)
     p = out / "trace.json"
     p.write_text(json.dumps(trace.to_dict() if trace else {}, indent=2, ensure_ascii=False), encoding="utf-8")
     written.append(p)
     full_meta = dict(meta)
-    full_meta["scanner_status"] = [
-        {"tool": s.name, "status": s.status, "tool_version": s.tool_version, "duration_s": s.duration_s,
-         **({"error": s.message} if s.message else {})}
-        for s in result.scanner_status
-    ] or [{"tool": r.tool, "status": r.status, **({"error": r.error} if r.error else {})} for r in result.raw_results]
+    full_meta["scanner_status"] = scanner_status_rows
     full_meta["reachability"] = {"ran": result.reachability_ran, "reason": result.reachability_reason}
     full_meta["secret_policy"] = result.secret_policy
     full_meta["excluded_count"] = result.excluded_count

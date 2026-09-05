@@ -88,9 +88,13 @@ class Cvss:
 
 @dataclass(frozen=True)
 class ScannerStatus:
-    """실제 실행 결과(구성값이 아님) — 보고서·xlsx Meta 시트가 이것을 쓴다(원칙 5)."""
+    """실제 실행 결과(구성값이 아님) — 보고서·xlsx Meta 시트가 이것을 쓴다(원칙 5).
 
-    name: str
+    `asdict(s)` → `tool/status/tool_version/duration_s/message` 5키가 정본 직렬화다(I2, 최종
+    리뷰). 이 5키 그대로가 write_evidence 의 meta.json·CLI 의 findings.json/report.md/xlsx 모두에
+    쓰인다 — 소비자마다 다른 키를 받는 shim 을 두지 않는다."""
+
+    tool: str
     status: str  # ok | failed | timeout | skipped
     tool_version: str | None = None
     duration_s: float | None = None

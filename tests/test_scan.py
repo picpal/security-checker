@@ -205,13 +205,13 @@ def test_run_scan_without_trace_is_unchanged():
 
 from secscan.models import ScannerStatus
 
-def test_run_scan_reports_actual_scanner_status_sorted_by_name():
+def test_run_scan_reports_actual_scanner_status_sorted_by_tool():
     res = run_scan("/proj", get_profile("quick"),
                    adapters=[FakeAdapter("trivy", TRIVY), FakeAdapter("gitleaks", "", status=FAILED)],
                    reachability_provider=None)
-    names = [s.name for s in res.scanner_status]
-    assert names == ["gitleaks", "trivy"]
-    assert {s.name: s.status for s in res.scanner_status} == {"gitleaks": "failed", "trivy": "ok"}
+    tools = [s.tool for s in res.scanner_status]
+    assert tools == ["gitleaks", "trivy"]
+    assert {s.tool: s.status for s in res.scanner_status} == {"gitleaks": "failed", "trivy": "ok"}
     assert all(isinstance(s, ScannerStatus) for s in res.scanner_status)
 
 

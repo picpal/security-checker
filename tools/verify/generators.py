@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Callable
 
 from secscan.measure import load_gt_manifest
+from secscan.output._status import status_rows
 
 from . import differential, evidence_readme, fidelity, gate, jar_surface, known_fp, profile_contract, reach_app, report
 from ._facts import facts_text
@@ -73,7 +74,8 @@ def _known_fp(c: Ctx):
 
 
 def _profile(c: Ctx):
-    statuses = {s["tool"]: s["status"] for s in json.loads(c.deep_meta.read_text(encoding="utf-8"))["scanner_status"]}
+    meta = json.loads(c.deep_meta.read_text(encoding="utf-8"))
+    statuses = {s["tool"]: s["status"] for s in status_rows(meta)}
     return profile_contract.render_doc(statuses), profile_contract.collect_facts(statuses)
 
 

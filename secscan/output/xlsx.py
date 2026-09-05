@@ -11,6 +11,7 @@ from typing import Iterable
 
 from .. import __version__
 from ..models import Finding, severity_rank
+from ._status import status_rows
 
 Sheet = tuple[list[str], list[list]]
 
@@ -156,12 +157,12 @@ def _rows_summary(findings: list[Finding], meta: dict) -> list[list]:
 
 def _rows_meta(meta: dict) -> list[list]:
     rows: list[list] = []
-    for s in sorted(meta.get("scanner_status", []), key=lambda s: s.get("name") or s.get("tool", "")):
-        name = s.get("name") or s.get("tool", "")
+    statuses = sorted(status_rows(meta), key=lambda s: s["tool"])
+    for s in statuses:
         for k in ("status", "tool_version", "duration_s", "message"):
-            rows.append([f"scanner.{name}.{k}", s.get(k) if s.get(k) is not None else (s.get("error", "") if k == "message" else "")])
+            rows.append([f"scanner.{s['tool']}.{k}", s[k] if s[k] is not None else ""])
     rows += [["profile", meta.get("profile", "")], ["commit", meta.get("commit", meta.get("snapshot", ""))],
-             ["partial_failures", _join(s.get("name") or s.get("tool", "") for s in meta.get("scanner_status", []) if s.get("status") != "ok")],
+             ["partial_failures", _join(s["tool"] for s in statuses if s["status"] != "ok")],
              ["reachability.ran", str(meta.get("reachability", {}).get("ran", ""))],
              ["reachability.reason", meta.get("reachability", {}).get("reason", "")],
              ["secret_policy", meta.get("secret_policy", "")], ["excluded_count", meta.get("excluded_count", "")]]

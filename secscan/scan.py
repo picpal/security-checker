@@ -142,6 +142,6 @@ def run_scan(
     if trace is not None:
         trace.record("final", findings)
     status = sorted((ScannerStatus(r.tool, r.status, r.version, r.duration_s, r.error) for r in raws),
-                    key=lambda s: s.name)
+                    key=lambda s: s.tool)
     return ScanResult(findings, raws, ran, reason, partial, secret_policy,
                       verified_count, suppressed_count, invalidated, excluded_count, status)

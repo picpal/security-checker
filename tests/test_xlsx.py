@@ -21,7 +21,7 @@ def _sca(cve="CVE-1", pkg="a:b", ver="1.0", target="pom.xml", reach=UNREACHABLE,
 
 def _meta():
     return {"profile": "standard", "target": "/repo", "run_date": "2026-09-05", "commit": "abc",
-            "scanner_status": [{"name": "trivy", "status": "ok", "tool_version": "0.71.2", "duration_s": 8.5, "message": ""}],
+            "scanner_status": [{"tool": "trivy", "status": "ok", "tool_version": "0.71.2", "duration_s": 8.5, "message": ""}],
             "reachability": {"ran": True, "reason": "ok"}, "secret_policy": "never", "excluded_count": 0}
 
 
