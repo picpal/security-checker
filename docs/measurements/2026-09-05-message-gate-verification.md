@@ -1,6 +1,6 @@
 # message-gate 검증 캠페인 측정 문서 (플랜 1: V0~V3, 중간본)
 
-**대상**: message-gate `a483b3b1` · **정답지**: GT-B(보안팀 trivy 1회 + 개발자 발견 12) / GT-A(외부 소스 점검 fix 커밋) 대비 — 절대 recall 이 아니다.
+**대상**: message-gate `a483b3b1` · **정답지**: GT-B(보안팀 trivy 결과 + 개발자 발견분) / GT-A(외부 소스 점검 fix 커밋) 대비 — 절대 recall 이 아니다.
 
 본 문서의 모든 측정값은 `docs/verification/results/2026-09-05/facts.json` · `facts-profile.json` · `facts-gta.json` · `facts-surface.json` (이하 정본)에서 그대로 옮겼다(spec §4.5). 인용 수치 옆에는 `fact:` 로 시작하는 HTML 주석 마커가 정본 위치를 가리킨다. 이 문서는 원인·해석을 담지 않는다 — 게이트 미통과는 `docs/superpowers/specs/2026-09-04-verification-campaign-design.md` §5 에 따라 캠페인 실패가 아니라 백로그 P1 등록 사유다.
 
@@ -38,7 +38,7 @@
 
 ## 축 2~4 — SCA (GT-B 대비)
 
-인용 스코프(spec §4.5): 아래 recall 은 message-gate `a483b3b1` 단일 스냅샷을 GT-B(보안팀 trivy 1회 + 개발자 발견 12건) 매니페스트와 대조한 값이며, 절대 recall 이 아니다.
+인용 스코프(spec §4.5): 아래 recall 은 message-gate `a483b3b1` 단일 스냅샷을 GT-B(보안팀 trivy 결과 + 개발자 발견분) 매니페스트와 대조한 값이며, 절대 recall 이 아니다.
 
 ### 단계별 attrition (`gt-b-match.md` 인용)
 
@@ -46,7 +46,7 @@ raw: trivy=ok(313797B), gitleaks=ok(9393B), semgrep=ok(57924B)
 
 | 단계 | 건수 | 증감 |
 |---|---|---|
-| normalize:gitleaks | 13 | |
+| normalize:gitleaks | 13 |  |
 | normalize:semgrep | 15 | +2 |
 | normalize:trivy | 48 | +33 |
 | merge | 73 | +25 |
@@ -60,7 +60,7 @@ raw: trivy=ok(313797B), gitleaks=ok(9393B), semgrep=ok(57924B)
 ### 정답지 대조 (`gt-b-match.md` 인용)
 
 - CVE 단위 recall(GT-B 합산): 37/46 <!-- fact:sca.recall_cve -->
-- origin 별 CVE recall: dev-found 3/12 <!-- fact:sca.recall_cve.dev-found --> · team 34/34 <!-- fact:sca.recall_cve.team --> (team = 보안팀 trivy 결과 재현율 성격 — secscan 도 trivy 를 쓰므로 도구 상관 / dev-found = 상대적으로 독립인 증거)
+- origin 별 CVE recall: dev-found 3/12 <!-- fact:sca.recall_cve.dev-found --> · team 34/34 <!-- fact:sca.recall_cve.team --> (spec §5 축 2: team = 보안팀 trivy 결과의 재현율, dev-found = 독립 증거)
 - 항목 단위 recall: strict 47/56 <!-- fact:sca.recall_entry_strict --> · loose(version-mismatch 포함) 47/56 <!-- fact:sca.recall_entry_loose -->
 
 ### 미탐 (`gt-b-match.md` 표 전체 인용) — 9 <!-- fact:sca.missed -->건
@@ -100,7 +100,7 @@ HIGH/Important 미탐 3 <!-- fact:sca.missed_high_important -->건(CVE-2026-6876
 
 정본: `docs/verification/results/2026-09-05/facts-surface.json`(이 태스크에서 신설, `jar_surface.collect_facts`). 대상 스냅샷 `a483b3b1-standard`: jar 빌드·스캔 성공 True <!-- fact:surface.jar_ok -->, BOM 인벤토리 195 <!-- fact:surface.bom_packages -->개 패키지, jar 인벤토리 127 <!-- fact:surface.jar_packages -->개 패키지, jar 표면의 정답지 패키지 취약점 부착 행 48 <!-- fact:surface.vuln_rows_gt -->건.
 
-인벤토리 차(BOM 전용 77 <!-- fact:surface.bom_only -->건 · jar 전용 9 <!-- fact:surface.jar_only -->건)의 개별 패키지 목록과, 버전 차이 1 <!-- fact:surface.version_differs -->건(`com.microsoft.sqlserver:mssql-jdbc`)의 상세, jar 표면 취약점 부착 버전 48건 표는 `docs/verification/results/2026-09-05/input-surface.md` 참조.
+인벤토리 차(BOM 전용 77 <!-- fact:surface.bom_only -->건 · jar 전용 9 <!-- fact:surface.jar_only -->건)의 개별 패키지 목록과, 버전 차이 1 <!-- fact:surface.version_differs -->건(`com.microsoft.sqlserver:mssql-jdbc`)의 상세, jar 표면 취약점 부착 버전 48 <!-- fact:surface.vuln_rows_gt -->건 표는 `docs/verification/results/2026-09-05/input-surface.md` 참조.
 
 ### 정답지 설치버전 대조 (`input-surface.md` 표 전체 인용)
 
