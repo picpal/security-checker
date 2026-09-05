@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from secscan.models import REACHABLE, UNREACHABLE, Advisory, Component, Finding, Reachability
+from secscan.models import REACHABLE, UNREACHABLE, Advisory, Component, Finding
 from secscan.reachability.depscan import decide_reachability, parse_invoked_symbols
 
 ROOT = Path(__file__).parent.parent

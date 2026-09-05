@@ -1,4 +1,5 @@
 {
+  "_note": "수기 작성 슬라이스 — fixtures/reach-app/App.java 변경 시 동기화 필요",
   "objectSlices": [
     {"code": "interpolate", "fullName": "demo.App.interpolate", "signature": "", "fileName": "App.java", "lineNumber": 13, "columnNumber": 0,
      "usages": [{"targetObj": {"name": "userInput", "typeFullName": "java.lang.String", "lineNumber": 13, "columnNumber": 0, "label": "PARAM"},

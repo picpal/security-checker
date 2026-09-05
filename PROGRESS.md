@@ -104,4 +104,14 @@ crypto 안티패턴 → **커스텀 룰(D)** (3종: MyBatis `${}`/하드코딩/z
 - [x] V1 TraceSink 단계 추적 + findings.json + tools/verify 격리 하네스 + 증거 동결(docs/verification/evidence/<date>)
 - [x] V2 SCA 실측: CVE recall N/46 · known-FP 3단계 · 프로파일 계약 · 초과분 triage · 입력면 교차
 - [x] V3 도달성 쌍 픽스처(reach-app, false-unreachable xfail) + GT-A differential — 정본 검증(reconcile ✓, docs/verification/results/2026-09-05/reconcile-report.md)
+- [x] 최종 전브랜치 리뷰 수정 라운드(Important 8건 전부 해소): I1 attrition 부호 정정(normalize(합계)
+  합성 행) · I2 미탐 전건 단계 귀속(sca.missed_by_stage.*) · I3 facts-profile.json 재생성 비교 연결 ·
+  I4 known-FP 축 3 값 fact id 부여 · I5 는 spec 정오표(g)로 플랜 2 이관 · I6 raw↔typed 카디널리티
+  마커화 · I7 reconcile 자기참조 순서(2단계 계산, 직전 실행 값 신뢰 금지) · I8 인용 표 대조
+  (reconcile.quote_mismatch). Minor 중 M2/M5/M6/M9/M10/M11/M12 도 함께 해소. `_facts.py`(facts_text)
+  로 4곳 직렬화 통일.
+- 플랜 2 이관(의도적 미착수): I5 의 `tools/verify/gate.py`(판정 생성기) · M1(trivy 순회 통합) ·
+  M3(축 5 원시 산출물을 evidence/ 로 이동) · M4(reconcile 증거 부재 시 degrade) · M7(`gta.row{i}` id
+  위치 독립화) · M8(증거 경로 상대화) · 생성기 인터페이스(`render_doc`+`collect_facts`) 6종 통일 ·
+  evidence/README.md 생성기화.
 - [ ] V4~V7 → 플랜 2 (판정 단계 H · 모델 확장 · xlsx · 변이 픽스처 · 최종 문서)
