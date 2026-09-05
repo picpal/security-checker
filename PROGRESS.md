@@ -98,3 +98,10 @@ crypto 안티패턴 → **커스텀 룰(D)** (3종: MyBatis `${}`/하드코딩/z
 — spotbugs 가 빌드·실행돼도 CWE-476/754/404 미탐(범주 공백, taint 아님).
 **D 완료(2026-06-29)**: coderay 격차의 커스텀룰 영역 3종 메움(d4a1ded 실증).
 다음 = 백로그(IaC/DAST/CI/주기점검) 또는 IDE 인스펙션 통합(broad-catch 코드스멜 = coderay 잔여격차).
+
+## V — 검증 캠페인 (spec 2026-09-04) — 플랜 1(V0~V3) ✅
+- [x] V0 정답지 매니페스트 3종 + 대조기(match_ground_truth/classify_extras)
+- [x] V1 TraceSink 단계 추적 + findings.json + tools/verify 격리 하네스 + 증거 동결(docs/verification/evidence/<date>)
+- [x] V2 SCA 실측: CVE recall N/46 · known-FP 3단계 · 프로파일 계약 · 초과분 triage · 입력면 교차
+- [x] V3 도달성 쌍 픽스처(reach-app, false-unreachable xfail) + GT-A differential — 정본 검증(reconcile, 축 9)은 별도 태스크에서 구현·실행 예정(미실행, docs/measurements/2026-09-05-message-gate-verification.md 축 9 참조)
+- [ ] V4~V7 → 플랜 2 (판정 단계 H · 모델 확장 · xlsx · 변이 픽스처 · 최종 문서)
