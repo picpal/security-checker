@@ -7,6 +7,7 @@
   "reconcile.raw_count": 38,
   "reconcile.raw_typed_mismatch": 0,
   "reconcile.regen_mismatch": 0,
+  "reconcile.self_marker_mismatch": 0,
   "reconcile.typed_count": 38,
   "reconcile.unmarked": 0,
   "reconcile.verdict": "통과"

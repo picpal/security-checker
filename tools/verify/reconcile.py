@@ -6,21 +6,13 @@ AI(컨트롤러·서브에이전트)가 쓴 수치·분류·판정이 섞였는�
 from __future__ import annotations
 
 import argparse
-import contextlib
-import io
 import json
 import re
-import tempfile
 from pathlib import Path
 
-from secscan.measure import load_gt_manifest
 from secscan.output.json_io import from_json
 
-from . import differential, report
 from ._facts import facts_text
-from .jar_surface import collect_facts as surface_facts, render_doc as render_surface
-from .known_fp import check_known_fp, collect_facts as knownfp_facts, render as render_fp
-from .profile_contract import collect_facts as profile_facts, render_doc as render_profiles
 
 _MARK = re.compile(r"(\S+)\s*<!--\s*fact:([A-Za-z0-9_.\-/가-힣]+)\s*-->")
 # 수치 토큰: 앞뒤가 영숫자·'.'·'/'·'-'·'§' 가 아닌 정수 또는 N/M ("9건"·"0(" 은 잡고, 날짜·버전·SHA·CVE id·§5 는 제외)
@@ -28,10 +20,12 @@ _NUM = re.compile(r"(?<![0-9A-Za-z./§-])(\d+(?:/\d+)?)(?![0-9A-Za-z./-])")
 _MARK_TOKEN = re.compile(r"\S*\d\S*\s*<!--\s*fact:[^>]*-->")
 _FACT_COMMENT = re.compile(r"\s*<!--\s*fact:[^>]*-->")
 _KNOWN_FP = dict(package="com.microsoft.sqlserver:mssql-jdbc", advisory="CVE-2025-59250", expected_version="13.2.1.jre11")
-# 측정 문서의 "표 전체 인용" 선언 — `<파일명>.md` 뒤 20자 이내에 "전체 인용"이 오면 그 표를
-# 대상 파일의 같은 헤더 표와 바이트 대조한다(spec §4.5 (f), 리뷰 I8). "전체 인용 아님"(부정)은
-# 제외한다 — 예: "reconcile-report.md(전체 인용 아님 — 요약만) 참조".
-_QUOTE_DECL = re.compile(r"`([^`\n]+\.md)`[^\n]{0,20}?전체 인용(?!\s*아님)")
+# 측정 문서의 "표 전체 인용" 선언 — 줄 단위로 찾는다(N1, 리뷰 이후 20자 창 방식에서 전환).
+# "전체 인용"을 포함하는 줄이면 그 줄에서 첫 백틱 파일명을 선언으로 취급해 그 표를 대상 파일의
+# 같은 헤더 표와 바이트 대조한다(spec §4.5 (f), 리뷰 I8). "전체 인용 아님"(부정)은 제외한다 —
+# 예: "reconcile-report.md(전체 인용 아님 — 요약만) 참조".
+_FULL_QUOTE = re.compile(r"전체 인용(?!\s*아님)")
+_QUOTE_FILE = re.compile(r"`([^`\n]+\.md)`")  # 경로 포함 허용(basename 은 호출부에서 Path(...).name 로 추출)
 
 
 def parse_markers(md: str) -> list[tuple[str, str]]:
@@ -152,12 +146,10 @@ def _read_table_lines(lines: list[str], start: int) -> list[str]:
     return out
 
 
-def _table_near(md_text: str, pos: int) -> list[str] | None:
-    """`pos`(문자 오프셋) 이후 표를 우선 찾고, 다음 헤딩 전까지 없으면 `pos` 이전(같은 절)의
-    가장 가까운 표를 찾는다 — "위 표는 …의 전체 인용이며" 처럼 표를 먼저 보여준 뒤 인용을
-    선언하는 문장도 대응한다. 펜스 코드블록 내부는 표로 보지 않는다(M5)."""
-    lines = _blank_fences(md_text).splitlines()
-    line_no = md_text.count("\n", 0, pos)
+def _table_near_lines(lines: list[str], line_no: int) -> list[str] | None:
+    """`lines`(이미 펜스 처리된 줄 목록)에서 `line_no` 다음 표를 우선 찾고, 다음 헤딩 전까지
+    없으면 `line_no` 이전(같은 절)의 가장 가까운 표를 찾는다 — "위 표는 …의 전체 인용이며"
+    처럼 표를 먼저 보여준 뒤 인용을 선언하는 문장도 대응한다."""
     # 매치가 있는 줄 자체는 헤딩(`### …`)일 수 있으므로 앞뒤 탐색 모두 그 다음/이전 줄부터 본다.
     i = line_no + 1
     while i < len(lines):
@@ -181,6 +173,14 @@ def _table_near(md_text: str, pos: int) -> list[str] | None:
     return None
 
 
+def _table_near(md_text: str, pos: int) -> list[str] | None:
+    """`pos`(문자 오프셋)를 줄 번호로 바꿔 `_table_near_lines` 에 위임. 펜스 코드블록 내부는
+    표로 보지 않는다(M5)."""
+    lines = _blank_fences(md_text).splitlines()
+    line_no = md_text.count("\n", 0, pos)
+    return _table_near_lines(lines, line_no)
+
+
 def _tables(md_text: str) -> list[list[str]]:
     """문서 전체의 표 블록들(구분선 제외, 펜스 코드블록 제외)."""
     lines = _blank_fences(md_text).splitlines()
@@ -202,12 +202,23 @@ def _tables(md_text: str) -> list[list[str]]:
 
 def check_quoted_tables(measurement_md: str, results_dir) -> list[dict]:
     """측정 문서의 "`<file>.md` … 전체 인용" 선언마다, 인용된 표를 원본 문서의 같은 헤더 표와
-    (마커 제거 후) 행 단위로 대조한다(spec §4.5 (f), 리뷰 I8). "전체 인용이다"라는 주장 자체를 검증한다."""
+    (마커 제거 후) 행 단위로 대조한다(spec §4.5 (f), 리뷰 I8). "전체 인용이다"라는 주장 자체를 검증한다.
+
+    N1: 탐지는 줄 단위다 — "전체 인용"을 포함하는 줄에서 첫 백틱 파일명(경로 포함 가능, `.md` 로
+    끝나는 첫 `` `...` ``)을 선언으로 취급한다. 그런 줄에 파일명이 없으면(예: 손으로 쓴 문장이
+    규칙을 어긴 경우) 검증 불능 행으로 남긴다 — 조용히 건너뛰지 않는다."""
     res = Path(results_dir)
     out: list[dict] = []
-    for m in _QUOTE_DECL.finditer(measurement_md):
+    blanked_lines = _blank_fences(measurement_md).splitlines()
+    for i, line in enumerate(measurement_md.splitlines()):
+        if not _FULL_QUOTE.search(line):
+            continue
+        m = _QUOTE_FILE.search(line)
+        if not m:
+            out.append({"quote": line, "header": "", "ok": False, "note": "선언 줄에 파일명 없음"})
+            continue
         fname = Path(m.group(1)).name
-        quoted = _table_near(measurement_md, m.end())
+        quoted = _table_near_lines(blanked_lines, i)
         if quoted is None:
             out.append({"quote": fname, "header": "", "ok": False, "note": "인용 위치 근처에 표 없음"})
             continue
@@ -249,49 +260,38 @@ def raw_vs_typed(trivy_json: str, findings) -> dict:
             "only_raw": sorted(raw - typed), "only_typed": sorted(typed - raw)}
 
 
-def regenerate(results_dir, evidence_root, gt_b, gt_a) -> list[dict]:
-    """생성 문서를 같은 증거로 다시 만들어 바이트 비교."""
-    res, ev = Path(results_dir), Path(evidence_root)
-    std = ev / "a483b3b1-standard"
+# 옛 결과 디렉토리(플랜 1, 2026-09-05)에는 이 태스크에서 새로 생긴 생성 문서가 없다 — 있으면
+# 비교하고 없으면 건너뛴다(플랜 1 결과 디렉토리 호환).
+_OPTIONAL = {"fidelity.md", "reach-app.md", "gate.md", "facts-fidelity.json", "facts-reachapp.json"}
+
+
+def regenerate(results_dir, evidence_root, gt_b, gt_a, *, std_name: str = "a483b3b1-standard") -> list[dict]:
+    """생성 문서·facts 를 레지스트리(generators.GENERATORS)로 다시 만들어 바이트 비교.
+
+    생성기 예외는 죽지 않고 ✗ 행으로 격리한다(M4/N6 — 부분 실패는 정상, spec §4.5)."""
+    from .generators import GENERATORS, Ctx
+    res = Path(results_dir)
+    ctx = Ctx(res, Path(evidence_root), Path(gt_b), Path(gt_a), std_name)
     rows: list[dict] = []
 
-    def cmp(name: str, text: str) -> None:
+    def cmp(name: str, text: str, optional: bool) -> None:
         p = res / name
         if not p.exists():
-            rows.append({"doc": name, "ok": False, "note": "결과 파일 없음"})
+            if not optional:
+                rows.append({"doc": name, "ok": False, "note": "결과 파일 없음"})
             return
         same = p.read_text(encoding="utf-8") == text
         rows.append({"doc": name, "ok": same, "note": "" if same else "재생성 결과와 다름"})
 
-    with tempfile.TemporaryDirectory() as td:
-        t = Path(td)
-        with contextlib.redirect_stdout(io.StringIO()):  # CLI 출력이 reconcile 의 stdout 을 오염하지 않게 한다(M11)
-            report.main(["--evidence", str(std), "--gt", str(gt_b), "--out", str(t / "m.md"), "--facts", str(t / "f.json")])
-            differential.main(["--evidence-root", str(ev), "--gt", str(gt_a), "--out", str(t / "d.md"), "--facts", str(t / "g.json")])
-        cmp("gt-b-match.md", (t / "m.md").read_text(encoding="utf-8"))
-        cmp("facts.json", (t / "f.json").read_text(encoding="utf-8"))
-        cmp("gt-a-differential.md", (t / "d.md").read_text(encoding="utf-8"))
-        cmp("facts-gta.json", (t / "g.json").read_text(encoding="utf-8"))
-    bom, trivy = std / "raw" / "bom.cdx.json", std / "raw" / "trivy.json"
-    if bom.exists() and trivy.exists():
-        fp_result = check_known_fp(bom.read_text(encoding="utf-8"), trivy.read_text(encoding="utf-8"), **_KNOWN_FP)
-        cmp("known-fp.md", render_fp(fp_result))
-        cmp("facts-knownfp.json", facts_text(knownfp_facts(fp_result)))
-    else:
-        rows.append({"doc": "known-fp.md", "ok": False, "note": "raw/bom.cdx.json 또는 raw/trivy.json 없음"})
-    deep = ev / "a483b3b1-deep" / "meta.json"
-    if deep.exists():
-        statuses = {s["tool"]: s["status"] for s in json.loads(deep.read_text(encoding="utf-8"))["scanner_status"]}
-        cmp("profile-contract.md", render_profiles(statuses))
-        cmp("facts-profile.json", facts_text(profile_facts(statuses)))
-    jar, status = res / "input-surface.trivy-fs.json", res / "input-surface.status.json"
-    if jar.exists() and status.exists() and bom.exists():
-        ok = bool(json.loads(status.read_text(encoding="utf-8")).get("jar_build_scan_ok", False))
-        m_b = load_gt_manifest(gt_b)
-        cmp("input-surface.md", render_surface(ok, bom.read_text(encoding="utf-8"), jar.read_text(encoding="utf-8"), m_b))
-        cmp("facts-surface.json", facts_text(surface_facts(ok, bom.read_text(encoding="utf-8"), jar.read_text(encoding="utf-8"), m_b)))
-    else:
-        rows.append({"doc": "input-surface.md", "ok": False, "note": "trivy-fs.json / status.json / bom 없음"})
+    for g in GENERATORS:
+        try:
+            doc, facts = g.produce(ctx)
+        except Exception as e:  # 증거 부재 등 — 죽지 않고 ✗ 행(M4/N6)
+            rows.append({"doc": g.doc, "ok": False, "note": f"생성 실패: {type(e).__name__}: {e}"})
+            continue
+        cmp(g.doc, doc, g.doc in _OPTIONAL)
+        if g.facts:
+            cmp(g.facts, facts_text(facts), g.facts in _OPTIONAL)
     return rows
 
 
@@ -307,15 +307,21 @@ def load_facts(results_dir) -> dict:
     return facts
 
 
+def _esc(s) -> str:
+    """N4 — 표 셀에 넣는 임의 텍스트(문서명·id·인용 헤더 등)의 `|` 를 이스케이프한다.
+    셀 안에 원본 그대로의 `|` 가 섞이면(예: 인용된 표 헤더 자체가 `| a | b |`) 표 구조가 깨진다."""
+    return str(s).replace("|", "\\|")
+
+
 def render_report(regen: list[dict], markers: dict[str, list[dict]], unmarked: dict[str, list[str]],
                   prov: list[dict], rvt: dict, quotes: list[dict] | None = None,
                   stats: dict[str, tuple[int, int]] | None = None) -> str:
     quotes = quotes or []
     stats = stats or {}
     L = ["# 정본 검증 (spec §4.5 · 축 9)", "", "## 생성 문서 재생성 비교", "| 문서 | 일치 | 비고 |", "|---|---|---|"]
-    L += [f"| {r['doc']} | {'✓' if r['ok'] else '✗'} | {r['note']} |" for r in regen]
+    L += [f"| {_esc(r['doc'])} | {'✓' if r['ok'] else '✗'} | {_esc(r['note'])} |" for r in regen]
     L += ["", "## fact 마커 대조", "| 문서 | id | 문서값 | 정본값 | 일치 |", "|---|---|---|---|---|"]
-    L += [f"| {doc} | {r['id']} | {r['doc']} | {r['fact']} | {'✓' if r['ok'] else '✗'} |"
+    L += [f"| {_esc(doc)} | {_esc(r['id'])} | {_esc(r['doc'])} | {_esc(r['fact'])} | {'✓' if r['ok'] else '✗'} |"
           for doc, rows in markers.items() for r in rows]
     un = [f"- {doc}: {', '.join(v)}" for doc, v in unmarked.items() if v]
     L += ["", "## 출처 불명 수치(마커 없음)", *(un or ["- 없음"])]
@@ -325,7 +331,7 @@ def render_report(regen: list[dict], markers: dict[str, list[dict]], unmarked: d
     if quotes:
         for q in quotes:
             origin = q["quote"] + (f" — {q['note']}" if q["note"] else "")
-            L.append(f"| {q['header'] or '(표 없음)'} | {origin} | {'✓' if q['ok'] else '✗'} |")
+            L.append(f"| {_esc(q['header']) or '(표 없음)'} | {_esc(origin)} | {'✓' if q['ok'] else '✗'} |")
     else:
         L.append("| - | 없음 | - |")
     pv = [f"- {r['dedup_key']}: {r['provenance']} {'✓' if r['ok'] else '✗'}" for r in prov]
@@ -378,7 +384,8 @@ def main(argv: list[str] | None = None) -> int:
     res = Path(a.results)
     facts = load_facts(res)  # facts-reconcile.json 제외(I7) — 아래에서 이번 실행 값으로 다시 채운다
     regen = regenerate(res, a.evidence_root, a.gt_b, a.gt_a)
-    docs: dict[str, tuple[Path, str | None]] = {"gate-v2.md": (res / "gate-v2.md", None), "gate-v3.md": (res / "gate-v3.md", None)}
+    docs: dict[str, tuple[Path, str | None]] = {"gate-v2.md": (res / "gate-v2.md", None), "gate-v3.md": (res / "gate-v3.md", None),
+                                                "gate.md": (res / "gate.md", None)}
     if a.measurement:
         docs["measurement"] = (Path(a.measurement), "요약")
     mds: dict[str, str] = {}
@@ -408,9 +415,19 @@ def main(argv: list[str] | None = None) -> int:
     facts_full = {**facts, **this_run_reconcile}
     markers = {name: check_markers(md, facts_full) for name, md in mds.items()}
 
+    # N5 — reconcile.marker_mismatch 는 1단계(seed, reconcile.* 자기인용 제외) 값으로 고정한다:
+    # 문서가 인용하는 그 값 자체가 자기인용 여부에 따라 흔들리면 안 된다(자기참조로 값이 값을
+    # 정의하는 순환을 피한다). reconcile.* 자기인용 불일치는 별도 facts.self_marker_mismatch 로
+    # 낸다 — 판정(문서의 "## 판정" 행, render_report 의 fails)에는 여전히 markers(전체, 2단계)를
+    # 써서 반영하고, facts-reconcile.json 의 verdict 합에도 self_mm 을 더한다.
+    self_mm = sum(not r["ok"] for rows in markers.values() for r in rows if r["id"].startswith("reconcile."))
+
     text = render_report(regen, markers, unmarked, prov, rvt, quotes, stats)
     Path(a.out or res / "reconcile-report.md").write_text(text, encoding="utf-8")
-    final_facts = collect_facts(regen, markers, unmarked, prov, rvt, quotes)
+    final_facts = collect_facts(regen, seed_markers, unmarked, prov, rvt, quotes)
+    final_facts["reconcile.self_marker_mismatch"] = self_mm
+    if self_mm:
+        final_facts["reconcile.verdict"] = "위반"
     (res / "facts-reconcile.json").write_text(facts_text(final_facts), encoding="utf-8")
     print(text.splitlines()[-1])
     return 0 if text.rstrip().endswith("✓ 통과") else 1

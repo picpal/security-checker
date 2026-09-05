@@ -161,13 +161,13 @@
 ## 인용 표 대조(spec §4.5 (f))
 | 인용 | 원본 | 일치 |
 |---|---|---|
-| | 프로파일 | spec §8 | 구현 | 누락 | 초과 | 실제 status | | profile-contract.md | ✓ |
-| | 단계 | 건수 | 증감 | | gt-b-match.md | ✓ |
-| | advisory | 패키지 | 설치 | 심각도(보안팀) | origin | 단계 | | gt-b-match.md | ✓ |
-| | advisory | 패키지 | 설치 | 분류 | | gt-b-match.md | ✓ |
-| | 단계 | 결과 | | known-fp.md | ✓ |
-| | 패키지 | 보안팀 | BOM | jar | | input-surface.md | ✓ |
-| | CWE | 분류 | 파일 | 룰 | 취약에서 출현 | 수정에서 소멸 | tier(기대) | 판정 | | gt-a-differential.md | ✓ |
+| \| 프로파일 \| spec §8 \| 구현 \| 누락 \| 초과 \| 실제 status \| | profile-contract.md | ✓ |
+| \| 단계 \| 건수 \| 증감 \| | gt-b-match.md | ✓ |
+| \| advisory \| 패키지 \| 설치 \| 심각도(보안팀) \| origin \| 단계 \| | gt-b-match.md | ✓ |
+| \| advisory \| 패키지 \| 설치 \| 분류 \| | gt-b-match.md | ✓ |
+| \| 단계 \| 결과 \| | known-fp.md | ✓ |
+| \| 패키지 \| 보안팀 \| BOM \| jar \| | input-surface.md | ✓ |
+| \| CWE \| 분류 \| 파일 \| 룰 \| 취약에서 출현 \| 수정에서 소멸 \| tier(기대) \| 판정 \| | gt-a-differential.md | ✓ |
 
 ## override provenance
 - override 없음

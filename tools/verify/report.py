@@ -19,13 +19,15 @@ def render_attrition(trace: dict) -> str:
     """단계별 attrition 표(normalize:<tool> 개별 → normalize(합계) → merge → exclude → final).
 
     `normalize:<tool>` 행은 도구별 **독립** 건수지 파이프라인 누적이 아니다 — 증감 칸을 비운다.
-    증감은 `normalize(합계)`(도구별 합) 이후의 파이프라인 단계에서만 계산한다(리뷰 I1). 예전에는
+    증감은 `normalize(합계)`(도구별 합) 이후의 파이프라인 단계에서만 계산한다(리뷰 I1, N3 — trace
+    의 `stages` 순서를 그대로 보존한다: partition 정렬 없이 normalize:* 행을 원래 순서대로 두고
+    그 뒤에 normalize(합계)를 끼운 다음, 이후 파이프라인 행의 증감을 그 합계부터 계산한다). 예전에는
     도구 행 사이를 알파벳순으로 이어 증감을 찍어 merge 의 실제 감소(76→73, -3)가 +25 로
-    부호가 뒤집혀 보였다."""
+    부호가 뒤집혀 보였다. 증감은 0 이면 "0", 아니면 부호를 붙인다(N3 — 통일된 표기)."""
     stages = trace.get("stages", [])
     norm = [s for s in stages if s["stage"].startswith("normalize:")]
     pipeline = [s for s in stages if not s["stage"].startswith("normalize:")]
-    L = ["| 단계 | 건수 | 증감 |", "|---|---|---|"]
+    L = ["| 단계 | 건수 | 증감 |", "| --- | --- | --- |"]
     for s in norm:
         L.append(f"| {s['stage']} | {s['count']} |  |")
     prev = None
@@ -34,7 +36,11 @@ def render_attrition(trace: dict) -> str:
         L.append(f"| normalize(합계) | {total} |  |")
         prev = total
     for s in pipeline:
-        delta = "" if prev is None else f"{s['count'] - prev:+d}"
+        if prev is None:
+            delta = ""
+        else:
+            d = s["count"] - prev
+            delta = "0" if d == 0 else f"{d:+d}"
         L.append(f"| {s['stage']} | {s['count']} | {delta} |")
         prev = s["count"]
     raw = ", ".join(f"{r['tool']}={r['status']}({r['bytes']}B)" for r in trace.get("raw", []))

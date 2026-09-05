@@ -197,7 +197,9 @@ def test_render_attrition_table_shows_stage_deltas():
 def test_render_attrition_normalize_rows_are_independent_not_cumulative():
     """I1 — normalize:<tool> 행은 도구별 독립 건수다(파이프라인 누적이 아니다). 증감 칸은 비우고,
     normalize(합계) 합성 행을 넣어 그 이후(merge~)부터만 증감을 계산한다. merge 는 76→73 로
-    실제로 3건이 줄었으므로 -3 이어야 한다(예전엔 도구 행 사이 알파벳순 차를 찍어 +25 로 뒤집혔다)."""
+    실제로 3건이 줄었으므로 -3 이어야 한다(예전엔 도구 행 사이 알파벳순 차를 찍어 +25 로 뒤집혔다).
+    증감 0 은 "+0" 이 아니라 "0" 으로 찍는다(N3 — Task 12 에서 통일; 부호 없는 0 과 유의미한 증감을
+    한눈에 구분하기 위함)."""
     trace = {"raw": [], "stages": [
         {"stage": "normalize:gitleaks", "count": 13, "keys": []},
         {"stage": "normalize:semgrep", "count": 15, "keys": []},
@@ -212,8 +214,8 @@ def test_render_attrition_normalize_rows_are_independent_not_cumulative():
     assert "| normalize:trivy | 48 |  |" in md
     assert "| normalize(합계) | 76 |  |" in md
     assert "| merge | 73 | -3 |" in md  # 76 → 73
-    assert "| exclude | 73 | +0 |" in md
-    assert "| final | 73 | +0 |" in md
+    assert "| exclude | 73 | 0 |" in md
+    assert "| final | 73 | 0 |" in md
 
 
 def test_render_match_lists_recall_and_extra_classes():
@@ -752,11 +754,13 @@ def test_reconcile_main_writes_facts_reconcile_json(tmp_path):
     (res / "gate-v2.md").write_text(f"# 게이트\n| 축 | 값 |\n|---|---|\n| recall | {facts['sca.recall_cve']} <!-- fact:sca.recall_cve --> |\n", encoding="utf-8")
     assert main(["--results", str(res), "--evidence-root", str(ev), "--gt-b", gt_b, "--gt-a", gt_a]) == 0
     fr = json.loads((res / "facts-reconcile.json").read_text(encoding="utf-8"))
+    # N5 — reconcile.self_marker_mismatch(reconcile.* 자기인용 불일치 수)가 새로 추가된다: 이 픽스처는
+    # gate-v2.md 에 reconcile.* 마커를 두지 않으므로 0.
     assert set(fr) == {"reconcile.regen_mismatch", "reconcile.marker_mismatch", "reconcile.unmarked",
                        "reconcile.provenance_violations", "reconcile.raw_typed_mismatch",
                        "reconcile.raw_count", "reconcile.typed_count", "reconcile.only_raw", "reconcile.only_typed",
-                       "reconcile.quote_mismatch", "reconcile.verdict"}
-    assert fr["reconcile.verdict"] == "통과"
+                       "reconcile.quote_mismatch", "reconcile.self_marker_mismatch", "reconcile.verdict"}
+    assert fr["reconcile.verdict"] == "통과" and fr["reconcile.self_marker_mismatch"] == 0
     # 판정(spec §4.5)을 좌우하는 5종(재생성·마커·출처불명·provenance·인용표)은 이 픽스처에서 전부 0 — 통과.
     assert all(fr[k] == 0 for k in ("reconcile.regen_mismatch", "reconcile.marker_mismatch",
                                     "reconcile.unmarked", "reconcile.provenance_violations",
@@ -797,9 +801,13 @@ def test_reconcile_does_not_trust_stale_self_citation(tmp_path):
     assert rc == 1
     assert report_text.rstrip().endswith("✓ 통과") is False
     # 이번 실행이 실제로 계산한 값(직전의 낡은 값이 아니라)이 기록돼야 한다: 자기인용 행 자체가
-    # 이제 doc="1" vs fact="0" 불일치로 잡히므로 marker_mismatch >= 1.
+    # 이제 doc="1" vs fact="0" 불일치로 잡힌다. N5 — 이 자기인용 불일치는 reconcile.marker_mismatch
+    # 가 아니라 별도의 reconcile.self_marker_mismatch 로 집계된다(marker_mismatch 는 seed 값 —
+    # reconcile.* 자기인용을 제외한 값 — 으로 고정해 순환 정의를 피한다); verdict 합에는 포함된다.
     fr = json.loads((res / "facts-reconcile.json").read_text(encoding="utf-8"))
-    assert fr["reconcile.marker_mismatch"] >= 1
+    assert fr["reconcile.self_marker_mismatch"] >= 1
+    assert fr["reconcile.marker_mismatch"] == 0
+    assert fr["reconcile.verdict"] == "위반"
 
 
 def test_regenerate_suppresses_generator_stdout(tmp_path, capsys):
@@ -855,3 +863,68 @@ def test_fidelity_reports_undecided_v1_style_evidence_as_fact(tmp_path):
     raw = [Finding(category="secret", severity="high", rule_id="k", location=Location("c.properties", 1))]  # H 미실행
     r = check(_fidelity_evidence(tmp_path, raw))
     assert r["undecided"] == 1 and r["disposition_mismatch"] == 0  # 판정 없음은 불일치가 아니라 '미판정' 사실
+
+
+def test_reach_app_facts_match_fixture_expectations():
+    from tools.verify.reach_app import collect_facts, evaluate
+    r = evaluate()
+    f = collect_facts(r)
+    assert f["reachapp.cases"] == 3 and f["reachapp.false_unreachable"] == 2  # 플랜 1 사실(xfail strict 2건)과 동일
+    assert f["reachapp.reachable_expected_hit"] == "1/1"
+
+
+def test_gate_renders_mechanical_verdicts_with_markers():
+    from tools.verify.gate import GATES, render_gate
+    facts = {"profile.rows": 4, "profile.drift": 3, "sca.recall_cve": "37/46", "sca.recall_cve.team": "34/34",
+             "sca.recall_cve.dev-found": "3/12", "sca.missed": 9, "sca.missed_high_important": 3,
+             "sca.missed_by_stage.scanner": 9, "sca.missed_by_stage.normalize": 0,
+             "knownfp.component_present": "True", "knownfp.version_preserved": "True", "knownfp.not_reported": "True",
+             "knownfp.found_version": "13.2.1.jre11", "sca.extras": 1, "sca.extras.unclassified": 0,
+             "surface.bom_only": 77, "surface.jar_only": 9, "surface.version_differs": 1, "surface.gt_match_bom": "16/16",
+             "surface.gt_match_jar": "15/16", "reachapp.cases": 3, "reachapp.false_unreachable": 2,
+             "reach.reachable": 0, "reach.unreachable": 48, "reach.unknown": 0, "gta.in_category_pass": "2/4",
+             "fidelity.roundtrip_identical": "True", "fidelity.id_set_mismatch": 0, "fidelity.disposition_mismatch": 0,
+             "fidelity.deterministic": "True", "fidelity.meta_scanner_status_rows": 3, "fidelity.undecided": 0}
+    md = render_gate(facts)
+    rows = [l for l in md.splitlines() if l.startswith("| ") and not l.startswith("| 축")]
+    verdicts = {l.split("|")[1].strip().split(" ")[0]: l.split("|")[4].strip() for l in rows}
+    assert verdicts["1"] == "✓" and verdicts["3"] == "✓" and verdicts["4"] == "✓" and verdicts["8"] == "✓"
+    assert verdicts["2"].startswith("✗") and verdicts["5"].startswith("✗") and verdicts["6"].startswith("✗") and verdicts["7"].startswith("✗")
+    assert verdicts["9"] == "기록"
+    assert "37/46 <!-- fact:sca.recall_cve -->" in md and "2 <!-- fact:reachapp.false_unreachable -->" in md
+    assert len(GATES) == 9
+
+
+def test_gate_marks_missing_fact_as_unmeasured_not_pass():
+    from tools.verify.gate import render_gate
+    md = render_gate({"profile.rows": 4, "profile.drift": 3})
+    row2 = next(l for l in md.splitlines() if l.startswith("| 2 "))
+    assert "미측정" in row2 and "✓" not in row2
+
+
+def test_generators_registry_isolates_failures(tmp_path, monkeypatch):
+    from tools.verify import generators
+    from tools.verify.reconcile import regenerate
+    def boom(ctx):
+        raise FileNotFoundError("evidence missing")
+    monkeypatch.setattr(generators, "GENERATORS", [generators.Generator("boom.md", None, boom)])
+    rows = regenerate(tmp_path, tmp_path, "gt-b.json", "gt-a.json")
+    assert rows == [{"doc": "boom.md", "ok": False, "note": "생성 실패: FileNotFoundError: evidence missing"}]
+
+
+def test_reconcile_escapes_pipes_in_report_cells():
+    from tools.verify.reconcile import render_report
+    md = render_report([], {}, {}, [], {"raw_count": 0, "typed_count": 0, "only_raw": [], "only_typed": []},
+                       quotes=[{"header": "| a | b |", "quote": "x.md", "ok": True, "note": ""}], stats={})
+    line = next(l for l in md.splitlines() if "x.md" in l)
+    import re
+    assert len(re.findall(r"(?<!\\)\|", line)) == 4 and "\\|" in line  # 셀 3개 = 구분자 4개
+
+
+def test_attrition_rows_follow_trace_order():
+    from tools.verify.report import render_attrition
+    trace = {"stages": [{"stage": "normalize:semgrep", "count": 2, "keys": []}, {"stage": "normalize:trivy", "count": 3, "keys": []},
+                        {"stage": "merge", "count": 5, "keys": []}, {"stage": "exclude", "count": 4, "keys": []}]}
+    lines = [l for l in render_attrition(trace).splitlines() if l.startswith("| ")][2:]
+    assert [l.split("|")[1].strip() for l in lines] == ["normalize:semgrep", "normalize:trivy", "normalize(합계)", "merge", "exclude"]
+    assert lines[3].split("|")[3].strip() == "0" and lines[4].split("|")[3].strip() == "-1"

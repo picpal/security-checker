@@ -45,16 +45,16 @@
 raw: trivy=ok(313797B), gitleaks=ok(9393B), semgrep=ok(57924B)
 
 | 단계 | 건수 | 증감 |
-|---|---|---|
+| --- | --- | --- |
 | normalize:gitleaks | 13 |  |
 | normalize:semgrep | 15 |  |
 | normalize:trivy | 48 |  |
 | normalize(합계) | 76 |  |
 | merge | 73 | -3 |
-| exclude | 73 | +0 |
-| compliance | 73 | +0 |
-| reachability | 73 | +0 |
-| final | 73 | +0 |
+| exclude | 73 | 0 |
+| compliance | 73 | 0 |
+| reachability | 73 | 0 |
+| final | 73 | 0 |
 
 위 표는 생성 문서(`gt-b-match.md`)의 전체 인용이며 `facts.json` 의 `attrition.<stage>` 값과 동일하다(개별 마커는 아래 SCA 절 본문 수치에만 붙인다).
 
@@ -189,7 +189,7 @@ reach.unknown / findings.sca = 0 <!-- fact:reach.unknown --> / 48 <!-- fact:find
 - **출처 불명 수치**(`gate-v2.md`·`gate-v3.md`·이 문서 `## 요약` 절의 측정값/값 열): 0 <!-- fact:reconcile.unmarked -->건(최초 실행에서 `gate-v3.md` 축 6(b) 손기입 수치 "2건" 1건이 잡혀 마커 없이 정본화할 수 없는 값이므로 문서에서 제거하고 pytest 코드블록 인용만 남겼다 — 축 9 스스로가 찾은 위반이며, 이 문서에서 발견 사실로 남긴다).
 - **override provenance**(`extras-triage.json`): override 없음 — 비인가(비 `human:`) override 0 <!-- fact:reconcile.provenance_violations -->건.
 - **raw↔typed 카디널리티**(`a483b3b1-standard`): raw trivy 고유 VulnerabilityID 38 <!-- fact:reconcile.raw_count -->건 = typed SCA 고유 advisory 38 <!-- fact:reconcile.typed_count -->건 — 불일치 0 <!-- fact:reconcile.raw_typed_mismatch -->건(spec §5 축 9 의 4개 기준에는 포함되지 않는 부수 기록이나, 정본 검증기가 산출하므로 함께 인용한다).
-- **인용 표 대조**(spec §4.5 (f)): 측정 문서가 "전체 인용"이라고 선언한 표를 원본 결과 문서의 동일 헤더 표와 마커 제거 후 행 단위로 대조 — 불일치 0 <!-- fact:reconcile.quote_mismatch -->건.
+- **인용 표 대조**(spec §4.5 (f)): 측정 문서가 표를 빠짐없이 그대로 옮겨 적었다고 선언한 곳을 원본 결과 문서의 동일 헤더 표와 마커 제거 후 행 단위로 대조 — 불일치 0 <!-- fact:reconcile.quote_mismatch -->건(Task 12 N1 — 인용 선언 탐지가 줄 단위로 강화되며, 이 항목의 예전 설명문이 이 검사의 트리거 문구를 그대로 담고 있어 파일명 없는 선언으로 스스로 오탐되는 것을 축 9 가 찾아 표현을 바꿨다).
 
 판정: ✓ 통과(spec §5: 4개 기준 모두 0).
 
