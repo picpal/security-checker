@@ -25,6 +25,26 @@ def test_low_entropy_password_missed_by_gitleaks_but_caught_by_custom_rule():
     assert hit and hit[0].disposition == ACTIONABLE and hit[0].tier == EXPECTED["variants"]["low_entropy_password"]["expected_tier"]
 
 
+def test_prefixed_identifier_is_missed_by_custom_rule_observed():
+    """관측된 갭을 고정한다(바람직한 동작이 아니다).
+
+    hardcoded-credential 룰의 metavariable-regex 는 식별자 접두사 매칭이다. 같은 값이라도
+    키워드가 변수명 접두사가 아니면(DB_PASSWORD 처럼 DB_ 뒤에 옴) 실도구 실측상 탐지되지
+    않는다. 픽스처를 룰에 맞춰 고치지 않고 이 미탐을 사실로 고정한다(룰 개선은 백로그 후보).
+    """
+    config_java = Path("fixtures/secret-app/src/main/java/com/example/Config.java")
+    lines = config_java.read_text(encoding="utf-8").splitlines()
+    db_password_line = next(i for i, l in enumerate(lines, start=1) if "DB_PASSWORD" in l and "=" in l)
+    s = decide(parse_semgrep((GOLDEN / "semgrep-secret-app-custom.json").read_text()))
+    assert not any(
+        f.rule_id.endswith("hardcoded-credential")
+        and f.location.file.endswith("Config.java")
+        and f.location.start_line == db_password_line
+        for f in s
+    )
+    assert EXPECTED["variants"]["low_entropy_prefixed_identifier"]["custom_rule"] == "absent"
+
+
 def test_inline_allowlist_is_respected():
     g = parse_gitleaks((GOLDEN / "gitleaks-secret-app.json").read_text())
     props = Path("fixtures/secret-app/config/application.properties").read_text(encoding="utf-8").splitlines()
