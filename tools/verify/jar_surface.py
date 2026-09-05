@@ -40,7 +40,7 @@ def inventory_from_trivy(trivy_json: str) -> dict[str, str]:
 
     같은 패키지를 서로 다른 버전으로 이중 보고하는 경우(예: mssql-jdbc 13.2.1 /
     13.2.1.jre11)를 감춰서는 안 된다(spec §5 축 5). 버전이 하나뿐이면 평문 문자열,
-    여럿이면 정렬해 " | "로 병기한다.
+    여럿이면 정렬해 " / "로 병기한다("|"는 마크다운 표 셀 구분자와 충돌하므로 사용하지 않음).
     """
     versions: dict[str, set[str]] = {}
     for res in json.loads(trivy_json or "{}").get("Results", []) or []:
@@ -50,7 +50,7 @@ def inventory_from_trivy(trivy_json: str) -> dict[str, str]:
         for v in res.get("Vulnerabilities") or []:
             if v.get("PkgName") and v.get("InstalledVersion"):
                 versions.setdefault(v["PkgName"], set()).add(v["InstalledVersion"])
-    return {k: " | ".join(sorted(vs)) for k, vs in versions.items()}
+    return {k: " / ".join(sorted(vs)) for k, vs in versions.items()}
 
 
 def vuln_installed_versions(trivy_json: str) -> list[tuple[str, str, str]]:

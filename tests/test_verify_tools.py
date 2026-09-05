@@ -272,17 +272,17 @@ def test_inventories_and_diff():
         {"group": "g", "name": "a", "version": "1.0", "purl": "pkg:maven/g/a@1.0"},
         {"group": "g", "name": "b", "version": "2.0", "purl": "pkg:maven/g/b@2.0"}]})
     # g:a 는 jar 쪽에서 두 버전으로 이중 보고된다(예: mssql-jdbc 13.2.1 / 13.2.1.jre11 재현) —
-    # 덮어쓰지 않고 " | "로 병기되어야 한다.
+    # 덮어쓰지 않고 " / "로 병기되어야 한다("|"는 마크다운 표 셀 구분자와 충돌).
     trivy = json.dumps({"Results": [{"Target": "Java", "Packages": [
         {"Name": "g:a", "Version": "1.0"}, {"Name": "g:a", "Version": "1.0.1"},
         {"Name": "g:c", "Version": "3.0"}],
         "Vulnerabilities": [{"PkgName": "g:b", "InstalledVersion": "2.0.jre11", "VulnerabilityID": "CVE-1"}]}]})
     ia, ib = inventory_from_bom(bom), inventory_from_trivy(trivy)
     assert ia == {"g:a": "1.0", "g:b": "2.0"}
-    assert ib == {"g:a": "1.0 | 1.0.1", "g:c": "3.0", "g:b": "2.0.jre11"}
+    assert ib == {"g:a": "1.0 / 1.0.1", "g:c": "3.0", "g:b": "2.0.jre11"}
     d = diff_inventories(ia, ib)
     assert d["only_a"] == [] and d["only_b"] == ["g:c"]
-    assert d["version_differs"] == {"g:a": ("1.0", "1.0 | 1.0.1"), "g:b": ("2.0", "2.0.jre11")}
+    assert d["version_differs"] == {"g:a": ("1.0", "1.0 / 1.0.1"), "g:b": ("2.0", "2.0.jre11")}
 
 
 def test_compare_installed_against_manifest():
