@@ -8,7 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from .adapters.base import OK, RawResult
-from .compliance import enrich_compliance
+from .disposition import decide
 from .exclude import DEFAULT_EXCLUDES, exclude_findings, filter_gitignored
 from .models import Finding, ScannerStatus
 from .normalize import normalize_each, to_findings
@@ -99,11 +99,6 @@ def run_scan(
     if trace is not None:
         trace.record("exclude", findings)
 
-    # 컴플라이언스 매핑: CWE → KISA/PCI (결정적·무비용 — 항상 적용).
-    enrich_compliance(findings)
-    if trace is not None:
-        trace.record("compliance", findings)
-
     ran, reason = False, "off"
     if profile.reachability and reachability_provider is not None:
         outcome = enrich_reachability(
@@ -135,6 +130,10 @@ def run_scan(
         findings, invalidated = s_out.findings, s_out.invalidated
         if trace is not None:
             trace.record("suppress", findings)
+    # 판정 H(spec §7.4): 억제 다음, 출력 앞. compliance 도 여기서 채운다.
+    findings = decide(findings)
+    if trace is not None:
+        trace.record("disposition", findings)
     suppressed_count = sum(1 for f in findings if f.suppression is not None)
 
     partial = [r for r in raws if r.status != OK]

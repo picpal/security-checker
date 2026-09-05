@@ -188,7 +188,7 @@ def test_trace_sink_records_stage_order_and_counts():
     assert ("gitleaks", FAILED) in raw_tools and ("trivy", OK) in raw_tools
     names = [s["stage"] for s in sink.stages]
     assert names[:2] == sorted(names[:2]) and all(n.startswith("normalize:") for n in names[:2])
-    assert names[2:] == ["merge", "exclude", "compliance", "reachability", "final"]
+    assert names[2:] == ["merge", "exclude", "reachability", "disposition", "final"]
     merge = next(s for s in sink.stages if s["stage"] == "merge")
     assert merge["count"] == len(merge["keys"]) > 0
     d = sink.to_dict()
@@ -213,3 +213,14 @@ def test_run_scan_reports_actual_scanner_status_sorted_by_name():
     assert names == ["gitleaks", "trivy"]
     assert {s.name: s.status for s in res.scanner_status} == {"gitleaks": "failed", "trivy": "ok"}
     assert all(isinstance(s, ScannerStatus) for s in res.scanner_status)
+
+
+def test_run_scan_ends_with_disposition_stage_and_every_finding_decided():
+    sink = TraceSink()
+    res = run_scan("/proj", get_profile("quick"), adapters=[FakeAdapter("trivy", TRIVY), FakeAdapter("gitleaks", GITLEAKS)],
+                   reachability_provider=None, trace=sink)
+    stages = [s["stage"] for s in sink.stages]
+    assert "disposition" in stages and "compliance" not in stages
+    assert stages.index("disposition") == stages.index("final") - 1
+    assert all(f.disposition is not None for f in res.findings)
+    assert all(f.compliance is not None for f in res.findings if f.category == "sast" and f.cwe)

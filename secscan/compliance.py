@@ -14,6 +14,8 @@ KisaWeakness.code 는 보고 안정성을 위한 *내부* 식별자이며 KISA �
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 from .models import Compliance, Finding, KisaWeakness
 
 # --- 7대 분류 ---
@@ -143,8 +145,9 @@ def map_compliance(cwes: tuple[str, ...]) -> Compliance:
 
 
 def enrich_compliance(findings: list[Finding]) -> list[Finding]:
-    """각 finding 의 cwe 로 컴플라이언스 매핑을 채운다. 매핑 없으면 None 유지."""
+    """각 finding 의 cwe 로 컴플라이언스 매핑을 채운 새 리스트를 돌려준다(입력 불변). 매핑 없으면 None."""
+    out = []
     for f in findings:
         c = map_compliance(f.cwe)
-        f.compliance = c if (c.kisa or c.pci) else None
-    return findings
+        out.append(replace(f, compliance=c if (c.kisa or c.pci) else None))
+    return out
