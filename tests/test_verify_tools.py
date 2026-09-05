@@ -169,3 +169,94 @@ def test_run_snapshot_parser_defaults():
     from tools.verify.run_snapshot import build_parser
     a = build_parser().parse_args(["--repo", "/r", "--sha", "abc", "--scratch", "/s", "--out", "/o"])
     assert a.profile == "standard" and a.no_reachability is False
+
+
+# --- V2: 리포트·프로파일 계약·known-FP ---
+from secscan.measure import GtEntry, GtManifest, match_ground_truth
+from secscan.models import UNKNOWN, UNREACHABLE, Advisory, Component, Finding, Reachability
+from tools.verify.known_fp import check_known_fp
+from tools.verify.profile_contract import SPEC_PROFILES, compare_profiles, render as render_profiles
+from tools.verify.report import published_dates, render_attrition, render_human_verdicts, render_match
+
+
+def _sca(pkg, ver, cve, reach=UNKNOWN, evidence=None):
+    return Finding(category="sca", severity="high", tool="trivy", rule_id=cve,
+                   component=Component("maven", pkg, ver), advisory=Advisory(cve, aliases=(cve,)),
+                   reachability=Reachability(reach, evidence=evidence))
+
+
+def test_render_attrition_table_shows_stage_deltas():
+    trace = {"raw": [{"tool": "trivy", "status": "ok", "bytes": 10}],
+             "stages": [{"stage": "merge", "count": 5, "keys": []},
+                        {"stage": "exclude", "count": 3, "keys": []},
+                        {"stage": "final", "count": 3, "keys": []}]}
+    md = render_attrition(trace)
+    assert "| merge | 5 |" in md and "| exclude | 3 | -2 |" in md
+
+
+def test_render_match_lists_recall_and_extra_classes():
+    m = GtManifest("sca", "s", "2026-08-31", (GtEntry("CVE-1", "g:a", "1.0"), GtEntry("CVE-2", "g:b", "1.0")), [])
+    r = match_ground_truth([_sca("g:a", "1.0", "CVE-1"), _sca("g:z", "1.0", "CVE-9")], m)
+    md = render_match(r, {r.extras[0].dedup_key: "inventory-diff"})
+    assert "CVE 단위 recall: 1/2" in md and "CVE-2" in md and "inventory-diff" in md
+
+
+def test_render_human_verdicts_compares_reason_classes():
+    m = GtManifest("sca", "s", "2026-08-31",
+                   (GtEntry("CVE-T", "org.apache.tomcat.embed:tomcat-embed-core", "11.0.22",
+                            human_verdict="unreachable", reason_class="config-gated", reason="HTTP/2 off"),), [])
+    md = render_human_verdicts(m, [_sca("org.apache.tomcat.embed:tomcat-embed-core", "11.0.22", "CVE-T", UNREACHABLE)])
+    assert "config-gated" in md and "unreachable" in md and "패키지 prefix" in md
+
+
+def test_published_dates_from_trivy_json():
+    payload = (GOLDEN / "trivy-vuln-maven-app.json").read_text()
+    d = published_dates(payload)
+    assert d["CVE-2022-42889"].startswith("2022-10")
+
+
+def test_profile_contract_detects_bom_sca_vs_trivy_osv_drift():
+    rows = compare_profiles()
+    acc = next(r for r in rows if r["profile"] == "accurate-sca")
+    assert acc["spec"] == sorted(SPEC_PROFILES["accurate-sca"])
+    assert "osv-scanner" in acc["missing"]
+    md = render_profiles(rows, {"trivy": "ok", "gitleaks": "ok"})
+    assert "accurate-sca" in md and "osv-scanner" in md
+
+
+def test_check_known_fp_three_stages():
+    bom = json.dumps({"components": [{"purl": "pkg:maven/com.microsoft.sqlserver/mssql-jdbc@13.2.1.jre11",
+                                      "group": "com.microsoft.sqlserver", "name": "mssql-jdbc", "version": "13.2.1.jre11"}]})
+    trivy_clean = json.dumps({"Results": [{"Target": "bom.json", "Vulnerabilities": []}]})
+    r = check_known_fp(bom, trivy_clean, package="com.microsoft.sqlserver:mssql-jdbc",
+                       advisory="CVE-2025-59250", expected_version="13.2.1.jre11")
+    assert r == {"component_present": True, "version_preserved": True, "not_reported": True,
+                 "found_version": "13.2.1.jre11"}
+    trivy_fp = json.dumps({"Results": [{"Target": "bom.json", "Vulnerabilities": [
+        {"VulnerabilityID": "CVE-2025-59250", "PkgName": "com.microsoft.sqlserver:mssql-jdbc", "InstalledVersion": "13.2.1"}]}]})
+    assert check_known_fp(bom, trivy_fp, package="com.microsoft.sqlserver:mssql-jdbc",
+                          advisory="CVE-2025-59250", expected_version="13.2.1.jre11")["not_reported"] is False
+
+
+def test_collect_facts_ids_and_values():
+    from tools.verify.report import collect_facts
+    m = GtManifest("gt-b-sca", "a483b3b1", "2026-08-31", entries=(
+        GtEntry("CVE-1", "g:a", "1.0", "present", "team", 1, severity_team="HIGH"),
+        GtEntry("CVE-2", "g:b", "1.0", "present", "team", 2),), raw_entries=())
+    fs = [_sca("g:a", "1.0", "CVE-1"), _sca("g:z", "9.9", "CVE-9")]
+    rep = match_ground_truth(fs, m)
+    facts = collect_facts(rep, {fs[1].dedup_key: "inventory-diff"}, fs,
+                          {"stages": [{"stage": "merge", "count": 2}, {"stage": "final", "count": 2}]},
+                          {"scanner_status": [{"tool": "trivy", "status": "ok"}]})
+    assert facts["sca.recall_cve"] == "1/2" and facts["sca.missed"] == 1 and facts["sca.missed_high"] == 0
+    assert facts["sca.extras"] == 1 and facts["sca.extras.inventory-diff"] == 1
+    assert facts["attrition.final"] == 2 and facts["scanner.trivy"] == "ok" and facts["findings.sca"] == 2
+
+
+def test_known_fp_render_and_profile_render_doc_are_full_docs():
+    from tools.verify.known_fp import render as render_fp
+    from tools.verify.profile_contract import render_doc
+    fp = render_fp({"component_present": True, "version_preserved": True, "not_reported": True, "found_version": "13.2.1.jre11"})
+    assert fp.startswith("# known-FP CVE-2025-59250") and "| not_reported | True |" in fp
+    doc = render_doc({"trivy": "ok"})
+    assert doc.startswith("# 프로파일 계약") and "standard" in doc
