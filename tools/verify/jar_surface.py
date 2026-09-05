@@ -83,6 +83,28 @@ def compare_installed(inv: dict[str, str], manifest: GtManifest) -> list[dict]:
     return rows
 
 
+def collect_facts(ok: bool, bom_json: str, jar_json: str, manifest: GtManifest) -> dict:
+    """정본 수치(spec §4.5, 축 5 — 입력면 교차). 문서는 이 값을 `<!-- fact:id -->` 마커와 함께 인용만 한다."""
+    inv_bom = inventory_from_bom(bom_json)
+    inv_jar = inventory_from_trivy(jar_json or "{}")
+    diff = diff_inventories(inv_bom, inv_jar)
+    gt_packages = {e.package for e in manifest.entries}
+    cmp_bom = compare_installed(inv_bom, manifest)
+    cmp_jar = compare_installed(inv_jar, manifest)
+    vulns_for_gt = [row for row in vuln_installed_versions(jar_json or "{}") if row[1] in gt_packages]
+    return {
+        "surface.jar_ok": str(ok),
+        "surface.bom_only": len(diff["only_a"]),
+        "surface.jar_only": len(diff["only_b"]),
+        "surface.version_differs": len(diff["version_differs"]),
+        "surface.gt_match_bom": f"{sum(1 for r in cmp_bom if r['match'])}/{len(cmp_bom)}",
+        "surface.gt_match_jar": f"{sum(1 for r in cmp_jar if r['match'])}/{len(cmp_jar)}",
+        "surface.vuln_rows_gt": len(vulns_for_gt),
+        "surface.jar_packages": len(inv_jar),
+        "surface.bom_packages": len(inv_bom),
+    }
+
+
 def render(diff: dict, cmp_bom: list[dict], cmp_jar: list[dict], vulns_for_gt: list[tuple[str, str, str]]) -> str:
     L = ["## 인벤토리 차이 (BOM=a, jar=b)",
          f"- BOM 에만: {len(diff['only_a'])} — {', '.join(diff['only_a'][:30])}",
@@ -125,7 +147,12 @@ def main(argv: list[str] | None = None) -> int:
     if not jar_json.exists():
         jar_json.write_text("{}", encoding="utf-8")  # reconcile 재생성용 — 실패도 파일로 남긴다
     out.with_name("input-surface.status.json").write_text(json.dumps({"jar_build_scan_ok": ok}) + "\n", encoding="utf-8")
-    out.write_text(render_doc(ok, Path(a.bom).read_text(encoding="utf-8"), jar_text, load_gt_manifest(a.gt)), encoding="utf-8")
+    bom_text = Path(a.bom).read_text(encoding="utf-8")
+    manifest = load_gt_manifest(a.gt)
+    out.write_text(render_doc(ok, bom_text, jar_text, manifest), encoding="utf-8")
+    out.with_name("facts-surface.json").write_text(
+        json.dumps(collect_facts(ok, bom_text, jar_text, manifest), ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8")
     print(out)
     return 0
 

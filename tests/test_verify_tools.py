@@ -410,6 +410,32 @@ def test_render_doc_vuln_table_lists_gt_packages_only():
     assert "| CVE-9 | not:in-gt | 9.9 |" not in doc
 
 
+def test_collect_facts_surface_ids_and_values():
+    """Task 12 Step 0(사후 개정) — 축 5 입력면 정본 수치. BOM 2 컴포넌트, jar 는 1 패키지 2버전 + GT 패키지 취약점 1행."""
+    from tools.verify.jar_surface import collect_facts
+
+    bom = json.dumps({"components": [
+        {"group": "g", "name": "a", "version": "1.0", "purl": "pkg:maven/g/a@1.0"},
+        {"group": "g", "name": "b", "version": "2.0", "purl": "pkg:maven/g/b@2.0"}]})
+    trivy = json.dumps({"Results": [{"Target": "Java", "Packages": [
+        {"Name": "g:a", "Version": "1.0"}, {"Name": "g:a", "Version": "1.0.1"}],
+        "Vulnerabilities": [{"VulnerabilityID": "CVE-1", "PkgName": "g:a", "InstalledVersion": "1.0"}]}]})
+    m = GtManifest("sca", "s", "2026-08-31",
+                   (GtEntry("CVE-1", "g:a", "1.0"), GtEntry("CVE-2", "g:x", "9")), [])
+    facts = collect_facts(True, bom, trivy, m)
+    assert facts == {
+        "surface.jar_ok": "True",
+        "surface.bom_only": 1,       # g:b — BOM 에만
+        "surface.jar_only": 0,
+        "surface.version_differs": 1,  # g:a: BOM "1.0" vs jar "1.0 / 1.0.1"
+        "surface.gt_match_bom": "1/2",  # g:a 일치, g:x 없음
+        "surface.gt_match_jar": "0/2",  # g:a 는 " / " 병기로 불일치, g:x 없음
+        "surface.vuln_rows_gt": 1,      # CVE-1/g:a 1행 (g:x 는 취약점 없음)
+        "surface.jar_packages": 1,
+        "surface.bom_packages": 2,
+    }
+
+
 # --- V3: GT-A differential ---
 from secscan.models import Location, sast_tier
 from tools.verify.differential import evaluate_pair, find_expected
