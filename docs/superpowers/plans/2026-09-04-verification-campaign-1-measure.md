@@ -22,6 +22,7 @@
 - 게이트 수치는 spec §5 그대로: SCA CVE 단위 recall ≥ 44/46, HIGH/Important 미탐 ≤ 1, mssql 3단계 전부 ✓, 초과분 미분류 0, false-unreachable = 0, GT-A 범주 내 출현·소멸 100%. **게이트 미통과 = 측정 문서에 기록 + 백로그 P1**, 캠페인은 계속 진행.
 - 커밋: 작게 자주, 메시지 마지막 줄 `다음: <할 일>`. 한국어 주석·문서.
 - 테스트 실행: `.venv/bin/pytest` (현재 234 green). 새 태스크는 기존 green 을 깨지 않는다.
+- **측정 사실성(spec §4.5)**: 실행자(서브에이전트)는 수치를 손으로 쓰지 않고, 초과분 분류를 override 하지 않고, 게이트 ✓/✗ 를 임의로 정하지 않는다. 결과 문서의 모든 수치는 `facts.json` 의 값을 `<!-- fact:<id> -->` 마커와 함께 인용한다. 판단이 필요한 항목은 `needs_human` 으로만 보고한다.
 
 ---
 
@@ -1375,7 +1376,10 @@ git commit -m "docs(V1): 증거 동결 — a483b3b1 standard/deep + GT-A 스냅�
 - `report.render_match(report: MatchReport, classes: dict[str, str]) -> str`
 - `report.render_human_verdicts(manifest: GtManifest, findings: list[Finding]) -> str`
 - `report.published_dates(trivy_payload: str) -> dict[str, str]` (raw trivy JSON 의 `PublishedDate`)
-- `report.main(argv)` CLI: `--evidence <dir> --gt <gt-b-sca.json> --out <md>`
+- `report.main(argv)` CLI: `--evidence <dir> --gt <gt-b-sca.json> --out <md> [--facts <json>]` — `--facts` 는 `collect_facts(...)` 결과를 JSON 으로 저장.
+- `report.collect_facts(report: MatchReport, classes: dict, findings, trace: dict, meta: dict) -> dict[str, str|int]` — 정본 수치(id → 값): `sca.recall_cve`("m/t"), `sca.recall_entry_strict`, `sca.recall_entry_loose`, `sca.missed`, `sca.missed_high`(severity_team 이 HIGH 인 미탐 수), `sca.false_positive`, `sca.extras`, `sca.extras.<class>`(4분류별), `findings.total`, `findings.<category>`, `attrition.<stage>`, `scanner.<tool>`(status), `reach.<status>`(SCA 도달성 status 별 건수; 없음=`none`).
+- `known_fp.render(result: dict) -> str` — `# known-FP CVE-2025-59250 (mssql-jdbc) 3단계` 제목 + `| 단계 | 결과 |` 표 전체 문서.
+- `profile_contract.render_doc(statuses: dict[str, str]) -> str` — `# 프로파일 계약 (spec §8 vs 구현 vs 실제)` 제목 + `render(compare_profiles(), statuses)` 전체 문서.
 - `profile_contract.SPEC_PROFILES: dict[str, frozenset[str]]`, `compare_profiles() -> list[dict]`, `render(rows, statuses: dict[str, str]) -> str`
 - `known_fp.check_known_fp(bom_json: str, trivy_json: str, *, package, advisory, expected_version) -> dict` with keys `component_present`, `version_preserved`, `not_reported`, `found_version`.
 
@@ -1611,10 +1615,12 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--evidence", required=True)
     p.add_argument("--gt", required=True)
     p.add_argument("--out", required=True)
+    p.add_argument("--facts", default=None, help="정본 수치 JSON 출력 경로(spec §4.5)")
     a = p.parse_args(argv)
     ev = Path(a.evidence)
     findings = from_json((ev / "findings.json").read_text(encoding="utf-8"))
     trace = json.loads((ev / "trace.json").read_text(encoding="utf-8"))
+    meta = json.loads((ev / "meta.json").read_text(encoding="utf-8")) if (ev / "meta.json").exists() else {}
     manifest = load_gt_manifest(a.gt)
     report = match_ground_truth(findings, manifest)
     raw_trivy = ev / "raw" / "trivy.json"
@@ -1627,12 +1633,90 @@ def main(argv: list[str] | None = None) -> int:
         "## 사람 도달성 판정 비교(일치율 산출 안 함 — 방법이 다름)", render_human_verdicts(manifest, findings),
     ])
     Path(a.out).write_text(md, encoding="utf-8")
+    if a.facts:
+        Path(a.facts).write_text(json.dumps(collect_facts(report, classes, findings, trace, meta),
+                                            ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(a.out)
     return 0
 
 
+def collect_facts(report: MatchReport, classes: dict[str, str], findings: list[Finding],
+                  trace: dict, meta: dict) -> dict:
+    """정본 수치(spec §4.5). 문서는 이 값을 `<!-- fact:id -->` 마커와 함께 인용만 한다."""
+    from collections import Counter
+    c_hit, c_tot = report.recall_cve()
+    s_hit, e_tot = report.recall_entry(strict=True)
+    l_hit, _ = report.recall_entry(strict=False)
+    facts: dict = {
+        "sca.recall_cve": f"{c_hit}/{c_tot}",
+        "sca.recall_entry_strict": f"{s_hit}/{e_tot}",
+        "sca.recall_entry_loose": f"{l_hit}/{e_tot}",
+        "sca.missed": len(report.missed()),
+        "sca.missed_high": sum(1 for m in report.missed() if (m.entry.severity_team or "").upper() == "HIGH"),
+        "sca.false_positive": len(report.false_positives()),
+        "sca.extras": len(report.extras),
+        "findings.total": len(findings),
+    }
+    for cls, n in sorted(Counter(classes.get(f.dedup_key, "미분류") for f in report.extras).items()):
+        facts[f"sca.extras.{cls}"] = n
+    for cat, n in sorted(Counter(f.category for f in findings).items()):
+        facts[f"findings.{cat}"] = n
+    for s in trace.get("stages", []):
+        facts[f"attrition.{s['stage']}"] = s["count"]
+    for s in meta.get("scanner_status", []):
+        facts[f"scanner.{s['tool']}"] = s["status"]
+    for st, n in sorted(Counter((f.reachability.status if f.reachability else "none")
+                                for f in findings if f.category == "sca").items()):
+        facts[f"reach.{st}"] = n
+    return facts
+
+
 if __name__ == "__main__":
     raise SystemExit(main())
+```
+
+`tools/verify/known_fp.py` 끝에 추가:
+
+```python
+def render(result: dict) -> str:
+    """known-FP 3단계 문서(생성기 — reconcile 이 같은 함수로 재생성해 비교한다)."""
+    rows = "\n".join(f"| {k} | {v} |" for k, v in result.items())
+    return "# known-FP CVE-2025-59250 (mssql-jdbc) 3단계\n\n| 단계 | 결과 |\n|---|---|\n" + rows + "\n"
+```
+
+`tools/verify/profile_contract.py` 끝에 추가:
+
+```python
+def render_doc(statuses: dict[str, str]) -> str:
+    """프로파일 계약 문서(생성기 — reconcile 재생성 비교 대상)."""
+    return "# 프로파일 계약 (spec §8 vs 구현 vs 실제)\n\n" + render(compare_profiles(), statuses) + "\n"
+```
+
+`tests/test_verify_tools.py` 에 추가:
+
+```python
+def test_collect_facts_ids_and_values():
+    from tools.verify.report import collect_facts
+    m = GtManifest("gt-b-sca", "a483b3b1", "2026-08-31", entries=(
+        GtEntry("CVE-1", "g:a", "1.0", "present", "team", 1, severity_team="HIGH"),
+        GtEntry("CVE-2", "g:b", "1.0", "present", "team", 2),), raw_entries=())
+    fs = [_sca("g:a", "1.0", "CVE-1"), _sca("g:z", "9.9", "CVE-9")]
+    rep = match_ground_truth(fs, m)
+    facts = collect_facts(rep, {fs[1].dedup_key: "inventory-diff"}, fs,
+                          {"stages": [{"stage": "merge", "count": 2}, {"stage": "final", "count": 2}]},
+                          {"scanner_status": [{"tool": "trivy", "status": "ok"}]})
+    assert facts["sca.recall_cve"] == "1/2" and facts["sca.missed"] == 1 and facts["sca.missed_high"] == 0
+    assert facts["sca.extras"] == 1 and facts["sca.extras.inventory-diff"] == 1
+    assert facts["attrition.final"] == 2 and facts["scanner.trivy"] == "ok" and facts["findings.sca"] == 2
+
+
+def test_known_fp_render_and_profile_render_doc_are_full_docs():
+    from tools.verify.known_fp import render as render_fp
+    from tools.verify.profile_contract import render_doc
+    fp = render_fp({"component_present": True, "version_preserved": True, "not_reported": True, "found_version": "13.2.1.jre11"})
+    assert fp.startswith("# known-FP CVE-2025-59250") and "| not_reported | True |" in fp
+    doc = render_doc({"trivy": "ok"})
+    assert doc.startswith("# 프로파일 계약") and "standard" in doc
 ```
 
 - [ ] **Step 6: 통과 확인**
@@ -1656,66 +1740,87 @@ git commit -m "feat(V2): 측정 리포트(attrition·대조·사람판정 비교
 **Files:**
 - Create: `docs/verification/results/<YYYY-MM-DD>/gt-b-match.md`, `known-fp.md`, `profile-contract.md`, `extras-triage.json`
 
-- [ ] **Step 1: 대조 리포트 생성**
+- [ ] **Step 0: BOM 을 증거에 보존 (known-FP 재현성 — 캐시는 tmp 라 사라진다)**
 
 ```bash
 export VDATE=<Task 6 의 날짜>; export EVD=docs/verification/evidence/$VDATE; export RES=docs/verification/results/$VDATE; mkdir -p $RES
-.venv/bin/python -m tools.verify.report --evidence $EVD/a483b3b1-standard \
-  --gt docs/verification/ground-truth/gt-b-sca.json --out $RES/gt-b-match.md
-```
-Expected: `gt-b-match.md` 에 CVE 단위 recall `N/46`, 미탐 표, 초과분 표.
+export SCRATCH=/private/tmp/secscan-verify
+cp "$(.venv/bin/python -c 'from pathlib import Path; from secscan.sbom import bom_cache_path; print(bom_cache_path(Path("/private/tmp/secscan-verify/a483b3b1/repo")))')" $EVD/a483b3b1-standard/raw/bom.cdx.json
+.venv/bin/python -c "import json,sys; d=json.load(open('$EVD/a483b3b1-standard/raw/bom.cdx.json')); print('components', len(d['components']))"
+git add $EVD/a483b3b1-standard/raw/bom.cdx.json
+git commit -m "docs(V1): 증거에 cdxgen BOM 보존(a483b3b1) — known-FP 3단계·입력면 재생성용
 
-- [ ] **Step 2: known-FP 3단계**
+다음: V2 대조 리포트"
+```
+Expected: components 196.
+
+- [ ] **Step 1: 대조 리포트 + 정본 수치 생성**
+
+```bash
+.venv/bin/python -m tools.verify.report --evidence $EVD/a483b3b1-standard \
+  --gt docs/verification/ground-truth/gt-b-sca.json --out $RES/gt-b-match.md --facts $RES/facts.json
+```
+Expected: `gt-b-match.md` 에 CVE 단위 recall `N/46`, 미탐 표, 초과분 표. `facts.json` 에 `sca.recall_cve` 등 정본 수치. **이 두 파일은 손으로 고치지 않는다.**
+
+- [ ] **Step 2: known-FP 3단계 (생성기 함수만 사용)**
 
 ```bash
 .venv/bin/python - <<'EOF'
-import json, sys
-from pathlib import Path
-from tools.verify.known_fp import check_known_fp
-from secscan.sbom import bom_cache_path
 import os
+from pathlib import Path
+from tools.verify.known_fp import check_known_fp, render
 evd = Path(os.environ["EVD"]) / "a483b3b1-standard"
-scratch_repo = Path(os.environ.get("SCRATCH", "/private/tmp/secscan-verify")) / "a483b3b1" / "repo"
-bom = bom_cache_path(scratch_repo)
-r = check_known_fp(bom.read_text(), (evd / "raw" / "trivy.json").read_text(),
+r = check_known_fp((evd / "raw" / "bom.cdx.json").read_text(), (evd / "raw" / "trivy.json").read_text(),
                    package="com.microsoft.sqlserver:mssql-jdbc", advisory="CVE-2025-59250",
                    expected_version="13.2.1.jre11")
-Path(os.environ["RES"], "known-fp.md").write_text(
-    "# known-FP CVE-2025-59250 (mssql-jdbc) 3단계\n\n| 단계 | 결과 |\n|---|---|\n"
-    + "\n".join(f"| {k} | {v} |" for k, v in r.items()) + "\n")
+Path(os.environ["RES"], "known-fp.md").write_text(render(r), encoding="utf-8")
 print(r)
 EOF
 ```
-Expected: 세 값 모두 True 가 게이트. False 가 있으면 어느 단계인지 그대로 기록(예: cdxgen 이 `.jre11` 을 잃으면 `version_preserved=False`).
+Expected: 세 값 모두 True 가 게이트. False 가 있으면 어느 단계인지 그대로 기록(예: cdxgen 이 `.jre11` 을 잃으면 `version_preserved=False`). 결과를 해석하거나 고치지 않는다.
 
-- [ ] **Step 3: 프로파일 계약**
+- [ ] **Step 3: 프로파일 계약 (생성기 함수만 사용)**
 
 ```bash
 .venv/bin/python - <<'EOF'
 import json, os
 from pathlib import Path
-from tools.verify.profile_contract import compare_profiles, render
+from tools.verify.profile_contract import render_doc
 meta = json.loads((Path(os.environ["EVD"]) / "a483b3b1-deep" / "meta.json").read_text())
 statuses = {s["tool"]: s["status"] for s in meta["scanner_status"]}
-Path(os.environ["RES"], "profile-contract.md").write_text("# 프로파일 계약 (spec §8 vs 구현 vs 실제)\n\n" + render(compare_profiles(), statuses) + "\n")
+Path(os.environ["RES"], "profile-contract.md").write_text(render_doc(statuses), encoding="utf-8")
 EOF
 ```
 
-- [ ] **Step 4: 초과분 수동 triage**
+- [ ] **Step 4: 초과분 triage — 실행자는 판단하지 않는다 (spec §4.5)**
 
-`gt-b-match.md` 의 초과 탐지 표를 보고 `our-fp` 여부를 판단해 `$RES/extras-triage.json` 에 기록한다. 자동 분류(`team-missed`/`db-drift`/`inventory-diff`/`unknown-date`)를 덮어쓸 때만 항목을 만든다. 판단 근거는 advisory 의 영향 버전 범위와 우리 설치 버전 비교다.
+`$RES/extras-triage.json` 을 아래 형식으로 만든다. **`overrides` 는 항상 `[]`** — 자동 분류(`team-missed`/`db-drift`/`inventory-diff`/`unknown-date`)를 실행자가 덮어쓰는 것은 금지다(오탐 추론 금지). 자동 분류가 의심스러운 항목(예: 설치 버전이 advisory 영향 범위 밖으로 보이는 경우)은 `needs_human` 에 **질문 형태**로만 적는다. 사람이 확정하면 `overrides` 에 `provenance: "human:<이름>"` 과 함께 추가한다(이 플랜 범위 밖).
 
 ```json
 {"@context": "secscan-extras-triage/v1", "evidence": "<EVD>/a483b3b1-standard",
- "overrides": [
-   {"dedup_key": "sca|maven|<pkg>|<ver>|<CVE>", "class": "our-fp", "reason": "영향 범위 밖 버전 — trivy 범위 판정 오류 의심"}
+ "overrides": [],
+ "needs_human": [
+   {"dedup_key": "sca|maven|<pkg>|<ver>|<CVE>", "auto_class": "team-missed",
+    "question": "trivy 는 <ver> 를 영향 범위로 보는데 advisory 본문의 영향 범위와 일치하는지 확인 필요"}
  ]}
 ```
-초과분이 없거나 전부 자동 분류로 충분하면 `"overrides": []`.
+의심 항목이 없으면 `"needs_human": []`.
 
-- [ ] **Step 5: 게이트 판정 기록 + 커밋**
+- [ ] **Step 5: 게이트 판정 기록(정본 인용만) + 커밋**
 
-`$RES/gate-v2.md`: 축 1(프로파일 드리프트 전건 문서화 ✓/✗), 축 2(CVE recall N/46 ≥ 44?, HIGH/Important 미탐 수), 축 3(mssql 3단계), 축 4(미분류 0?). 미통과 항목은 "백로그 P1 후보" 로 표기.
+`$RES/gate-v2.md` 의 **모든 수치는 `facts.json` 의 값을 그대로 옮기고 옆에 `<!-- fact:<id> -->` 마커**를 단다. ✓/✗ 는 spec §5 게이트 기준을 수치에 기계적으로 적용한 결과이며(기준을 문장으로 함께 적음), 실행자의 해석을 덧붙이지 않는다. 예:
+
+```markdown
+# 게이트 V2 (정본: facts.json)
+
+| 축 | 기준 | 측정값 | 판정 |
+|---|---|---|---|
+| 1 프로파일 계약 | 드리프트 전건 문서화 | profile-contract.md 행 수 N <!-- fact:profile.rows --> · 드리프트 M <!-- fact:profile.drift --> | ✓ (문서화됨) |
+| 2 SCA recall | CVE 단위 ≥ 44/46, HIGH 미탐 ≤ 1 | 38/46 <!-- fact:sca.recall_cve --> · HIGH 미탐 3 <!-- fact:sca.missed_high --> | ✗ → 백로그 P1 후보 |
+| 3 known-FP | 3단계 모두 True | known-fp.md 참조 (component_present/version_preserved/not_reported) | ✓/✗ |
+| 4 초과분 | 미분류 0 | 초과 7 <!-- fact:sca.extras --> · 미분류 0 <!-- fact:sca.extras.미분류 --> | ✓ |
+```
+(위 숫자는 형식 예시다 — 실제 값은 `facts.json` 에서 옮긴다. `profile.rows`/`profile.drift` 는 `profile-contract.md` 표에서 세어 `facts.json` 에 `facts-profile.json` 으로 별도 저장: `{"profile.rows": N, "profile.drift": M}` — 세는 스크립트 한 줄을 문서에 남긴다.)
 
 ```bash
 git add docs/verification/results
@@ -1738,7 +1843,8 @@ git commit -m "docs(V2): GT-B 대조 실측 — CVE recall N/46, known-FP 3단�
 - `inventory_from_trivy(trivy_json: str) -> dict[str, str]` (`Results[].Packages[]` 또는 `Vulnerabilities[]` 의 PkgName/InstalledVersion)
 - `diff_inventories(a, b) -> dict` with `only_a`, `only_b`, `version_differs: dict[pkg, (va, vb)]`
 - `compare_installed(inv: dict, manifest: GtManifest) -> list[dict]` — 정답지 설치버전 vs 인벤토리
-- `render(diff, cmp) -> str`
+- `render(diff, cmp_bom, cmp_jar) -> str`
+- `render_doc(ok: bool, bom_json: str, jar_json: str, manifest: GtManifest) -> str` — 문서 전체(제목 포함). `main` 은 이 함수로만 md 를 만들고, `input-surface.status.json`(`{"jar_build_scan_ok": bool}`)을 함께 저장한다 — reconcile(Task 13)이 저장된 `input-surface.trivy-fs.json`·증거 `raw/bom.cdx.json`·status 로 같은 문서를 재생성해 비교한다.
 
 - [ ] **Step 1: 실패하는 테스트 작성**
 
@@ -1877,14 +1983,21 @@ def main(argv: list[str] | None = None) -> int:
     out = Path(a.out)
     jar_json = out.with_suffix(".trivy-fs.json")
     ok = build_and_scan_jar(Path(a.repo_dir), jar_json)
-    inv_bom = inventory_from_bom(Path(a.bom).read_text(encoding="utf-8"))
-    inv_jar = inventory_from_trivy(jar_json.read_text(encoding="utf-8")) if jar_json.exists() else {}
-    m = load_gt_manifest(a.gt)
-    md = f"# 입력면 교차 — jar 빌드/스캔 {'성공' if ok else '실패(부분)'}\n\n" + render(
-        diff_inventories(inv_bom, inv_jar), compare_installed(inv_bom, m), compare_installed(inv_jar, m))
-    out.write_text(md, encoding="utf-8")
+    jar_text = jar_json.read_text(encoding="utf-8") if jar_json.exists() else "{}"
+    if not jar_json.exists():
+        jar_json.write_text("{}", encoding="utf-8")  # reconcile 재생성용 — 실패도 파일로 남긴다
+    out.with_name("input-surface.status.json").write_text(json.dumps({"jar_build_scan_ok": ok}) + "\n", encoding="utf-8")
+    out.write_text(render_doc(ok, Path(a.bom).read_text(encoding="utf-8"), jar_text, load_gt_manifest(a.gt)), encoding="utf-8")
     print(out)
     return 0
+
+
+def render_doc(ok: bool, bom_json: str, jar_json: str, manifest: GtManifest) -> str:
+    """입력면 교차 문서 전체(생성기 — reconcile 이 같은 입력으로 재생성해 비교한다)."""
+    inv_bom = inventory_from_bom(bom_json)
+    inv_jar = inventory_from_trivy(jar_json) if jar_json.strip() not in ("", "{}") else {}
+    return f"# 입력면 교차 — jar 빌드/스캔 {'성공' if ok else '실패(부분)'}\n\n" + render(
+        diff_inventories(inv_bom, inv_jar), compare_installed(inv_bom, manifest), compare_installed(inv_jar, manifest))
 
 
 if __name__ == "__main__":
@@ -2113,7 +2226,8 @@ git commit -m "test(V3): reach-app 도달성 쌍 픽스처 — 취약 API reacha
 - `find_expected(findings, entry: dict) -> list[Finding]` — `rule_id.endswith(expected_rule_suffix)` ∧ `location.file.endswith(file_suffix)`.
 - `evaluate_pair(entry: dict, vuln_findings, fixed_findings) -> dict` with `present_in_vulnerable`, `absent_in_fixed`, `tier_vulnerable`, `passed`(in-category 만 판정), `observed`(measure-then-classify: 취약 스냅샷에서 해당 파일에 걸린 rule_id 목록).
 - `render(rows) -> str`
-- CLI `main`: `--evidence-root <EVD> --gt gt-a-source.json --out <md>` — `<EVD>/<sha>-standard/findings.json` 을 읽는다(Task 6 산출물).
+- CLI `main`: `--evidence-root <EVD> --gt gt-a-source.json --out <md> [--facts <json>]` — `<EVD>/<sha>-standard/findings.json` 을 읽는다(Task 6 산출물). `--facts` 는 `collect_facts(rows)` 를 저장(`gta.in_category_pass`="m/t", 행별 `gta.row<i>.<cwe>.passed`, measure-then-classify 는 `gta.row<i>.<cwe>.observed`).
+- `collect_facts(rows: list[dict]) -> dict`
 
 - [ ] **Step 1: 실패하는 테스트 작성**
 
@@ -2227,6 +2341,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--evidence-root", required=True)
     p.add_argument("--gt", required=True)
     p.add_argument("--out", required=True)
+    p.add_argument("--facts", default=None, help="정본 수치 JSON(spec §4.5)")
     a = p.parse_args(argv)
     root = Path(a.evidence_root)
     rows = []
@@ -2238,8 +2353,22 @@ def main(argv: list[str] | None = None) -> int:
     in_cat = [r for r in rows if r["class"] == "in-category"]
     md = (f"# GT-A differential — 범주 내 {sum(1 for r in in_cat if r['passed'])}/{len(in_cat)} PASS\n\n" + render(rows))
     Path(a.out).write_text(md, encoding="utf-8")
+    if a.facts:
+        Path(a.facts).write_text(json.dumps(collect_facts(rows), ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(a.out)
     return 0
+
+
+def collect_facts(rows: list[dict]) -> dict:
+    """정본 수치(spec §4.5). 판정은 evaluate_pair 의 기계적 결과를 그대로 옮긴다."""
+    in_cat = [r for r in rows if r["class"] == "in-category"]
+    facts: dict = {"gta.in_category_pass": f"{sum(1 for r in in_cat if r['passed'])}/{len(in_cat)}"}
+    for i, r in enumerate(rows):
+        if r["class"] == "in-category":
+            facts[f"gta.row{i}.{r['cwe']}.passed"] = str(r["passed"])
+        elif r["class"] == "measure-then-classify":
+            facts[f"gta.row{i}.{r['cwe']}.observed"] = ", ".join(r.get("observed", [])) or "없음"
+    return facts
 
 
 if __name__ == "__main__":
@@ -2262,13 +2391,13 @@ git commit -m "feat(V3): GT-A differential — 취약 출현·수정 소멸·tie
 ```bash
 export VDATE=<Task 6 날짜>; export EVD=docs/verification/evidence/$VDATE; export RES=docs/verification/results/$VDATE
 .venv/bin/python -m tools.verify.differential --evidence-root $EVD \
-  --gt docs/verification/ground-truth/gt-a-source.json --out $RES/gt-a-differential.md
+  --gt docs/verification/ground-truth/gt-a-source.json --out $RES/gt-a-differential.md --facts $RES/facts-gta.json
 ```
 Expected: 범주 내 4행(259·760·#305 ×2) PASS 여부 + measure-then-classify 2행의 관측 룰. FAIL 이면 해당 증거 디렉토리의 `raw/semgrep.json` 에서 룰 id·파일을 확인해 원인(룰 미로드 / 경로 제외 / 파일명 불일치)을 `gate-v3.md` 에 적는다.
 
 - [ ] **Step 6: 게이트 기록 + 커밋**
 
-`$RES/gate-v3.md`: 축 6 — (a) 사람 판정 비교표는 `gt-b-match.md` 하단, (b) false-unreachable: `tests/test_reach_app.py` xfail 1건 = **게이트 미통과, 백로그 P1**(프레임워크 활성화 라이브러리), (c) 증거 `findings.json` 의 unknown 비율. 축 7 — differential PASS 수, tier 기대 일치, measure-then-classify 관측 결과와 사후 분류.
+`$RES/gate-v3.md`(모든 수치에 `<!-- fact:<id> -->` 마커 — `facts-gta.json`·`facts.json` 값만 인용; reach-app xfail 수는 pytest 출력 줄을 코드블록으로 인용): 축 6 — (a) 사람 판정 비교표는 `gt-b-match.md` 하단, (b) false-unreachable: `tests/test_reach_app.py` xfail 1건 = **게이트 미통과, 백로그 P1**(프레임워크 활성화 라이브러리), (c) 증거 `findings.json` 의 unknown 비율. 축 7 — differential PASS 수, tier 기대 일치, measure-then-classify 관측 결과와 사후 분류.
 
 ```bash
 git add docs/verification/results
@@ -2287,7 +2416,7 @@ git commit -m "docs(V3): GT-A differential 실측 + 도달성 축 게이트 기�
 
 - [ ] **Step 1: 측정 문서 작성**
 
-`docs/verification/results/<date>/` 의 md 들을 절로 묶는다. 구성(spec §5 순서): 요약(축별 게이트 ✓/✗ 표) → 환경·격리·도구 버전(meta.json) → 축 1 프로파일 계약 → 축 2~4 SCA(recall 표·미탐·known-FP 3단계·초과분 분류) → 축 5 입력면 → 축 6 도달성(사람 판정 비교표 + reach-app 결과) → 축 7 GT-A differential → 부수 측정(시간·메모리) → **백로그 후보(우선순위)**: 게이트 미통과 항목을 P1 로, 관측된 갭을 P2 로. 마지막에 "플랜 2(V4~V7)에서 확정" 표기. 수치는 결과 파일에서 전사하고 추정치를 쓰지 않는다.
+`docs/verification/results/<date>/` 의 md 들을 절로 묶는다. 구성(spec §5 순서): 요약(축별 게이트 ✓/✗ 표) → 환경·격리·도구 버전(meta.json) → 축 1 프로파일 계약 → 축 2~4 SCA(recall 표·미탐·known-FP 3단계·초과분 분류) → 축 5 입력면 → 축 6 도달성(사람 판정 비교표 + reach-app 결과) → 축 7 GT-A differential → 부수 측정(시간·메모리) → **백로그 후보(우선순위)**: 게이트 미통과 항목을 P1 로, 관측된 갭을 P2 로. 마지막에 "플랜 2(V4~V7)에서 확정" 표기. 수치는 `facts*.json` 의 값을 그대로 옮기고 **요약 표의 모든 수치 셀에 `<!-- fact:<id> -->` 마커**를 단다(Task 13 정본 검증기가 대조). 추정치·해석 수치 금지. 생성 문서(`gt-b-match.md` 등)는 내용을 바꾸지 말고 인용(파일 경로 + 핵심 표 복사)한다.
 
 - [ ] **Step 2: PROGRESS.md 에 V 절 추가**
 
@@ -2296,7 +2425,7 @@ git commit -m "docs(V3): GT-A differential 실측 + 도달성 축 게이트 기�
 - [x] V0 정답지 매니페스트 3종 + 대조기(match_ground_truth/classify_extras)
 - [x] V1 TraceSink 단계 추적 + findings.json + tools/verify 격리 하네스 + 증거 동결(docs/verification/evidence/<date>)
 - [x] V2 SCA 실측: CVE recall N/46 · known-FP 3단계 · 프로파일 계약 · 초과분 triage · 입력면 교차
-- [x] V3 도달성 쌍 픽스처(reach-app, false-unreachable xfail) + GT-A differential
+- [x] V3 도달성 쌍 픽스처(reach-app, false-unreachable xfail) + GT-A differential + 정본 검증(reconcile ✓)
 - [ ] V4~V7 → 플랜 2 (판정 단계 H · 모델 확장 · xlsx · 변이 픽스처 · 최종 문서)
 ```
 
@@ -2314,8 +2443,330 @@ git commit -m "docs(V3): message-gate 검증 측정 문서 중간본 + PROGRESS/
 
 ---
 
+### Task 13: 정본 검증기 `tools/verify/reconcile.py` (spec §4.5 · 축 9 — 측정 사실성)
+
+**Files:**
+- Create: `tools/verify/reconcile.py`
+- Test: `tests/test_verify_tools.py` (추가)
+- Create: `docs/verification/results/<date>/reconcile-report.md`
+
+**Interfaces:**
+- Consumes: `report.main/collect_facts`(Task 7), `known_fp.check_known_fp/render`(Task 7), `profile_contract.render_doc`(Task 7), `jar_surface.render_doc`(Task 9), `differential.main`(Task 11), `secscan.output.json_io.from_json`, `secscan.measure.load_gt_manifest`.
+- Produces: `parse_markers(md) -> list[tuple[str, str]]`(fact_id, 문서값), `check_markers(md, facts) -> list[dict]`, `unmarked_numbers(md, section: str | None) -> list[str]`, `check_provenance(triage: dict) -> list[dict]`, `raw_vs_typed(trivy_json, findings) -> dict`, `regenerate(results_dir, evidence_root, gt_b, gt_a) -> list[dict]`, `load_facts(results_dir) -> dict`, `render_report(...) -> str`, `main(argv) -> int` (`--results --evidence-root --gt-b --gt-a [--measurement <md>] [--out <md>]`, exit 0=통과 / 1=위반).
+
+- [ ] **Step 1: 실패하는 테스트 작성 (`tests/test_verify_tools.py` 끝에 추가)**
+
+```python
+# --- V3: 정본 검증기 (spec §4.5) ---
+from tools.verify.reconcile import (check_markers, check_provenance, parse_markers, raw_vs_typed,
+                                    regenerate, unmarked_numbers)
+
+
+def test_parse_and_check_markers():
+    md = "| recall | 38/46 <!-- fact:sca.recall_cve --> | 미탐 3 <!-- fact:sca.missed --> |"
+    assert parse_markers(md) == [("sca.recall_cve", "38/46"), ("sca.missed", "3")]
+    rows = check_markers(md, {"sca.recall_cve": "38/46", "sca.missed": 4})
+    assert [r["ok"] for r in rows] == [True, False] and rows[1]["fact"] == "4"
+    assert check_markers("7 <!-- fact:nope -->", {})[0]["ok"] is False
+
+
+def test_unmarked_numbers_only_in_section_tables():
+    md = ("## 요약\n| 축 | 값 |\n|---|---|\n| a | 38/46 <!-- fact:x --> |\n| b | 7 |\n| c | 2026-09-05 |\n"
+          "## 기타\n| z | 99 |\n")
+    assert unmarked_numbers(md, "요약") == ["7"]
+    assert unmarked_numbers(md, None) == ["7", "99"]
+
+
+def test_check_provenance_requires_human():
+    t = {"overrides": [{"dedup_key": "k1", "provenance": "human:picpal"}, {"dedup_key": "k2", "provenance": "ai:claude"},
+                       {"dedup_key": "k3"}]}
+    assert [r["ok"] for r in check_provenance(t)] == [True, False, False]
+    assert check_provenance({"overrides": []}) == []
+
+
+def test_raw_vs_typed_cardinality():
+    trivy = json.dumps({"Results": [{"Vulnerabilities": [{"VulnerabilityID": "CVE-1"}, {"VulnerabilityID": "CVE-2"}]}]})
+    r = raw_vs_typed(trivy, [_sca("g:a", "1.0", "CVE-1")])
+    assert (r["raw_count"], r["typed_count"], r["only_raw"], r["only_typed"]) == (2, 1, ["CVE-2"], [])
+
+
+def _fake_results(tmp_path):
+    """가짜 증거 + 그 증거로 생성한 결과 문서 — 재생성 비교의 양성 케이스."""
+    from tools.verify import differential, report
+    from tools.verify.jar_surface import render_doc as render_surface
+    from tools.verify.known_fp import check_known_fp, render as render_fp
+    from tools.verify.profile_contract import render_doc as render_profiles
+    from secscan.output.json_io import to_json
+    ev = tmp_path / "evidence"; std = ev / "a483b3b1-standard"; (std / "raw").mkdir(parents=True)
+    fs = [_sca("org.apache.tomcat.embed:tomcat-embed-core", "11.0.22", "CVE-2026-1"),
+          _sca("com.microsoft.sqlserver:mssql-jdbc", "13.2.1.jre11", "CVE-2020-9")]
+    (std / "findings.json").write_text(to_json(fs), encoding="utf-8")
+    (std / "trace.json").write_text(json.dumps({"raw": [{"tool": "trivy", "status": "ok", "bytes": 1}],
+                                                "stages": [{"stage": "merge", "count": 2}, {"stage": "final", "count": 2}]}), encoding="utf-8")
+    (std / "meta.json").write_text(json.dumps({"scanner_status": [{"tool": "trivy", "status": "ok"}]}), encoding="utf-8")
+    (std / "raw" / "trivy.json").write_text(json.dumps({"Results": [{"Target": "Java", "Vulnerabilities": [
+        {"VulnerabilityID": "CVE-2026-1", "PkgName": "org.apache.tomcat.embed:tomcat-embed-core", "InstalledVersion": "11.0.22", "PublishedDate": "2026-08-25T00:00:00Z"}]}]}), encoding="utf-8")
+    (std / "raw" / "bom.cdx.json").write_text(json.dumps({"components": [
+        {"group": "com.microsoft.sqlserver", "name": "mssql-jdbc", "version": "13.2.1.jre11", "purl": "pkg:maven/com.microsoft.sqlserver/mssql-jdbc@13.2.1.jre11?type=jar"}]}), encoding="utf-8")
+    deep = ev / "a483b3b1-deep"; deep.mkdir()
+    (deep / "meta.json").write_text(json.dumps({"scanner_status": [{"tool": "trivy", "status": "ok"}, {"tool": "spotbugs", "status": "ok"}]}), encoding="utf-8")
+    res = tmp_path / "results"; res.mkdir()
+    gt_b = "docs/verification/ground-truth/gt-b-sca.json"; gt_a = "docs/verification/ground-truth/gt-a-source.json"
+    report.main(["--evidence", str(std), "--gt", gt_b, "--out", str(res / "gt-b-match.md"), "--facts", str(res / "facts.json")])
+    differential.main(["--evidence-root", str(ev), "--gt", gt_a, "--out", str(res / "gt-a-differential.md"), "--facts", str(res / "facts-gta.json")])
+    r = check_known_fp((std / "raw" / "bom.cdx.json").read_text(), (std / "raw" / "trivy.json").read_text(),
+                       package="com.microsoft.sqlserver:mssql-jdbc", advisory="CVE-2025-59250", expected_version="13.2.1.jre11")
+    (res / "known-fp.md").write_text(render_fp(r), encoding="utf-8")
+    (res / "profile-contract.md").write_text(render_profiles({"trivy": "ok", "spotbugs": "ok"}), encoding="utf-8")
+    (res / "input-surface.trivy-fs.json").write_text("{}", encoding="utf-8")
+    (res / "input-surface.status.json").write_text(json.dumps({"jar_build_scan_ok": False}), encoding="utf-8")
+    from secscan.measure import load_gt_manifest
+    (res / "input-surface.md").write_text(render_surface(False, (std / "raw" / "bom.cdx.json").read_text(), "{}", load_gt_manifest(gt_b)), encoding="utf-8")
+    return res, ev, gt_b, gt_a
+
+
+def test_regenerate_passes_then_detects_tampering(tmp_path):
+    res, ev, gt_b, gt_a = _fake_results(tmp_path)
+    rows = regenerate(res, ev, gt_b, gt_a)
+    assert rows and all(r["ok"] for r in rows), rows
+    p = res / "gt-b-match.md"; p.write_text(p.read_text(encoding="utf-8") + "\n손으로 고친 줄", encoding="utf-8")
+    rows = regenerate(res, ev, gt_b, gt_a)
+    assert [r["doc"] for r in rows if not r["ok"]] == ["gt-b-match.md"]
+
+
+def test_reconcile_main_exit_code(tmp_path):
+    from tools.verify.reconcile import main
+    res, ev, gt_b, gt_a = _fake_results(tmp_path)
+    facts = json.loads((res / "facts.json").read_text(encoding="utf-8"))
+    (res / "gate-v2.md").write_text(f"# 게이트\n| 축 | 값 |\n|---|---|\n| recall | {facts['sca.recall_cve']} <!-- fact:sca.recall_cve --> |\n", encoding="utf-8")
+    assert main(["--results", str(res), "--evidence-root", str(ev), "--gt-b", gt_b, "--gt-a", gt_a]) == 0
+    assert (res / "reconcile-report.md").read_text(encoding="utf-8").rstrip().endswith("✓ 통과")
+    (res / "gate-v2.md").write_text("# 게이트\n| 축 | 값 |\n|---|---|\n| recall | 46/46 <!-- fact:sca.recall_cve --> | 3 |\n", encoding="utf-8")
+    assert main(["--results", str(res), "--evidence-root", str(ev), "--gt-b", gt_b, "--gt-a", gt_a]) == 1
+```
+
+- [ ] **Step 2: 실패 확인**
+
+Run: `.venv/bin/pytest tests/test_verify_tools.py -q -k "markers or unmarked or provenance or raw_vs_typed or regenerate or reconcile_main"`
+Expected: FAIL — `ModuleNotFoundError: tools.verify.reconcile`
+
+- [ ] **Step 3: `tools/verify/reconcile.py`**
+
+```python
+"""정본 검증기 — 결과 문서의 수치가 증거에서 재계산한 정본과 같은지 기계적으로 검사(spec §4.5, 축 9).
+
+AI(컨트롤러·서브에이전트)가 쓴 수치·분류·판정이 섞였는지 잡는다. 위반이면 문서를 고친다 — 정본은 불변.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import tempfile
+from pathlib import Path
+
+from secscan.measure import load_gt_manifest
+from secscan.output.json_io import from_json
+
+from . import differential, report
+from .jar_surface import render_doc as render_surface
+from .known_fp import check_known_fp, render as render_fp
+from .profile_contract import render_doc as render_profiles
+
+_MARK = re.compile(r"(\S+)\s*<!--\s*fact:([A-Za-z0-9_.\-/가-힣]+)\s*-->")
+_NUM = re.compile(r"^\d+(?:/\d+)?$")
+_KNOWN_FP = dict(package="com.microsoft.sqlserver:mssql-jdbc", advisory="CVE-2025-59250", expected_version="13.2.1.jre11")
+
+
+def parse_markers(md: str) -> list[tuple[str, str]]:
+    """`<값> <!-- fact:<id> -->` 쌍 → (id, 값)."""
+    return [(m.group(2), m.group(1)) for m in _MARK.finditer(md)]
+
+
+def check_markers(md: str, facts: dict) -> list[dict]:
+    rows = []
+    for fid, val in parse_markers(md):
+        fact = facts.get(fid)
+        rows.append({"id": fid, "doc": val, "fact": None if fact is None else str(fact),
+                     "ok": fact is not None and str(fact) == val})
+    return rows
+
+
+def unmarked_numbers(md: str, section: str | None) -> list[str]:
+    """`## <section>` 절(None=문서 전체)의 표 셀 중 수치 토큰(`N` 또는 `N/M`)인데 마커가 없는 것 = 출처 불명."""
+    out: list[str] = []
+    inside = section is None
+    for ln in md.splitlines():
+        if ln.startswith("## "):
+            if section is not None:
+                inside = ln[3:].strip().startswith(section)
+            continue
+        s = ln.strip()
+        if not inside or not s.startswith("|") or set(s) <= set("|-: "):
+            continue
+        for cell in s.strip("|").split("|"):
+            if "<!-- fact:" in cell:
+                continue
+            out.extend(tok for tok in cell.split() if _NUM.match(tok))
+    return out
+
+
+def check_provenance(triage: dict) -> list[dict]:
+    """override 는 사람 확정(`human:<이름>`)만 유효 — AI 분류 덮어쓰기 금지."""
+    rows = []
+    for o in triage.get("overrides", []) or []:
+        prov = str(o.get("provenance", "") or "")
+        rows.append({"dedup_key": o.get("dedup_key"), "provenance": prov or "(없음)", "ok": prov.startswith("human:")})
+    return rows
+
+
+def raw_vs_typed(trivy_json: str, findings) -> dict:
+    """raw trivy 고유 VulnerabilityID vs typed SCA 고유 advisory — 정규화 손실 검출(차이는 사실로 기록)."""
+    raw: set[str] = set()
+    for res in json.loads(trivy_json or "{}").get("Results", []) or []:
+        for v in res.get("Vulnerabilities") or []:
+            if v.get("VulnerabilityID"):
+                raw.add(v["VulnerabilityID"])
+    typed = {f.advisory.id for f in findings if f.category == "sca" and f.advisory}
+    return {"raw_count": len(raw), "typed_count": len(typed),
+            "only_raw": sorted(raw - typed), "only_typed": sorted(typed - raw)}
+
+
+def regenerate(results_dir, evidence_root, gt_b, gt_a) -> list[dict]:
+    """생성 문서를 같은 증거로 다시 만들어 바이트 비교."""
+    res, ev = Path(results_dir), Path(evidence_root)
+    std = ev / "a483b3b1-standard"
+    rows: list[dict] = []
+
+    def cmp(name: str, text: str) -> None:
+        p = res / name
+        if not p.exists():
+            rows.append({"doc": name, "ok": False, "note": "결과 파일 없음"})
+            return
+        same = p.read_text(encoding="utf-8") == text
+        rows.append({"doc": name, "ok": same, "note": "" if same else "재생성 결과와 다름"})
+
+    with tempfile.TemporaryDirectory() as td:
+        t = Path(td)
+        report.main(["--evidence", str(std), "--gt", str(gt_b), "--out", str(t / "m.md"), "--facts", str(t / "f.json")])
+        cmp("gt-b-match.md", (t / "m.md").read_text(encoding="utf-8"))
+        cmp("facts.json", (t / "f.json").read_text(encoding="utf-8"))
+        differential.main(["--evidence-root", str(ev), "--gt", str(gt_a), "--out", str(t / "d.md"), "--facts", str(t / "g.json")])
+        cmp("gt-a-differential.md", (t / "d.md").read_text(encoding="utf-8"))
+        cmp("facts-gta.json", (t / "g.json").read_text(encoding="utf-8"))
+    bom, trivy = std / "raw" / "bom.cdx.json", std / "raw" / "trivy.json"
+    if bom.exists() and trivy.exists():
+        cmp("known-fp.md", render_fp(check_known_fp(bom.read_text(encoding="utf-8"), trivy.read_text(encoding="utf-8"), **_KNOWN_FP)))
+    else:
+        rows.append({"doc": "known-fp.md", "ok": False, "note": "raw/bom.cdx.json 또는 raw/trivy.json 없음"})
+    deep = ev / "a483b3b1-deep" / "meta.json"
+    if deep.exists():
+        statuses = {s["tool"]: s["status"] for s in json.loads(deep.read_text(encoding="utf-8"))["scanner_status"]}
+        cmp("profile-contract.md", render_profiles(statuses))
+    jar, status = res / "input-surface.trivy-fs.json", res / "input-surface.status.json"
+    if jar.exists() and status.exists() and bom.exists():
+        ok = bool(json.loads(status.read_text(encoding="utf-8")).get("jar_build_scan_ok", False))
+        cmp("input-surface.md", render_surface(ok, bom.read_text(encoding="utf-8"), jar.read_text(encoding="utf-8"), load_gt_manifest(gt_b)))
+    else:
+        rows.append({"doc": "input-surface.md", "ok": False, "note": "trivy-fs.json / status.json / bom 없음"})
+    return rows
+
+
+def load_facts(results_dir) -> dict:
+    facts: dict = {}
+    for p in sorted(Path(results_dir).glob("facts*.json")):
+        facts.update(json.loads(p.read_text(encoding="utf-8")))
+    return facts
+
+
+def render_report(regen: list[dict], markers: dict[str, list[dict]], unmarked: dict[str, list[str]],
+                  prov: list[dict], rvt: dict) -> str:
+    L = ["# 정본 검증 (spec §4.5 · 축 9)", "", "## 생성 문서 재생성 비교", "| 문서 | 일치 | 비고 |", "|---|---|---|"]
+    L += [f"| {r['doc']} | {'✓' if r['ok'] else '✗'} | {r['note']} |" for r in regen]
+    L += ["", "## fact 마커 대조", "| 문서 | id | 문서값 | 정본값 | 일치 |", "|---|---|---|---|---|"]
+    L += [f"| {doc} | {r['id']} | {r['doc']} | {r['fact']} | {'✓' if r['ok'] else '✗'} |"
+          for doc, rows in markers.items() for r in rows]
+    un = [f"- {doc}: {', '.join(v)}" for doc, v in unmarked.items() if v]
+    L += ["", "## 출처 불명 수치(마커 없음)", *(un or ["- 없음"])]
+    pv = [f"- {r['dedup_key']}: {r['provenance']} {'✓' if r['ok'] else '✗'}" for r in prov]
+    L += ["", "## override provenance", *(pv or ["- override 없음"])]
+    L += ["", "## raw↔typed 카디널리티 (a483b3b1-standard)",
+          f"- raw trivy 고유 VulnerabilityID: {rvt['raw_count']}", f"- typed SCA 고유 advisory: {rvt['typed_count']}",
+          f"- raw 에만: {', '.join(rvt['only_raw']) or '없음'}", f"- typed 에만: {', '.join(rvt['only_typed']) or '없음'}"]
+    fails = (sum(not r["ok"] for r in regen) + sum(not r["ok"] for rows in markers.values() for r in rows)
+             + sum(len(v) for v in unmarked.values()) + sum(not r["ok"] for r in prov))
+    L += ["", f"## 판정: {'✓ 통과' if fails == 0 else f'✗ 위반 {fails}건 — 문서를 고친다(정본 불변)'}"]
+    return "\n".join(L) + "\n"
+
+
+def main(argv: list[str] | None = None) -> int:
+    p = argparse.ArgumentParser(prog="tools.verify.reconcile")
+    p.add_argument("--results", required=True)
+    p.add_argument("--evidence-root", required=True)
+    p.add_argument("--gt-b", required=True)
+    p.add_argument("--gt-a", required=True)
+    p.add_argument("--measurement", default=None, help="측정 문서(md) — `## 요약` 절 마커 검사")
+    p.add_argument("--out", default=None)
+    a = p.parse_args(argv)
+    res = Path(a.results)
+    facts = load_facts(res)
+    regen = regenerate(res, a.evidence_root, a.gt_b, a.gt_a)
+    docs: dict[str, tuple[Path, str | None]] = {"gate-v2.md": (res / "gate-v2.md", None), "gate-v3.md": (res / "gate-v3.md", None)}
+    if a.measurement:
+        docs["measurement"] = (Path(a.measurement), "요약")
+    markers: dict[str, list[dict]] = {}
+    unmarked: dict[str, list[str]] = {}
+    for name, (path, section) in docs.items():
+        if not path.exists():
+            continue
+        md = path.read_text(encoding="utf-8")
+        markers[name] = check_markers(md, facts)
+        unmarked[name] = unmarked_numbers(md, section)
+    triage = res / "extras-triage.json"
+    prov = check_provenance(json.loads(triage.read_text(encoding="utf-8"))) if triage.exists() else []
+    std = Path(a.evidence_root) / "a483b3b1-standard"
+    rvt = raw_vs_typed((std / "raw" / "trivy.json").read_text(encoding="utf-8"),
+                       from_json((std / "findings.json").read_text(encoding="utf-8")))
+    text = render_report(regen, markers, unmarked, prov, rvt)
+    Path(a.out or res / "reconcile-report.md").write_text(text, encoding="utf-8")
+    print(text.splitlines()[-1])
+    return 0 if text.rstrip().endswith("✓ 통과") else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+```
+
+- [ ] **Step 4: 통과 확인 + 전체 회귀**
+
+Run: `.venv/bin/pytest tests/test_verify_tools.py -q` 그리고 `.venv/bin/pytest -q`
+Expected: PASS (기존 green 유지)
+
+- [ ] **Step 5: 실측 결과에 실행 (문서가 틀리면 문서를 고친다)**
+
+```bash
+export VDATE=<Task 6 의 날짜>; export EVD=docs/verification/evidence/$VDATE; export RES=docs/verification/results/$VDATE
+.venv/bin/python -m tools.verify.reconcile --results $RES --evidence-root $EVD \
+  --gt-b docs/verification/ground-truth/gt-b-sca.json --gt-a docs/verification/ground-truth/gt-a-source.json \
+  --measurement docs/measurements/$VDATE-message-gate-verification.md; echo "exit=$?"
+cat $RES/reconcile-report.md
+```
+Expected: `## 판정: ✓ 통과`, exit 0. ✗ 가 있으면 **해당 문서(gate-v2/v3, 측정 문서)의 인용을 정본 값으로 고치거나 마커를 달고** 재실행한다. 생성 문서(`gt-b-match.md` 등)가 ✗ 면 손으로 고친 흔적이므로 생성기로 다시 만든다. `facts*.json` 과 생성기 코드는 이 단계에서 고치지 않는다(고쳐야 하면 BLOCKED 로 보고).
+
+- [ ] **Step 6: 커밋**
+
+```bash
+git add tools/verify/reconcile.py tests/test_verify_tools.py docs/verification/results docs/measurements
+git commit -m "feat(V3): 정본 검증기 reconcile — 생성 문서 재생성 비교·fact 마커·출처불명 수치·override provenance·raw↔typed (spec §4.5 축 9)
+
+다음: 플랜 2(V4~V7) 작성 — 판정 단계 H·모델 확장·xlsx"
+```
+
+---
+
 ## Self-Review (작성자 체크 결과)
 
-- **Spec coverage**: §3.4 매니페스트(Task 1) · §4.1 격리(Task 5) · §4.2 추적기(Task 3) · §4.3 대조기·초과분(Task 2, 7, 8) · §4.4 증거 동결(Task 4, 6) · §5 축 1(Task 7·8) 축 2~4(Task 8) 축 5(Task 9) 축 6(Task 7 비교표 + Task 10) 축 7(Task 11) · §6 도달성 픽스처(Task 10). 축 8(보고서 충실성)·§6 secret/억제/deep 픽스처·§7·§8·§9 V4~V7 은 플랜 2.
+- **Spec coverage**: §3.4 매니페스트(Task 1) · §4.1 격리(Task 5) · §4.2 추적기(Task 3) · §4.3 대조기·초과분(Task 2, 7, 8) · §4.4 증거 동결(Task 4, 6) · §5 축 1(Task 7·8) 축 2~4(Task 8) 축 5(Task 9) 축 6(Task 7 비교표 + Task 10) 축 7(Task 11) · §6 도달성 픽스처(Task 10). §4.5 정본 검증·축 9(Task 13, 2026-09-05 사용자 원칙 반영 — 실행자 수치·분류·판정 금지, facts.json 인용 + 마커). 축 8(보고서 충실성)·§6 secret/억제/deep 픽스처·§7·§8·§9 V4~V7 은 플랜 2.
 - **Placeholder scan**: `<YYYY-MM-DD>`/`<date>`/`N` 은 실행 시 채워지는 값이며, 코드·명령에는 미완성 지시 없음.
 - **Type consistency**: `GtEntry.key`, `GtManifest.raw_entries`, `MatchReport.recall_entry(strict=)`, `TraceSink.record/record_raw/to_dict`, `write_evidence(out_dir, *, result, trace, meta)`, `check_known_fp(..., package, advisory, expected_version)`, `evaluate_pair(entry, vuln, fixed)` — 정의와 사용처 일치. `Finding.advisory.aliases` 에 자기 id 포함 관례(`parse_trivy`)를 대조기가 전제함.
