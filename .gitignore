@@ -23,3 +23,6 @@ build/
 
 # OS
 .DS_Store
+
+# codex/claude 세션 컨텍스트(로컬 전용)
+.context/
