@@ -18,7 +18,7 @@ from .detect import detect_stack, suggest_profile
 from .fetch import DEFAULT_BASE, FetchError, clean, fetch, list_clones
 from .doctor import MISSING, OK, DoctorReport, run_doctor
 from .measure import reachability_stats
-from .models import UNREACHABLE, sast_tier
+from .models import ACTIONABLE
 from .output.markdown import to_markdown
 from .output.sarif import to_sarif
 from .profiles import build_adapters, get_profile
@@ -141,7 +141,7 @@ def render_scan_summary(result) -> str:
         lines.append(f"컴플라이언스: KISA 약점 {kisa_n}건 · PCI-DSS 6.2.4 {pci_n}건")
     sast = [f for f in result.findings if f.category == "sast"]
     if sast:
-        act = sum(1 for f in sast if sast_tier(f) == "actionable")
+        act = sum(1 for f in sast if f.tier == "actionable")
         lines.append(f"SAST: 우선 {act} · 검토후보 {len(sast) - act}")
     if result.secret_policy == "verify":
         lines.append(f"시크릿 검증: 적용됨 — 라이브 {result.secret_verified_count}건 확인")
@@ -160,18 +160,10 @@ def render_scan_summary(result) -> str:
 
 
 def _has_actionable(findings) -> bool:
-    # exit code 게이트(P1③): SAST 는 actionable tier 만, SCA 는 도달 가능/미상,
-    # secret 은 항상. SAST review 와 도달 불가 SCA 는 CI 를 막지 않는다.
-    for f in findings:
-        if f.category == "sast":
-            if sast_tier(f) == "actionable":
-                return True
-        elif f.category == "sca":
-            if f.reachability.status != UNREACHABLE:
-                return True
-        else:  # secret 등
-            return True
-    return False
+    """exit code 게이트 — 판정 H 가 저장한 disposition 만 읽는다(재계산 금지, spec §7.4)."""
+    if any(f.disposition is None for f in findings):
+        raise ValueError("판정 단계(H) 미실행 finding 이 있다 — run_scan 을 거치지 않은 입력")
+    return any(f.disposition == ACTIONABLE for f in findings)
 
 
 def _cmd_scan(args) -> int:

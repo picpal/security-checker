@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from ..models import REACHABLE, UNKNOWN, UNREACHABLE, Finding, sast_tier, severity_rank
+from ..models import ACTIONABLE, DEMOTED, REACHABLE, REVIEW, SUPPRESSED, UNKNOWN, UNREACHABLE, Finding, severity_rank
 
 _REACH_RANK = {REACHABLE: 2, UNKNOWN: 1, UNREACHABLE: 0}
 _REACH_LABEL = {REACHABLE: "도달 가능", UNREACHABLE: "도달 불가", UNKNOWN: "도달성 미상"}
@@ -39,7 +39,7 @@ def _line(f: Finding) -> list[str]:
         subject = f.location.file if f.location else f.rule_id
         if f.location and f.location.start_line:
             subject += f":{f.location.start_line}"
-    out = [f"### [{_SEV_KO.get(f.severity, f.severity)}] {f.rule_id} — {subject}"]
+    out = [f"### [{_SEV_KO.get(f.severity, f.severity)}] {f.rule_id} — {subject} · id `{f.id}`"]
 
     if f.category == "sca":
         reach = _REACH_LABEL.get(f.reachability.status, f.reachability.status)
@@ -126,21 +126,12 @@ def to_markdown(findings: list[Finding], *, target: str | None = None, meta: dic
         L.append(_SAST_NOTE)
     L.append("")
 
-    # 억제된 항목은 별도 섹션으로 분리(우선/낮음에서 제외).
-    suppressed = [f for f in findings if f.suppression is not None]
-    active = [f for f in findings if f.suppression is None]
-
-    # 낮은 우선순위 = 도달 불가로 판정된 SCA 만. 그 외(도달 가능/미상 SCA, 시크릿/SAST)는
-    # 모두 우선 조치. (시크릿은 도달성 개념이 없어 강등 대상이 아니다.)
-    def _is_low(f: Finding) -> bool:
-        return f.category == "sca" and f.reachability.status == UNREACHABLE
-
-    def _is_review(f: Finding) -> bool:
-        return sast_tier(f) == "review"
-
-    review = [f for f in active if _is_review(f)]
-    low = [f for f in active if _is_low(f) and not _is_review(f)]
-    priority = [f for f in active if not _is_low(f) and not _is_review(f)]
+    # 버킷은 판정 H 가 저장한 disposition 만 읽는다(재계산 금지, spec §7.4).
+    suppressed = [f for f in findings if f.disposition == SUPPRESSED]
+    review = [f for f in findings if f.disposition == REVIEW]
+    low = [f for f in findings if f.disposition == DEMOTED]
+    priority = [f for f in findings if f.disposition == ACTIONABLE]
+    undecided = [f for f in findings if f.disposition is None]
 
     L.append("## 우선 조치")
     if priority:
@@ -175,5 +166,11 @@ def to_markdown(findings: list[Finding], *, target: str | None = None, meta: dic
             L.append(f"- {f.rule_id} — {subj} · 사유: {s.reason} · 출처: {s.provenance}"
                      + (f" · 만료: {s.expiry}" if s.expiry else ""))
         L.append("")
+
+    if undecided:
+        L.append("## 미판정 (판정 단계 미실행)")
+        L.append("> ⚠️ 아래 finding 은 판정 단계 H 를 거치지 않았다(run_scan 외부 입력). 조치 대상 여부를 알 수 없다.")
+        for f in undecided:
+            L.extend(_line(f))
 
     return "\n".join(L)

@@ -5,8 +5,11 @@ properties bag 에 싣는다(spec §6). 도달성은 주석만, 자동 억제는
 """
 
 import json
+import re
 
+from secscan.disposition import decide, decide_one
 from secscan.models import (
+    ACTIONABLE,
     REACHABLE,
     UNKNOWN,
     UNREACHABLE,
@@ -16,20 +19,21 @@ from secscan.models import (
     Finding,
     Location,
     Reachability,
+    Suppression,
 )
 from secscan.output.markdown import to_markdown
 from secscan.output.sarif import to_sarif
 
 
 def _f(cve="CVE-2022-42889", sev="critical", reach=UNREACHABLE):
-    return Finding(
+    return decide_one(Finding(
         category="sca", severity=sev, title="Text4Shell", rule_id=cve,
         tool="trivy+osv-scanner", cwe=("CWE-94",),
         component=Component("maven", "org.apache.commons:commons-text", "1.9"),
         advisory=Advisory(cve, aliases=(cve,), fixed_versions=("1.10.0",)),
         reachability=Reachability(reach, source="dep-scan"),
         consensus=Consensus(("trivy", "osv-scanner"), 2),
-    )
+    ))
 
 
 def test_sarif_top_level_shape():
@@ -223,7 +227,7 @@ def test_markdown_suppressed_findings_go_to_separate_section():
     f.suppression = Suppression(state="suppressed", reason="도달 불가 확정",
                                 provenance="alice", evidence="e", expiry="2099-12-31",
                                 scope="k", basis="unreachable")
-    md = to_markdown([f])
+    md = to_markdown([decide_one(f)])  # 버킷은 판정 H 를 거친 disposition 만 읽는다
     assert "억제됨" in md
     assert "alice" in md  # provenance 노출(감사)
     # 억제된 항목은 우선 조치에 중복 노출되지 않는다
@@ -283,15 +287,15 @@ def test_markdown_separates_sast_actionable_and_review():
                   location=Location("A.java", start_line=1))
     rev = Finding(category="sast", severity="high", rule_id="REV-RULE", confidence="low",
                   location=Location("B.java", start_line=2))
-    md = to_markdown([act, rev])
+    md = to_markdown(decide([act, rev]))  # 버킷은 판정 H 를 거친 disposition 만 읽는다
     assert md.index("우선 조치") < md.index("검토 후보")
     assert md.index("ACT-RULE") < md.index("검토 후보")  # actionable 은 우선 조치에
     assert md.index("검토 후보") < md.index("REV-RULE")  # review 는 검토 후보 섹션에
 
 
 def test_sarif_carries_confidence_and_sast_tier():
-    f = Finding(category="sast", severity="high", confidence="high", rule_id="x",
-                location=Location("A.java", start_line=1))
+    f = decide_one(Finding(category="sast", severity="high", confidence="high", rule_id="x",
+                           location=Location("A.java", start_line=1)))
     props = to_sarif([f])["runs"][0]["results"][0]["properties"]
     assert props["confidence"] == "high"
     assert props["sastTier"] == "actionable"
@@ -315,3 +319,52 @@ def test_markdown_renders_actual_scanner_status_not_configured_names():
     ]})
     line = next(l for l in md.splitlines() if l.startswith("- 스캐너:"))
     assert "trivy ok (0.71.2, 8.5s)" in line and "spotbugs skipped (빌드 실패)" in line
+
+
+# --- Task 5: 출력이 disposition/tier 만 읽는다 ---
+
+def test_markdown_buckets_come_from_disposition_only():
+    reachable, unreachable = _f(cve="CVE-A", reach=REACHABLE), _f(cve="CVE-B", reach=UNREACHABLE)
+    sup = Finding(**{**unreachable.__dict__, "disposition": None, "tier": None,
+                     "suppression": Suppression("suppressed", "r", "alice", "e", None, unreachable.dedup_key)})
+    md = to_markdown(decide([reachable, unreachable, sup]))
+    pri = md.split("## 우선 조치")[1].split("## 검토 후보")[0]
+    low = md.split("## 낮은 우선순위")[1].split("## 억제됨")[0]
+    assert "CVE-A" in pri and "CVE-B" not in pri
+    assert "CVE-B" in low and "CVE-A" not in low
+    assert "## 억제됨 (사람 확정)" in md
+
+
+def test_markdown_line_carries_finding_id():
+    f = _f()
+    assert f"· id `{f.id}`" in to_markdown([f])
+
+
+def test_markdown_undecided_findings_are_visible_not_hidden():
+    raw = Finding(category="secret", severity="high", rule_id="aws", location=Location("a.properties", 4))
+    md = to_markdown([raw])  # H 미실행
+    assert "## 미판정 (판정 단계 미실행)" in md and "aws" in md.split("## 미판정")[1]
+
+
+def test_sarif_carries_id_disposition_and_tier_from_fields():
+    sast = decide_one(Finding(category="sast", severity="high", rule_id="r", confidence="high",
+                              location=Location("src/main/A.java", 3)))
+    res = to_sarif([sast])["runs"][0]["results"][0]
+    assert res["properties"]["id"] == sast.id
+    assert res["properties"]["disposition"] == ACTIONABLE
+    assert res["properties"]["sastTier"] == "actionable"
+
+
+def test_three_outputs_agree_on_actionable_set():
+    fs = decide([
+        Finding(category="sast", severity="high", rule_id="s1", confidence="high", location=Location("src/main/A.java", 1)),
+        Finding(category="sast", severity="high", rule_id="s2", confidence="low", location=Location("src/main/B.java", 1)),
+        Finding(category="secret", severity="high", rule_id="k", location=Location("c.properties", 1)),
+        Finding(category="sca", severity="high", rule_id="CVE-Z", component=Component("maven", "x:y", "1"),
+                advisory=Advisory("CVE-Z"), reachability=Reachability(UNREACHABLE)),
+    ])
+    want = {f.id for f in fs if f.disposition == ACTIONABLE}
+    md = to_markdown(fs)
+    md_ids = set(re.findall(r"· id `([0-9a-f]{12})`", md.split("## 우선 조치")[1].split("## 검토 후보")[0]))
+    sarif_ids = {r["properties"]["id"] for r in to_sarif(fs)["runs"][0]["results"] if r["properties"].get("disposition") == ACTIONABLE}
+    assert md_ids == sarif_ids == want and len(want) == 2
