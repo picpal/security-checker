@@ -821,3 +821,37 @@ def test_write_evidence_meta_carries_scanner_status_fields(tmp_path):
     write_evidence(tmp_path, result=res, trace=None, meta={"snapshot": "x"})
     meta = json.loads((tmp_path / "meta.json").read_text())
     assert meta["scanner_status"] == [{"tool": "trivy", "status": "ok", "tool_version": "0.71.2", "duration_s": 1.25}]
+
+
+def _fidelity_evidence(tmp_path, findings, meta=None):
+    from secscan.output.json_io import to_json
+    (tmp_path / "findings.json").write_text(to_json(findings, meta=meta or {}), encoding="utf-8")
+    (tmp_path / "meta.json").write_text(json.dumps(meta or {"scanner_status": [{"tool": "trivy", "status": "ok"}]}), encoding="utf-8")
+    return tmp_path
+
+
+def test_fidelity_all_formats_agree_on_decided_findings(tmp_path):
+    from secscan.disposition import decide
+    from secscan.models import Advisory, Component, Finding, Location, Reachability, UNREACHABLE
+    from tools.verify.fidelity import check, collect_facts
+    fs = decide([
+        Finding(category="sast", severity="high", rule_id="s1", confidence="high", location=Location("src/main/A.java", 1)),
+        Finding(category="secret", severity="high", rule_id="k", location=Location("c.properties", 1)),
+        Finding(category="sca", severity="high", rule_id="CVE-Z", component=Component("maven", "x:y", "1"),
+                advisory=Advisory("CVE-Z"), reachability=Reachability(UNREACHABLE)),
+    ])
+    r = check(_fidelity_evidence(tmp_path, fs))
+    assert r["roundtrip_identical"] and r["deterministic"]
+    assert r["id_set_mismatch"] == 0 and r["disposition_mismatch"] == 0 and r["undecided"] == 0
+    assert r["ids"]["markdown"] == r["ids"]["sarif"] == r["ids"]["xlsx"] == r["ids"]["findings"]
+    f = collect_facts(r)
+    assert f["fidelity.roundtrip_identical"] == "True" and f["fidelity.id_set_mismatch"] == 0
+    assert f["fidelity.actionable.findings"] == 2 and f["fidelity.meta_scanner_status_rows"] == 1
+
+
+def test_fidelity_reports_undecided_v1_style_evidence_as_fact(tmp_path):
+    from secscan.models import Finding, Location
+    from tools.verify.fidelity import check
+    raw = [Finding(category="secret", severity="high", rule_id="k", location=Location("c.properties", 1))]  # H 미실행
+    r = check(_fidelity_evidence(tmp_path, raw))
+    assert r["undecided"] == 1 and r["disposition_mismatch"] == 0  # 판정 없음은 불일치가 아니라 '미판정' 사실
