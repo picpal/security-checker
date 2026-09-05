@@ -3,6 +3,7 @@
 fake 어댑터(골든 페이로드) + 골든 슬라이스 기반 provider 로 결정적 검증.
 """
 
+import time
 from pathlib import Path
 
 from secscan.adapters.base import FAILED, OK, RawResult
@@ -20,12 +21,15 @@ SECRET_FILE = "fixtures/secret-app/config/application.properties"
 
 
 class FakeAdapter:
-    def __init__(self, name, payload="", status=OK):
+    def __init__(self, name, payload="", status=OK, delay=0.0):
         self.name = name
         self._payload = payload
         self._status = status
+        self._delay = delay  # M1(최종 리뷰) — 완료 순서를 뒤집는 테스트용 지연
 
     def run(self, target, **kw):
+        if self._delay:
+            time.sleep(self._delay)
         return RawResult(self.name, self._status, payload=self._payload)
 
 
@@ -44,6 +48,27 @@ def test_run_scan_merges_two_tools_into_consensus():
         reachability_provider=None,
     )
     assert _by_cve(res.findings, "CVE-2022-42889").consensus.score == 2
+
+
+def test_run_scan_merge_order_independent_of_adapter_completion_order():
+    """M1(최종 리뷰) — `merge_consensus` 는 첫 finding 을 base 로 삼는데, 그 순서가 스레드 완료
+    순서(orchestrate 의 as_completed 도착 순서)를 그대로 물려받으면 같은 입력도 실행마다 다른
+    `tool`(`"+".join(tools)`)·`consensus.tools` 순서를 낼 수 있다. `run_scan` 은 orchestrate 직후
+    도구 이름으로 정렬해 이 비결정성을 없앤다 — 어느 쪽이 늦게 끝나든 결과가 같아야 한다."""
+    slow_trivy = run_scan(
+        "/proj", get_profile("accurate-sca"),
+        adapters=[FakeAdapter("trivy", TRIVY, delay=0.05), FakeAdapter("osv-scanner", OSV)],
+        reachability_provider=None,
+    )
+    slow_osv = run_scan(
+        "/proj", get_profile("accurate-sca"),
+        adapters=[FakeAdapter("trivy", TRIVY), FakeAdapter("osv-scanner", OSV, delay=0.05)],
+        reachability_provider=None,
+    )
+    a = _by_cve(slow_trivy.findings, "CVE-2022-42889")
+    b = _by_cve(slow_osv.findings, "CVE-2022-42889")
+    assert a.tool == b.tool == "osv-scanner+trivy"
+    assert a.consensus.tools == b.consensus.tools == ("osv-scanner", "trivy")
 
 
 def test_run_scan_applies_reachability_when_enabled():

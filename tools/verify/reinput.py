@@ -29,6 +29,10 @@ def load_raws(evidence_dir: Path) -> list[RawResult]:
     meta = json.loads((ev / "meta.json").read_text(encoding="utf-8")) if (ev / "meta.json").exists() else {}
     versions = meta.get("tool_versions", {})
     raws = []
+    # M1(최종 리뷰) — 파일시스템 순회는 순서를 보장하지 않는다. `sorted(iterdir())` 로 이미
+    # 결정적이다: raw 파일명이 `<tool>.<ext>`(`_SKIP_RAW` 제외)라 경로 문자열 정렬 = tool 이름
+    # 정렬과 같다 — `secscan.scan.run_scan` 이 orchestrate 직후 raws 를 tool 로 정렬하는 것과
+    # 같은 불변식을 여기서도 만족한다(merge_consensus 의 base·tool 순서 결정성).
     for p in sorted((ev / "raw").iterdir()):
         if p.name in _SKIP_RAW:
             continue

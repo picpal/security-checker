@@ -76,6 +76,11 @@ def run_scan(
     trace: TraceSink | None = None,
 ) -> ScanResult:
     raws = orchestrate(adapters, target, max_workers=max_workers)
+    # M1(최종 리뷰) — orchestrate 는 as_completed 도착 순서(스레드 완료 순서, 비결정적)로 raws 를
+    # 낸다. normalize_each 의 dict 삽입 순서 → merge_consensus 의 "첫 finding = base" 가 그 순서를
+    # 그대로 물려받아 tool(`"+".join(tools)`)·consensus.tools 순서가 실행마다 달라질 수 있었다.
+    # 여기서 도구 이름으로 정렬해 이후 모든 단계(trace 포함)가 결정적 순서를 본다.
+    raws = sorted(raws, key=lambda r: r.tool)
     if trace is not None:
         for r in raws:
             trace.record_raw(r.tool, r.status, len(r.payload or ""))
