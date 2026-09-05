@@ -844,6 +844,40 @@ def test_write_evidence_meta_carries_scanner_status_fields(tmp_path):
         {"tool": "trivy", "status": "ok", "tool_version": "0.71.2", "duration_s": 1.25, "message": ""}]
 
 
+def test_write_evidence_copies_bom_cache_to_raw_when_target_given(tmp_path, monkeypatch):
+    """I3(최종 리뷰) — `write_evidence` 는 `target` 이 주어지고 `secscan.sbom.bom_cache_path(target)`
+    가 존재하면 그 BOM 을 `raw/bom.cdx.json` 으로 복사한다(그동안 사람이 손으로 하던 단계). `known_fp`
+    와 `jar_surface`(축 3·축 5 정본)는 그 파일을 읽으므로 정본의 입력이 사람 손을 거치지 않게 된다."""
+    import tools.verify.evidence as evidence_mod
+    cache = tmp_path / "cache-bom.json"
+    cache.write_text('{"components": []}', encoding="utf-8")
+    monkeypatch.setattr(evidence_mod, "bom_cache_path", lambda target: cache)
+    result = ScanResult(findings=[], raw_results=[])
+    out = tmp_path / "out"
+    written = write_evidence(out, result=result, trace=None, meta={"snapshot": "x"}, target="/some/repo")
+    p = out / "raw" / "bom.cdx.json"
+    assert p in written
+    assert p.read_text(encoding="utf-8") == '{"components": []}'
+
+
+def test_write_evidence_skips_bom_copy_when_target_omitted(tmp_path):
+    """I3 — `target` 을 안 주면(기존 호출부·테스트) 동작이 그대로다 — BOM 복사를 시도하지 않는다."""
+    result = ScanResult(findings=[], raw_results=[])
+    out = tmp_path / "out"
+    write_evidence(out, result=result, trace=None, meta={"snapshot": "x"})
+    assert not (out / "raw" / "bom.cdx.json").exists()
+
+
+def test_write_evidence_skips_bom_copy_when_cache_missing(tmp_path, monkeypatch):
+    """I3 — `bom_cache_path(target)` 가 가리키는 파일이 없으면(BOM 미생성) 조용히 건너뛴다."""
+    import tools.verify.evidence as evidence_mod
+    monkeypatch.setattr(evidence_mod, "bom_cache_path", lambda target: tmp_path / "does-not-exist.json")
+    result = ScanResult(findings=[], raw_results=[])
+    out = tmp_path / "out"
+    write_evidence(out, result=result, trace=None, meta={"snapshot": "x"}, target="/some/repo")
+    assert not (out / "raw" / "bom.cdx.json").exists()
+
+
 def _fidelity_evidence(tmp_path, findings, meta=None):
     from secscan.output.json_io import to_json
     (tmp_path / "findings.json").write_text(to_json(findings, meta=meta or {}), encoding="utf-8")

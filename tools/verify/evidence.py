@@ -12,6 +12,7 @@ from secscan.output.json_io import to_json
 from secscan.output.markdown import to_markdown
 from secscan.output.sarif import to_sarif
 from secscan.output.xlsx import write_workbook
+from secscan.sbom import bom_cache_path
 
 if TYPE_CHECKING:
     from secscan.models import Finding
@@ -75,11 +76,19 @@ def _relativize(findings: list[Finding], repo_root: Path) -> list[Finding]:
 
 
 def write_evidence(out_dir, *, result: ScanResult, trace: TraceSink | None, meta: dict, xlsx: bool = False,
-                   repo_root: Path | None = None) -> list[Path]:
+                   repo_root: Path | None = None, target=None) -> list[Path]:
     out = Path(out_dir)
     (out / "raw").mkdir(parents=True, exist_ok=True)
     written: list[Path] = []
     findings = _relativize(result.findings, Path(repo_root)) if repo_root is not None else result.findings
+    # I3(최종 리뷰) — bom-sca 가 실제로 먹인 cdxgen BOM 은 secscan.sbom.ensure_bom 의 경로해시 캐시
+    # 에만 있었고, 지금까지는 사람이 손으로 raw/bom.cdx.json 으로 복사했다(known_fp·jar_surface 가
+    # 정본 축 3·5 로 그 파일을 읽는다). target 이 주어지면 여기서 그 복사를 대신한다.
+    if target is not None:
+        cache = bom_cache_path(target)
+        if cache.exists():
+            p = out / "raw" / "bom.cdx.json"
+            p.write_bytes(cache.read_bytes()); written.append(p)
     # I2(최종 리뷰) — 정본 직렬화는 asdict(ScannerStatus) 하나(tool/status/tool_version/duration_s/
     # message 5키). scanner_status 가 비어 있으면(트레이스 없이 만든 합성 ScanResult 등) raw_results
     # 에서 같은 5키로 재구성한다 — "error" 전용 키는 어디에도 쓰지 않는다.
