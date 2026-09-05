@@ -12,7 +12,6 @@ from secscan.reachability.depscan import decide_reachability, parse_invoked_symb
 
 FIXTURE = Path("fixtures/reach-app/expected.json")
 SLICE = Path("tests/golden/atom-usages-reach-app.json")
-EXPECTED = json.loads(FIXTURE.read_text(encoding="utf-8"))
 
 # expected.json 은 짧은 아티팩트명만 담는다(예: "commons-text") — decide_reachability 의 verdicts
 # 키는 `Component.package`("group:artifact") 기준이라(tests/test_reach_app.py 의 기존 _f() 헬퍼와
@@ -37,7 +36,14 @@ def build_findings(expected: dict) -> list[Finding]:
     return fs
 
 
-def evaluate(fixture: Path = FIXTURE, slice_path: Path = SLICE) -> dict:
+def evaluate(fixture: Path | None = None, slice_path: Path | None = None) -> dict:
+    """`fixture`/`slice_path` 생략 시 모듈 전역 FIXTURE/SLICE 를 **호출 시점**에 읽는다(리뷰 I1) —
+    이 함수는 임포트 시점에 파일을 읽지 않으므로, 픽스처가 없거나 손상됐을 때
+    reconcile.regenerate 의 예외 격리(M4/N6)가 reach-app 생성기 한 행으로만 잡힌다(생성기
+    레지스트리 전체가 임포트 단계에서 죽지 않는다). 이 지연 조회 덕분에 테스트가
+    `reach_app.FIXTURE` 를 monkeypatch 하면 인자 없는 호출도 그 값을 따라간다."""
+    fixture = FIXTURE if fixture is None else fixture
+    slice_path = SLICE if slice_path is None else slice_path
     expected = json.loads(fixture.read_text(encoding="utf-8"))
     fs = build_findings(expected)
     result = decide_reachability(fs, parse_invoked_symbols(slice_path.read_text(encoding="utf-8")))

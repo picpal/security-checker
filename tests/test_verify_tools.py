@@ -888,9 +888,10 @@ def test_gate_renders_mechanical_verdicts_with_markers():
     md = render_gate(facts)
     rows = [l for l in md.splitlines() if l.startswith("| ") and not l.startswith("| 축")]
     verdicts = {l.split("|")[1].strip().split(" ")[0]: l.split("|")[4].strip() for l in rows}
-    assert verdicts["1"] == "✓" and verdicts["3"] == "✓" and verdicts["4"] == "✓" and verdicts["8"] == "✓"
+    # 리뷰 I2(Ruling J) — 축 1 은 기계 판정할 predicate 가 없어 기록(축 9 와 동일 취급).
+    assert verdicts["3"] == "✓" and verdicts["4"] == "✓" and verdicts["8"] == "✓"
     assert verdicts["2"].startswith("✗") and verdicts["5"].startswith("✗") and verdicts["6"].startswith("✗") and verdicts["7"].startswith("✗")
-    assert verdicts["9"] == "기록"
+    assert verdicts["1"] == "기록" and verdicts["9"] == "기록"
     assert "37/46 <!-- fact:sca.recall_cve -->" in md and "2 <!-- fact:reachapp.false_unreachable -->" in md
     assert len(GATES) == 9
 
@@ -912,6 +913,21 @@ def test_generators_registry_isolates_failures(tmp_path, monkeypatch):
     assert rows == [{"doc": "boom.md", "ok": False, "note": "생성 실패: FileNotFoundError: evidence missing"}]
 
 
+def test_reach_app_missing_fixture_is_isolated_not_fatal(tmp_path, monkeypatch):
+    """리뷰 I1 — reach_app 은 임포트 시점에 픽스처를 읽지 않는다(모듈 레벨 EXPECTED 제거,
+    evaluate() 가 FIXTURE/SLICE 를 호출 시점에 지연 조회). 픽스처가 없어도 generators 임포트나
+    reconcile.main 전체가 죽지 않고, regenerate 가 reach-app.md 행 하나만 ✗ 생성 실패로
+    격리한다(M4/N6)."""
+    from tools.verify import reach_app
+    from tools.verify.reconcile import regenerate
+    monkeypatch.setattr(reach_app, "FIXTURE", tmp_path / "missing-expected.json")
+    rows = regenerate(tmp_path, tmp_path, "gt-b.json", "gt-a.json")
+    reach_rows = [r for r in rows if r["doc"] == "reach-app.md"]
+    assert len(reach_rows) == 1
+    assert reach_rows[0]["ok"] is False
+    assert reach_rows[0]["note"].startswith("생성 실패: FileNotFoundError:")
+
+
 def test_reconcile_escapes_pipes_in_report_cells():
     from tools.verify.reconcile import render_report
     md = render_report([], {}, {}, [], {"raw_count": 0, "typed_count": 0, "only_raw": [], "only_typed": []},
@@ -919,6 +935,33 @@ def test_reconcile_escapes_pipes_in_report_cells():
     line = next(l for l in md.splitlines() if "x.md" in l)
     import re
     assert len(re.findall(r"(?<!\\)\|", line)) == 4 and "\\|" in line  # 셀 3개 = 구분자 4개
+
+
+def test_check_quoted_tables_flags_declaration_line_without_filename():
+    """리뷰 I3 — N1: "전체 인용" 을 포함하는 줄에 백틱 파일명이 없으면 검증 불능 행(✗)으로 남기고
+    (조용히 건너뛰지 않는다), 그 행은 quote_mismatch 로 집계된다."""
+    from tools.verify.reconcile import check_quoted_tables, collect_facts
+    line = "이 절의 표는 전체 인용이다(파일명 생략)."
+    rows = check_quoted_tables(line + "\n", Path("/nonexistent"))
+    assert rows == [{"quote": line, "header": "", "ok": False, "note": "선언 줄에 파일명 없음"}]
+    facts = collect_facts([], {}, {}, [], {"raw_count": 0, "typed_count": 0, "only_raw": [], "only_typed": []}, quotes=rows)
+    assert facts["reconcile.quote_mismatch"] == 1
+
+
+def test_check_quoted_tables_resolves_backtick_path_to_basename():
+    """리뷰 I3 — 백틱 안 파일명이 전체 경로(`docs/verification/results/2026-09-05/gt.md`)여도
+    basename(`gt.md`)으로 원본을 찾아 비교한다. `_QUOTE_FILE` 을 브리핑의 `[\\w.-]+\\.md` 보다
+    넓게(`[^`\\n]+\\.md`) 잡은 것을 고정한다 — 다시 좁히면 이 테스트가 깨진다(캠페인 문서가
+    조용히 깨지는 대신)."""
+    from tools.verify.reconcile import check_quoted_tables
+    src = "# gt\n\n| 축 | 값 |\n|---|---|\n| a | 3 |\n"
+    md = "출처: `docs/verification/results/2026-09-05/gt.md` (전체 인용).\n\n| 축 | 값 |\n|---|---|\n| a | 3 |\n"
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        (td / "gt.md").write_text(src, encoding="utf-8")
+        rows = check_quoted_tables(md, td)
+        assert len(rows) == 1 and rows[0]["ok"] is True and rows[0]["quote"] == "gt.md"
 
 
 def test_attrition_rows_follow_trace_order():

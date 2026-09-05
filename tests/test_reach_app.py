@@ -6,10 +6,12 @@
 XPASS 로 실패해 제거를 강제한다.
 """
 
+import json
+
 import pytest
 
 from secscan.models import REACHABLE, UNREACHABLE
-from tools.verify.reach_app import EXPECTED, evaluate
+from tools.verify.reach_app import FIXTURE, evaluate
 
 
 def _row(package: str) -> dict:
@@ -34,5 +36,8 @@ def test_current_engine_false_unreachable_modes_documented():
     # 위 두 xfail 의 반대 진술 — 갭이 실재함을 명시적으로 고정(엔진이 고쳐지면 셋 다 갱신).
     assert _row("jackson-databind")["status"] == UNREACHABLE
     assert _row("tomcat-embed-core")["status"] == UNREACHABLE
-    assert EXPECTED["must_not_be_unreachable"][0]["package"] == "jackson-databind"
-    assert EXPECTED["must_not_be_unreachable"][1]["package"] == "tomcat-embed-core"
+    # 리뷰 I1 — reach_app 은 임포트 시점에 픽스처를 읽지 않는다(모듈 레벨 EXPECTED 제거); 이
+    # 테스트가 필요한 값은 여기서 직접 읽는다.
+    expected = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    assert expected["must_not_be_unreachable"][0]["package"] == "jackson-databind"
+    assert expected["must_not_be_unreachable"][1]["package"] == "tomcat-embed-core"

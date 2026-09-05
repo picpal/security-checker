@@ -19,7 +19,8 @@ class Gate:
 
 
 GATES: tuple[Gate, ...] = (
-    Gate("1 프로파일 계약", "드리프트 전건 문서화 + spec 갱신 백로그", ("profile.rows", "profile.drift"), lambda f: True),
+    Gate("1 프로파일 계약", "드리프트 전건 문서화 + spec 갱신 백로그 — 기계 판정 없음(문서화는 생성 문서 profile-contract.md 존재로 충족)",
+         ("profile.rows", "profile.drift"), None),
     Gate("2 SCA recall(GT-B 대비)", "CVE 단위 합산 ≥ 44/46 · HIGH/Important 미탐 ≤ 1 · 미탐 전건 단계 특정(origin 별 병기)",
          ("sca.recall_cve", "sca.recall_cve.team", "sca.recall_cve.dev-found", "sca.missed", "sca.missed_high_important",
           "sca.missed_by_stage.scanner", "sca.missed_by_stage.normalize"),
