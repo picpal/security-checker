@@ -126,6 +126,7 @@ secscan 의 각 탐지 프로세스(SCA·도달성·Secret·SAST·deep·병합·
 - **생성 문서**(`gt-b-match.md`·`known-fp.md`·`profile-contract.md`·`input-surface.md`·`gt-a-differential.md`)는 생성기 함수의 결정적 출력이다. 손으로 고치지 않는다.
 - **판단 격리**: 초과분 triage 의 override(`our-fp` 등)는 `provenance: "human:<이름>"` 이 있어야 유효. `ai:*`·누락은 위반. 실행자는 판단이 필요한 항목을 `needs_human` 목록으로만 보고한다.
 - **검증기** `tools/verify/reconcile.py`: (a) 생성 문서를 같은 증거로 재생성해 바이트 비교 (b) 문서의 fact 마커 값 ↔ `facts.json` 대조 (c) 게이트 문서·측정 문서 요약 절의 마커 없는 수치 = 출처 불명 (d) override provenance 검사 (e) raw↔typed 카디널리티(raw trivy 고유 VulnerabilityID vs typed SCA 고유 advisory — 정규화 손실 검출). 산출 `reconcile-report.md` + exit code.
+- **인용 스코프**: 수치를 인용할 때 "대상(message-gate a483b3b1) · 정답지(GT-B = 보안팀 trivy 1회 + 개발자 발견 12) 대비" 스코프를 병기한다. 절대 recall 로 읽히는 문장("secscan recall 80%")을 쓰지 않는다. SCA recall 은 origin 별 수치와 함께만 인용한다(축 2).
 - **게이트**: 재생성 불일치 0 · 마커 불일치 0 · 출처 불명 수치 0 · 비인가 override 0 · raw↔typed 차이는 전건 사실로 기록. 미통과 시 **문서를 고친다**(정본은 고치지 않는다). 플랜 1 끝(V3)과 플랜 2 끝(V7)에서 실행.
 
 ## 5. 측정 축과 게이트
@@ -135,7 +136,7 @@ secscan 의 각 탐지 프로세스(SCA·도달성·Secret·SAST·deep·병합·
 | # | 축 | 정답지 | 측정 | 게이트 |
 |---|---|---|---|---|
 | 1 | 프로파일 계약 | 원 spec §8 | 프로파일별 기대 어댑터 vs 실제 실행·status. 드리프트(spec `accurate-sca=Trivy+OSV` vs 구현 `bom-sca` 단독 → SCA 합의 비활성) | 드리프트 전건 문서화 + spec 갱신 백로그 |
-| 2 | SCA 현재 유효성 | GT-B 46 | recall(CVE·항목 병기), attrition 으로 미탐 단계 특정 | CVE 단위 recall ≥ 44/46, HIGH/Important 미탐 ≤ 1, 미탐 전건 단계 특정 |
+| 2 | SCA 현재 유효성 | GT-B 46 | GT-B recall(CVE·항목 병기) + **origin 별 병기 필수**(`team` 35 = 보안팀 trivy 결과 재현율 성격 — secscan 도 trivy 를 쓰므로 도구 상관 / `dev-found` 12 = 상대적으로 독립인 증거), attrition 으로 미탐 단계 특정 | CVE 단위 GT-B recall ≥ 44/46(합산; origin 별 수치 없이 합산만 보고 금지), HIGH/Important 미탐 ≤ 1, 미탐 전건 단계 특정 |
 | 3 | SCA known-FP | mssql | 3단계: BOM/SBOM 에 컴포넌트 존재 → purl 버전 `13.2.1.jre11` 보존 → trivy 판정 비해당 | 3단계 모두 ✓ (미보고만으로 통과 불가) |
 | 4 | SCA 초과분 | — | 4분류 전건 | 미분류 0, `our-fp` 는 백로그 |
 | 5 | 입력면 교차 | 같은 스냅샷 | (a) `./gradlew bootJar` → `trivy fs build/libs`(중첩 jar) (b) cdxgen BOM → `trivy sbom`. 인벤토리(purl 집합) 차·탐지 차·해석 버전 vs 보안팀 `Installed Versions` | 인벤토리 차 전건 원인 특정, 해석 버전 불일치 0 |
