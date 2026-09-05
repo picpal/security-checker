@@ -1,0 +1,10 @@
+{
+  "SchemaVersion": 2,
+  "Trivy": {
+    "Version": "0.71.2"
+  },
+  "ReportID": "01a07056-2ed9-78dd-a832-a2d0b8f050bd",
+  "CreatedAt": "2026-09-05T15:51:31.417581+09:00",
+  "ArtifactName": "/private/tmp/secscan-verify/a483b3b1/repo/build/libs",
+  "ArtifactType": "filesystem"
+}
