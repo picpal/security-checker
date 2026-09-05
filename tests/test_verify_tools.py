@@ -249,7 +249,7 @@ def test_collect_facts_ids_and_values():
                           {"stages": [{"stage": "merge", "count": 2}, {"stage": "final", "count": 2}]},
                           {"scanner_status": [{"tool": "trivy", "status": "ok"}]})
     assert facts["sca.recall_cve"] == "1/2" and facts["sca.missed"] == 1 and facts["sca.missed_high_important"] == 0
-    assert facts["sca.extras"] == 1 and facts["sca.extras.inventory-diff"] == 1
+    assert facts["sca.extras"] == 1 and facts["sca.extras.inventory-diff"] == 1 and facts["sca.extras.unclassified"] == 0
     assert facts["attrition.final"] == 2 and facts["scanner.trivy"] == "ok" and facts["findings.sca"] == 2
     assert facts["sca.recall_cve.team"] == "1/2" and "sca.recall_cve.dev-found" not in facts
 

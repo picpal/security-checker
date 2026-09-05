@@ -117,6 +117,7 @@ def collect_facts(report: MatchReport, classes: dict[str, str], findings: list[F
     }
     for cls, n in sorted(Counter(classes.get(f.dedup_key, "미분류") for f in report.extras).items()):
         facts[f"sca.extras.{cls}"] = n
+    facts["sca.extras.unclassified"] = sum(1 for f in report.extras if f.dedup_key not in classes)
     for origin, (hit, tot) in sorted(recall_by_origin(report).items()):
         facts[f"sca.recall_cve.{origin}"] = f"{hit}/{tot}"
     for cat, n in sorted(Counter(f.category for f in findings).items()):
