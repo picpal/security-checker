@@ -1861,7 +1861,8 @@ git commit -m "docs(V2): GT-B 대조 실측 — CVE recall N/46, known-FP 3단�
 
 **Interfaces:**
 - `inventory_from_bom(bom_json: str) -> dict[str, str]` (`group:artifact` → version)
-- `inventory_from_trivy(trivy_json: str) -> dict[str, str]` (`Results[].Packages[]` 또는 `Vulnerabilities[]` 의 PkgName/InstalledVersion)
+- `inventory_from_trivy(trivy_json: str) -> dict[str, str]` (`Results[].Packages[]` 또는 `Vulnerabilities[]` 의 PkgName/InstalledVersion). **같은 패키지가 여러 버전으로 잡히면 덮어쓰지 않고 `" | ".join(sorted(set(versions)))` 로 병기**(jar 분석기가 mssql-jdbc 를 `13.2.1`·`13.2.1.jre11` 두 항목으로 내는 사실을 문서가 가리면 안 됨 — 2026-09-05 실측).
+- `vuln_installed_versions(trivy_json: str) -> list[tuple[str, str, str]]` — `(VulnerabilityID, PkgName, InstalledVersion)` 정렬 목록. `render` 는 이를 "## jar 표면의 취약점 부착 버전(정답지 패키지만)" 표로 낸다(정답지 패키지에 한정).
 - `diff_inventories(a, b) -> dict` with `only_a`, `only_b`, `version_differs: dict[pkg, (va, vb)]`
 - `compare_installed(inv: dict, manifest: GtManifest) -> list[dict]` — 정답지 설치버전 vs 인벤토리
 - `render(diff, cmp_bom, cmp_jar) -> str`
