@@ -194,6 +194,28 @@ def test_render_attrition_table_shows_stage_deltas():
     assert "| merge | 5 |" in md and "| exclude | 3 | -2 |" in md
 
 
+def test_render_attrition_normalize_rows_are_independent_not_cumulative():
+    """I1 — normalize:<tool> 행은 도구별 독립 건수다(파이프라인 누적이 아니다). 증감 칸은 비우고,
+    normalize(합계) 합성 행을 넣어 그 이후(merge~)부터만 증감을 계산한다. merge 는 76→73 로
+    실제로 3건이 줄었으므로 -3 이어야 한다(예전엔 도구 행 사이 알파벳순 차를 찍어 +25 로 뒤집혔다)."""
+    trace = {"raw": [], "stages": [
+        {"stage": "normalize:gitleaks", "count": 13, "keys": []},
+        {"stage": "normalize:semgrep", "count": 15, "keys": []},
+        {"stage": "normalize:trivy", "count": 48, "keys": []},
+        {"stage": "merge", "count": 73, "keys": []},
+        {"stage": "exclude", "count": 73, "keys": []},
+        {"stage": "final", "count": 73, "keys": []},
+    ]}
+    md = render_attrition(trace)
+    assert "| normalize:gitleaks | 13 |  |" in md
+    assert "| normalize:semgrep | 15 |  |" in md
+    assert "| normalize:trivy | 48 |  |" in md
+    assert "| normalize(합계) | 76 |  |" in md
+    assert "| merge | 73 | -3 |" in md  # 76 → 73
+    assert "| exclude | 73 | +0 |" in md
+    assert "| final | 73 | +0 |" in md
+
+
 def test_render_match_lists_recall_and_extra_classes():
     m = GtManifest("sca", "s", "2026-08-31", (GtEntry("CVE-1", "g:a", "1.0"), GtEntry("CVE-2", "g:b", "1.0")), [])
     r = match_ground_truth([_sca("g:a", "1.0", "CVE-1"), _sca("g:z", "1.0", "CVE-9")], m)
@@ -247,7 +269,7 @@ def test_collect_facts_ids_and_values():
     rep = match_ground_truth(fs, m)
     facts = collect_facts(rep, {fs[1].dedup_key: "inventory-diff"}, fs,
                           {"stages": [{"stage": "merge", "count": 2}, {"stage": "final", "count": 2}]},
-                          {"scanner_status": [{"tool": "trivy", "status": "ok"}]})
+                          {"scanner_status": [{"tool": "trivy", "status": "ok"}]}, [])
     assert facts["sca.recall_cve"] == "1/2" and facts["sca.missed"] == 1 and facts["sca.missed_high_important"] == 0
     assert facts["sca.extras"] == 1 and facts["sca.extras.inventory-diff"] == 1 and facts["sca.extras.unclassified"] == 0
     assert facts["attrition.final"] == 2 and facts["scanner.trivy"] == "ok" and facts["findings.sca"] == 2
@@ -257,6 +279,41 @@ def test_collect_facts_ids_and_values():
     # reach.reachable/unreachable/unknown 은 값이 0 이어도 항상 출력된다(부재가 아니라 "관측 0건").
     # _sca() 기본값은 UNKNOWN 이므로 fs 두 건 모두 unknown 으로 집계된다.
     assert facts["reach.reachable"] == 0 and facts["reach.unreachable"] == 0 and facts["reach.unknown"] == 2
+    # CVE-2/g:b 는 어느 trace 단계에도 없고 raw_vulns([])에도 없음 → scanner(리뷰 I2).
+    assert facts["sca.missed_by_stage.scanner"] == 1 and facts["sca.missed_by_stage.normalize"] == 0
+
+
+def test_missed_stage_attribution_scanner_normalize_and_pipeline_drop():
+    """I2 — 미탐 항목이 어느 단계에서 빠졌는지 기계적으로 귀속한다.
+    trace.stages[*].keys 에서 dedup_key(sca|ecosystem|package|version|advisory) 를 패키지·advisory 로
+    대조해 마지막으로 관측된 단계를 찾고, 그 다음 단계를 "빠진 단계"로 본다."""
+    from tools.verify.report import missed_stage
+    trace = {"stages": [
+        {"stage": "normalize:trivy", "count": 2, "keys": ["sca|maven|g:a|1.0|CVE-1", "sca|maven|g:b|1.0|CVE-2"]},
+        {"stage": "merge", "count": 2, "keys": ["sca|maven|g:a|1.0|CVE-1", "sca|maven|g:b|1.0|CVE-2"]},
+        {"stage": "exclude", "count": 1, "keys": ["sca|maven|g:a|1.0|CVE-1"]},  # g:b/CVE-2 는 exclude 에서 빠짐
+        {"stage": "final", "count": 1, "keys": ["sca|maven|g:a|1.0|CVE-1"]},
+    ]}
+    raw_vulns = [{"PkgName": "g:a", "VulnerabilityID": "CVE-1"}, {"PkgName": "g:c", "VulnerabilityID": "CVE-3"}]
+
+    # 1) normalize:trivy·merge 엔 있고 exclude 부턴 없음 → "빠진" 단계는 그 다음인 exclude.
+    assert missed_stage(GtEntry("CVE-2", "g:b", "1.0"), trace, raw_vulns) == "exclude"
+    # 2) raw trivy 출력에도 아예 없음 → scanner(애초에 미생산).
+    assert missed_stage(GtEntry("CVE-9", "g:z", "9.9"), trace, raw_vulns) == "scanner"
+    # 3) raw 엔 있지만 trace 어느 단계에도 없음 → normalize(정규화가 버림).
+    assert missed_stage(GtEntry("CVE-3", "g:c", "1.0"), trace, raw_vulns) == "normalize"
+    # 4) final 까지 살아남았는데 미탐 처리된 극단 케이스 → matcher(대조기 자체를 봐야 함).
+    assert missed_stage(GtEntry("CVE-1", "g:a", "1.0"), trace, raw_vulns) == "matcher"
+
+
+def test_render_match_includes_stage_column_for_missed_entries():
+    from tools.verify.report import missed_stages
+    m = GtManifest("sca", "s", "2026-08-31", (GtEntry("CVE-1", "g:a", "1.0"), GtEntry("CVE-2", "g:b", "1.0")), [])
+    r = match_ground_truth([_sca("g:a", "1.0", "CVE-1")], m)  # CVE-2/g:b 는 미탐
+    trace = {"stages": [{"stage": "merge", "count": 1, "keys": []}]}
+    stages = missed_stages(r, trace, [])
+    md = render_match(r, {}, stages)
+    assert "단계" in md and "| CVE-2 | g:b | 1.0 | - | team | scanner |" in md
 
 
 def test_known_fp_render_and_profile_render_doc_are_full_docs():
