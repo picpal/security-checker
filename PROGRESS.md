@@ -103,5 +103,5 @@ crypto 안티패턴 → **커스텀 룰(D)** (3종: MyBatis `${}`/하드코딩/z
 - [x] V0 정답지 매니페스트 3종 + 대조기(match_ground_truth/classify_extras)
 - [x] V1 TraceSink 단계 추적 + findings.json + tools/verify 격리 하네스 + 증거 동결(docs/verification/evidence/<date>)
 - [x] V2 SCA 실측: CVE recall N/46 · known-FP 3단계 · 프로파일 계약 · 초과분 triage · 입력면 교차
-- [x] V3 도달성 쌍 픽스처(reach-app, false-unreachable xfail) + GT-A differential — 정본 검증(reconcile, 축 9)은 별도 태스크에서 구현·실행 예정(미실행, docs/measurements/2026-09-05-message-gate-verification.md 축 9 참조)
+- [x] V3 도달성 쌍 픽스처(reach-app, false-unreachable xfail) + GT-A differential — 정본 검증(reconcile ✓, docs/verification/results/2026-09-05/reconcile-report.md)
 - [ ] V4~V7 → 플랜 2 (판정 단계 H · 모델 확장 · xlsx · 변이 픽스처 · 최종 문서)

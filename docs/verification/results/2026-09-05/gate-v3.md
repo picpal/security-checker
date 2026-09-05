@@ -5,7 +5,7 @@
 | 축 | 기준(spec §5) | 측정값 | 판정 |
 |---|---|---|---|
 | 6(a) 도달성 판정 근거 비교표 | 일치율은 산출하지 않음 — 판정 방법이 다름(우리: 패키지 prefix 존재 / 사람: CVE 별 활성화 조건) | `gt-b-match.md` 하단 "사람 도달성 판정 비교" 표 참조(행 수 34 <!-- fact:human.verdict_rows --> · 고유 advisory 24 <!-- fact:human.verdict_advisories -->) | 기록(게이트 없음) |
-| 6(b) false-unreachable(`fixtures/reach-app`) | **false-unreachable = 0**(프레임워크 활성화 케이스 포함) | `tests/test_reach_app.py` xfail(strict) 2건 — 아래 pytest 코드블록 참조 | ✗ → 백로그 P1 |
+| 6(b) false-unreachable(`fixtures/reach-app`) | **false-unreachable = 0**(프레임워크 활성화 케이스 포함) | `tests/test_reach_app.py` xfail(strict) — 아래 pytest 코드블록 참조 | ✗ → 백로그 P1 |
 | 6(c) 증거의 SCA 도달성 분포 | 게이트 없음(부수 측정 — unknown 기권 비율) | reach.reachable 0 <!-- fact:reach.reachable --> · reach.unreachable 48 <!-- fact:reach.unreachable --> · reach.unknown 0 <!-- fact:reach.unknown --> · findings.sca 48 <!-- fact:findings.sca --> | 기록 |
 | 7 GT-A differential(범주 내) | 범주 내 출현·소멸 100% | gta.in_category_pass 2/4 <!-- fact:gta.in_category_pass --> | ✗ → 백로그 P1 후보 |
 | 7 measure-then-classify | 결과 기록만(게이트 없음) | CWE-489 관측 없음 <!-- fact:gta.row4.CWE-489.observed --> · CWE-497 관측 없음 <!-- fact:gta.row5.CWE-497.observed --> | 기록 |

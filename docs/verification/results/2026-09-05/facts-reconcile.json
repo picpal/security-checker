@@ -1,0 +1,8 @@
+{
+  "reconcile.marker_mismatch": 0,
+  "reconcile.provenance_violations": 0,
+  "reconcile.raw_typed_mismatch": 0,
+  "reconcile.regen_mismatch": 0,
+  "reconcile.unmarked": 0,
+  "reconcile.verdict": "통과"
+}

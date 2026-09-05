@@ -17,7 +17,7 @@
 | 5 입력면 교차 | spec §5: 인벤토리 차 전건 원인 특정, 해석 버전 불일치 0 | BOM 전용 77 <!-- fact:surface.bom_only -->건 · jar 전용 9 <!-- fact:surface.jar_only -->건 · 버전 차이 1 <!-- fact:surface.version_differs -->건 · 정답지 대비 일치 BOM 16/16 <!-- fact:surface.gt_match_bom --> / jar 15/16 <!-- fact:surface.gt_match_jar --> | ✗ → 백로그 P1 후보* |
 | 6 도달성 | spec §5: false-unreachable = 0(프레임워크 활성화 케이스 포함) | reach.reachable 0 <!-- fact:reach.reachable --> · reach.unreachable 48 <!-- fact:reach.unreachable --> · reach.unknown 0 <!-- fact:reach.unknown --> (findings.sca 48 <!-- fact:findings.sca -->) · false-unreachable 목록은 `gate-v3.md` 코드블록 참조 | ✗ → 백로그 P1 |
 | 7 GT-A differential(범주 내) | spec §5: 범주 내 출현·소멸 100% | gta.in_category_pass 2/4 <!-- fact:gta.in_category_pass --> | ✗ → 백로그 P1 후보 |
-| 9 측정 사실성(정본 검증) | spec §5: 재생성 불일치 0 · 마커 불일치 0 · 출처 불명 0 · 비인가 override 0 | 미실행 | 미실행 |
+| 9 측정 사실성(정본 검증) | spec §5: 재생성 불일치 0 · 마커 불일치 0 · 출처 불명 0 · 비인가 override 0 | 재생성 불일치 0 <!-- fact:reconcile.regen_mismatch -->건 · 마커 불일치 0 <!-- fact:reconcile.marker_mismatch -->건 · 출처 불명 0 <!-- fact:reconcile.unmarked -->건 · 비인가 override 0 <!-- fact:reconcile.provenance_violations -->건 · raw↔typed 불일치 0 <!-- fact:reconcile.raw_typed_mismatch -->건 | ✓ |
 
 \* 축 5 는 `gate-v2.md`/`gate-v3.md` 에 판정이 없다 — 두 문서가 작성될 시점에는 축 5 의 정본 수치(`facts-surface.json`)가 없었다(이 문서와 같은 태스크에서 사후 추가). 위 판정은 spec §5 축 5 기준을 `facts-surface.json` 수치에 기계적으로 적용한 결과다: 버전 차이(`surface.version_differs`)가 0 이 아니고, 인벤토리 차(BOM 전용/jar 전용) 개별 항목에 원인 분류가 부여되어 있지 않다(아래 축 5 절 참조).
 
@@ -181,7 +181,15 @@ reach.unknown / findings.sca = 0 <!-- fact:reach.unknown --> / 48 <!-- fact:find
 
 ## 축 9 — 측정 사실성 (정본 검증)
 
-미실행. 정본 검증기(`tools/verify/reconcile.py`)는 이 문서 작성 시점에 아직 구현되지 않았다 — 별도 태스크에서 구현·실행하고 `reconcile-report.md` 로 남긴다.
+정본 검증기(`tools/verify/reconcile.py`)를 `docs/verification/results/2026-09-05/` 의 생성 문서·게이트 문서·이 문서에 대해 실행했다. 전체 결과는 `docs/verification/results/2026-09-05/reconcile-report.md`(전체 인용 아님 — 요약만) 참조.
+
+- **생성 문서 재생성 비교**(`gt-b-match.md`·`facts.json`·`gt-a-differential.md`·`facts-gta.json`·`known-fp.md`·`profile-contract.md`·`input-surface.md`·`facts-surface.json` 8건): 전건 동일 바이트 재생성 — 불일치 0 <!-- fact:reconcile.regen_mismatch -->건.
+- **fact 마커 대조**(`gate-v2.md`·`gate-v3.md`·이 문서 `## 요약` 절): 전 마커가 정본과 일치 — 불일치 0 <!-- fact:reconcile.marker_mismatch -->건.
+- **출처 불명 수치**(`gate-v2.md`·`gate-v3.md`·이 문서 `## 요약` 절의 측정값/값 열): 0 <!-- fact:reconcile.unmarked -->건(최초 실행에서 `gate-v3.md` 축 6(b) 손기입 수치 "2건" 1건이 잡혀 마커 없이 정본화할 수 없는 값이므로 문서에서 제거하고 pytest 코드블록 인용만 남겼다 — 축 9 스스로가 찾은 위반이며, 이 문서에서 발견 사실로 남긴다).
+- **override provenance**(`extras-triage.json`): override 없음 — 비인가(비 `human:`) override 0 <!-- fact:reconcile.provenance_violations -->건.
+- **raw↔typed 카디널리티**(`a483b3b1-standard`): raw trivy 고유 VulnerabilityID 38건 = typed SCA 고유 advisory 38건 — 불일치 0 <!-- fact:reconcile.raw_typed_mismatch -->건(spec §5 축 9 의 4개 기준에는 포함되지 않는 부수 기록이나, 정본 검증기가 산출하므로 함께 인용한다).
+
+판정: ✓ 통과(spec §5: 4개 기준 모두 0).
 
 ## 부수 측정 (시간·메모리, 게이트 없음)
 
