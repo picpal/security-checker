@@ -24,4 +24,4 @@ drift = sum(1 for l in data_rows if l.split("|")[4].strip() != "-" or l.split("|
 ## 요약
 
 - 통과: 축 1(문서화 기준), 축 3(known-FP), 축 4(초과분 전건 분류).
-- 미통과: 축 2(SCA recall) — CVE 합산 recall(37/46)이 게이트 하한(44/46) 미달, HIGH/Important 미탐(3건)이 상한(1건) 초과. spec §5에 따라 캠페인 실패가 아니라 백로그 P1 등록 사유.
+- 미통과: 축 2(SCA recall) — CVE 합산 recall 37/46 <!-- fact:sca.recall_cve --> 이 기준(spec §5: ≥ 44/46) 미달, HIGH/Important 미탐 3 <!-- fact:sca.missed_high_important -->건이 기준(spec §5: ≤ 1건) 초과. spec §5에 따라 캠페인 실패가 아니라 백로그 P1 등록 사유.
