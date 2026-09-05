@@ -117,9 +117,15 @@ GENERATORS: list[Generator] = [
 
 
 def write_all(ctx: Ctx) -> list[Path]:
+    from .reconcile import is_legacy_results_dir
     ctx.results.mkdir(parents=True, exist_ok=True)
+    legacy = is_legacy_results_dir(ctx.results)
     written = []
     for g in GENERATORS:
+        if legacy and g.doc == "README.md":
+            # I1(최종 리뷰) — legacy 결과 디렉토리(플랜 1)의 README.md 는 evidence 루트에 있는
+            # 손기입 운영 로그다(reconcile.regenerate 와 같은 가드, 같은 이유: Rec 5).
+            continue
         doc, facts = g.produce(ctx)
         p = g.path(ctx) if g.path else ctx.results / g.doc
         p.parent.mkdir(parents=True, exist_ok=True)

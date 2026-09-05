@@ -1106,6 +1106,39 @@ def test_regenerate_fails_missing_optional_doc_when_not_legacy(tmp_path, monkeyp
     assert rows == [{"doc": "gate.md", "ok": False, "note": "결과 파일 없음"}]
 
 
+def test_write_all_leaves_frozen_legacy_readme_byte_identical(tmp_path, monkeypatch):
+    """I1(최종 리뷰) — `write_all` 은 `regenerate` 와 같은 legacy 판정(`is_legacy_results_dir`)을
+    써서, legacy 결과 디렉토리(`gate-v2.md` 있음·`gate.md` 없음)에서는 `path` 오버라이드를 쓰는
+    README 생성기를 건너뛴다. 손기입 운영 로그를 재생성 문서로 덮어쓰면 V1 증거 불변이 도구
+    스스로에 의해 깨진다."""
+    from tools.verify import generators
+    ev = tmp_path / "evidence"; ev.mkdir()
+    res = tmp_path / "results"; res.mkdir()
+    (res / "gate-v2.md").write_text("# 옛 게이트\n", encoding="utf-8")
+    frozen = "# 손으로 쓴 운영 로그\n"
+    (ev / "README.md").write_text(frozen, encoding="utf-8")
+    monkeypatch.setattr(generators, "GENERATORS", [
+        generators.Generator("README.md", None, lambda c: ("# 생성된 README\n", None),
+                              path=lambda c: c.evidence_root / "README.md"),
+    ])
+    generators.write_all(generators.Ctx(res, ev, Path("gt-b.json"), Path("gt-a.json")))
+    assert (ev / "README.md").read_text(encoding="utf-8") == frozen
+
+
+def test_write_all_writes_readme_for_non_legacy_results_dir(tmp_path, monkeypatch):
+    """I1 — legacy 표지(`gate-v2.md`)가 없는 결과 디렉토리는 README 도 정상적으로 (재)생성한다."""
+    from tools.verify import generators
+    ev = tmp_path / "evidence"; ev.mkdir()
+    res = tmp_path / "results"; res.mkdir()
+    (ev / "README.md").write_text("# 손으로 쓴 운영 로그\n", encoding="utf-8")
+    monkeypatch.setattr(generators, "GENERATORS", [
+        generators.Generator("README.md", None, lambda c: ("# 생성된 README\n", None),
+                              path=lambda c: c.evidence_root / "README.md"),
+    ])
+    generators.write_all(generators.Ctx(res, ev, Path("gt-b.json"), Path("gt-a.json")))
+    assert (ev / "README.md").read_text(encoding="utf-8") == "# 생성된 README\n"
+
+
 def test_reconcile_final_facts_match_this_run_reconcile_computation(tmp_path):
     """M2 — `main` 은 `collect_facts` 를 같은 인자로 두 번 부르지 않는다: 문서 대조(2단계, 전체
     마커 포함)에 쓴 `this_run_reconcile` 값을 `facts-reconcile.json` 에 그대로 재사용한다. 관측 가능한

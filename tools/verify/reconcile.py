@@ -255,10 +255,13 @@ def raw_vs_typed(trivy_json: str, findings) -> dict:
 _OPTIONAL = {"fidelity.md", "reach-app.md", "gate.md", "facts-fidelity.json", "facts-reachapp.json", "README.md"}
 
 
-def _is_legacy_results_dir(results_dir) -> bool:
+def is_legacy_results_dir(results_dir) -> bool:
     """M5(최종 리뷰) — `_OPTIONAL` 스킵은 플랜 1 옛 결과 디렉토리에만 적용한다: `gate-v2.md` 가
     있고 `gate.md` 가 없으면(Task 13 이전, 새 생성 문서가 아직 없던 시절) legacy 로 본다. 그 외
-    디렉토리는 생성 문서·facts 가 없으면 검사를 약화하지 않고 ✗ 행("결과 파일 없음")으로 잡는다."""
+    디렉토리는 생성 문서·facts 가 없으면 검사를 약화하지 않고 ✗ 행("결과 파일 없음")으로 잡는다.
+
+    공개 함수(밑줄 없음) — I1(최종 리뷰): `generators.write_all` 도 같은 판정을 재사용해
+    legacy 증거 디렉토리의 손기입 README 를 덮어쓰지 않는다."""
     res = Path(results_dir)
     return (res / "gate-v2.md").exists() and not (res / "gate.md").exists()
 
@@ -270,7 +273,7 @@ def regenerate(results_dir, evidence_root, gt_b, gt_a, *, std_name: str = "a483b
     from .generators import GENERATORS, Ctx
     res = Path(results_dir)
     ctx = Ctx(res, Path(evidence_root), Path(gt_b), Path(gt_a), std_name)
-    legacy = _is_legacy_results_dir(res)
+    legacy = is_legacy_results_dir(res)
     rows: list[dict] = []
 
     def cmp(name: str, text: str, path: Path, optional: bool) -> None:
