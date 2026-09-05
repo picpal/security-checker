@@ -53,6 +53,37 @@ secscan scan --target <프로젝트> --profile standard --out out
 - `--suppressions <file>` / `--baseline <file>` / `--write-baseline <file>` : 억제(사람 확정) · baseline
 - `--allow-large` : 대형 코드베이스에서도 도달성 강제 · `--no-reachability` : 도달성 생략
 
+## 슬래시 커맨드 (Claude Code)
+
+이 저장소를 clone 한 뒤 그 디렉터리에서 Claude Code 를 실행하면 바로 쓸 수 있다.
+
+| 커맨드 | 하는 일 |
+|---|---|
+| `/secscan-setup` | 스캐너·런타임 설치 상태를 `doctor` 로 점검하고, 빠진 것을 하나씩 승인받아 설치 |
+| `/security-check <경로 \| git URL>` | 스택 감지 → 프로파일 결정 → 스캔 → 보고서 해석 → 억제 후보 제안 |
+| `/clear-clone [슬러그 \| all]` | git URL 로 받아 둔 클론 정리 (보고서는 남김) |
+
+처음이라면 `/secscan-setup` 부터 — venv 생성까지 여기서 안내한다.
+
+### git URL 점검
+
+`/security-check https://github.com/owner/repo.git` 처럼 원격 저장소를 바로 넘길 수 있다.
+내부적으로 `secscan fetch` 가 `--depth 1` 로 `.secscan/repos/<host>__<owner>__<repo>/` 에 받는다.
+
+- `.secscan/` 은 `.gitignore` 되어 있고 `exclude.py` 기본 제외 목록에도 있어, secscan 자신을
+  점검해도 클론한 코드가 findings 에 섞이지 않는다
+- 이미 받아 둔 클론이 있으면 **지우고 다시 받는다** — 보고서가 항상 현재 기본 브랜치 기준
+- 보고서는 `out/<슬러그>/` 로 분리돼 여러 프로젝트 결과가 서로 덮어쓰지 않는다
+
+클론/삭제는 결정적 코드(`secscan/fetch.py`)가 처리한다 — 삭제는 `.secscan/repos/` 밖으로
+나갈 수 없고 심볼릭 링크 탈출도 막는다. Claude 가 `rm -rf` 경로를 계산하지 않는다(원칙 2).
+
+```bash
+secscan fetch <git URL>          # 얕은 클론 + 커밋 SHA 출력
+secscan clean --list             # 클론 목록 + 용량
+secscan clean [--slug <슬러그>]   # 정리 (미지정 시 전체)
+```
+
 ## 하이브리드 동작 (Claude 레이어)
 1. Claude가 자연어 요청("이 프로젝트 점검해줘")을 **intent**로 해석
 2. `secscan detect`로 스택/빌드도구 감지 → 프로파일 결정

@@ -55,7 +55,9 @@ def render_doctor(report: DoctorReport) -> str:
         for s in group:
             mark = _marker(s.state)
             if not s.present:
-                detail = f"(미설치) {s.req.purpose}"
+                # 선택 항목은 없어도 점검이 진행된다 — 설치 순서를 정할 수 있게 표시.
+                tag = "(미설치, 선택)" if s.req.optional else "(미설치)"
+                detail = f"{tag} {s.req.purpose}"
             elif s.satisfies:
                 detail = s.version or "설치됨"
             else:  # present 하나 문제(outdated/unknown/low): 감지값 + 사유

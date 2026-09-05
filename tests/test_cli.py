@@ -70,6 +70,19 @@ def test_render_present_tool_without_version_shows_installed_not_purpose():
     assert "atom 용도" not in line  # purpose 잡음을 상태줄에 노출하지 않음
 
 
+def test_render_marks_optional_missing_tool_as_non_blocking():
+    """/secscan-setup 이 차단 항목을 먼저 설치하려면 출력에 선택 여부가 보여야 한다."""
+    report = DoctorReport([
+        _status("depscan", False, None, False, MISSING),
+        _status("trufflehog", False, None, False, MISSING, optional=True),
+    ])
+    lines = cli.render_doctor(report).splitlines()
+    blocker = next(ln for ln in lines if "depscan" in ln)
+    opt = next(ln for ln in lines if "trufflehog" in ln)
+    assert "선택" not in blocker
+    assert "선택" in opt
+
+
 def test_main_doctor_returns_0_when_environment_ok(monkeypatch):
     ok_report = DoctorReport([_status("trivy", True, "0.50.0", True, OK)])
     monkeypatch.setattr(cli, "run_doctor", lambda: ok_report)
