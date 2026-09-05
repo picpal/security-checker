@@ -14,6 +14,7 @@ from datetime import date
 from pathlib import Path
 
 from .detect import detect_stack, suggest_profile
+from .fetch import DEFAULT_BASE, FetchError, clean, fetch, list_clones
 from .doctor import MISSING, OK, DoctorReport, run_doctor
 from .measure import reachability_stats
 from .models import UNREACHABLE, sast_tier
@@ -239,6 +240,50 @@ def _cmd_detect(args) -> int:
     return 0
 
 
+def _human_size(n: int) -> str:
+    for unit in ("B", "KB", "MB", "GB"):
+        if n < 1024 or unit == "GB":
+            return f"{n:.0f}{unit}" if unit == "B" else f"{n:.1f}{unit}"
+        n /= 1024
+    return f"{n:.1f}GB"
+
+
+def _cmd_fetch(args) -> int:
+    try:
+        clone = fetch(args.url, args.base)
+    except FetchError as e:
+        print(f"✗ {e}")
+        return 1
+    print(f"클론 완료: {clone.path}")
+    print(f"커밋: {clone.sha or '(SHA 조회 실패 — 클론 자체는 유효)'}")
+    print(f"이제: secscan scan --target {clone.path} --profile <프로파일>")
+    return 0
+
+
+def _cmd_clean(args) -> int:
+    clones = list_clones(args.base)
+    if args.list:
+        if not clones:
+            print(f"클론이 없습니다 ({args.base}).")
+            return 0
+        total = sum(c.size_bytes for c in clones)
+        print(f"클론 {len(clones)}개 · 합계 {_human_size(total)}  ({args.base})")
+        for c in clones:
+            print(f"  {c.slug:<44} {_human_size(c.size_bytes)}")
+        return 0
+
+    try:
+        removed = clean(args.base, slug=args.slug)
+    except FetchError as e:
+        print(f"✗ {e}")
+        return 1
+    print(f"삭제 {len(removed)}개:")
+    for p in removed:
+        print(f"  {p}")
+    print("보고서(out/)는 그대로 남겨 뒀습니다.")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="secscan",
@@ -277,6 +322,17 @@ def main(argv: list[str] | None = None) -> int:
     sp.add_argument("--baseline", help="baseline 파일(JSON) — 기존 이슈 억제, 신규만 알림")
     sp.add_argument("--write-baseline", help="현재 findings 를 baseline 파일로 저장")
 
+    fp = sub.add_parser("fetch", help="git URL 을 .secscan/repos 아래로 얕은 클론")
+    fp.add_argument("url", help="git URL (https / ssh / scp 형식)")
+    fp.add_argument("--base", default=str(DEFAULT_BASE),
+                    help=f"클론 루트 (기본: {DEFAULT_BASE})")
+
+    cp = sub.add_parser("clean", help="fetch 로 받은 클론 정리 (보고서는 남김)")
+    cp.add_argument("--base", default=str(DEFAULT_BASE),
+                    help=f"클론 루트 (기본: {DEFAULT_BASE})")
+    cp.add_argument("--slug", help="특정 클론만 삭제 (미지정 시 전체)")
+    cp.add_argument("--list", action="store_true", help="삭제하지 않고 목록만 출력")
+
     args = parser.parse_args(argv)
     if args.command == "doctor":
         return _cmd_doctor()
@@ -284,6 +340,10 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_detect(args)
     if args.command == "scan":
         return _cmd_scan(args)
+    if args.command == "fetch":
+        return _cmd_fetch(args)
+    if args.command == "clean":
+        return _cmd_clean(args)
 
     parser.print_help()
     return 2

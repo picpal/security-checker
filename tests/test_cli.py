@@ -220,3 +220,71 @@ def test_main_scan_network_off_forces_never_and_no_runner(monkeypatch, tmp_path)
               "--verify-secrets", "--network-off"])
     assert captured["secret_policy"] == "never"  # network-off 가 verify 이김
     assert captured["secret_runner"] is None  # 네트워크 runner 미전달(전송 불가)
+
+
+# --- fetch / clean 커맨드 (슬래시 커맨드가 호출하는 결정적 진입점) ---
+
+def test_main_fetch_prints_path_and_sha(tmp_path, capsys, monkeypatch):
+    from secscan.fetch import Clone
+
+    dest = tmp_path / "github.com__owner__repo"
+    monkeypatch.setattr(
+        cli, "fetch",
+        lambda url, base, **kw: Clone("github.com__owner__repo", dest, url, "deadbeef"),
+    )
+    rc = cli.main(["fetch", "https://github.com/owner/repo.git", "--base", str(tmp_path)])
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert str(dest) in out
+    assert "deadbeef" in out
+
+
+def test_main_fetch_reports_failure_without_traceback(tmp_path, capsys, monkeypatch):
+    from secscan.fetch import FetchError
+
+    def boom(url, base, **kw):
+        raise FetchError("클론 실패(128): repository not found")
+
+    monkeypatch.setattr(cli, "fetch", boom)
+    rc = cli.main(["fetch", "https://github.com/owner/nope.git", "--base", str(tmp_path)])
+    captured = capsys.readouterr()
+    assert rc == 1
+    assert "repository not found" in (captured.out + captured.err)
+
+
+def test_main_clean_list_shows_clones(tmp_path, capsys):
+    (tmp_path / "github.com__owner__repo").mkdir(parents=True)
+    rc = cli.main(["clean", "--list", "--base", str(tmp_path)])
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "github.com__owner__repo" in out
+
+
+def test_main_clean_list_on_empty_base_is_not_an_error(tmp_path, capsys):
+    rc = cli.main(["clean", "--list", "--base", str(tmp_path / "missing")])
+    assert rc == 0
+    assert "없" in capsys.readouterr().out
+
+
+def test_main_clean_removes_all(tmp_path, capsys):
+    (tmp_path / "github.com__a__app").mkdir(parents=True)
+    (tmp_path / "github.com__b__app").mkdir(parents=True)
+    rc = cli.main(["clean", "--base", str(tmp_path)])
+    assert rc == 0
+    assert list(tmp_path.iterdir()) == []
+    assert "2" in capsys.readouterr().out
+
+
+def test_main_clean_one_slug(tmp_path):
+    (tmp_path / "github.com__a__app").mkdir(parents=True)
+    keep = tmp_path / "github.com__b__app"
+    keep.mkdir(parents=True)
+    rc = cli.main(["clean", "--slug", "github.com__a__app", "--base", str(tmp_path)])
+    assert rc == 0
+    assert keep.exists()
+
+
+def test_main_clean_unknown_slug_returns_1(tmp_path, capsys):
+    rc = cli.main(["clean", "--slug", "nope", "--base", str(tmp_path)])
+    assert rc == 1
+    assert "nope" in (capsys.readouterr().out + capsys.readouterr().err)
