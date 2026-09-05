@@ -1,0 +1,13 @@
+{
+  "gta.in_category_pass": "2/4",
+  "gta.row0.CWE-259.fixed_residual": 0,
+  "gta.row0.CWE-259.passed": "True",
+  "gta.row1.CWE-760.fixed_residual": 0,
+  "gta.row1.CWE-760.passed": "True",
+  "gta.row2.CWE-89.fixed_residual": 8,
+  "gta.row2.CWE-89.passed": "False",
+  "gta.row3.CWE-89.fixed_residual": 5,
+  "gta.row3.CWE-89.passed": "False",
+  "gta.row4.CWE-489.observed": "없음",
+  "gta.row5.CWE-497.observed": "없음"
+}
