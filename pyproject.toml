@@ -12,6 +12,7 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
+xlsx = ["openpyxl>=3.1"]
 
 [project.scripts]
 secscan = "secscan.cli:main"

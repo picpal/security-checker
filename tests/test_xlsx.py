@@ -91,3 +91,49 @@ def test_all_string_cells_are_sanitized():
     f = _sca(cve="=HYPERLINK(\"x\")")
     _, rows = build_sheets(decide([f]), _meta())["Deduped_CVEs"]
     assert rows[0][1].startswith("'=")
+
+
+# --- Task 8: 라이터(시트 분할·CSV 폴백·xlsx) ---
+
+import csv
+import pytest
+
+from secscan.output.xlsx import split_sheet, write_csv_bundle, write_workbook
+
+
+def test_split_sheet_by_row_limit():
+    header, rows = ["A"], [[i] for i in range(10)]
+    parts = split_sheet("Findings", (header, rows), max_rows=4)  # 헤더 1 + 데이터 3 씩
+    assert [n for n, _ in parts] == ["Findings", "Findings_2", "Findings_3", "Findings_4"]
+    assert sum(len(r) for _, (_, r) in parts) == 10 and all(len(r) <= 3 for _, (_, r) in parts)
+
+
+def test_csv_bundle_writes_every_sheet_sanitized(tmp_path):
+    fs = decide([_sca(cve="=EVIL()")])
+    paths = write_csv_bundle(build_sheets(fs, _meta()), tmp_path)
+    assert {p.name for p in paths} == {"Summary.csv", "Findings.csv", "Deduped_CVEs.csv", "Targets.csv", "SAST.csv", "Secret.csv", "Meta.csv"}
+    rows = list(csv.reader((tmp_path / "Deduped_CVEs.csv").open(encoding="utf-8")))
+    assert rows[0][:12] == list(TEAM_HEADER) and rows[1][1] == "'=EVIL()"
+
+
+def test_write_workbook_falls_back_to_csv_with_warning(tmp_path):
+    paths, warn = write_workbook(decide([_sca()]), _meta(), tmp_path, prefer_xlsx=False)
+    assert warn and "openpyxl" in warn and (tmp_path / "findings-xlsx" / "Deduped_CVEs.csv").exists()
+
+
+def test_write_workbook_xlsx_roundtrip_when_openpyxl_available(tmp_path):
+    openpyxl = pytest.importorskip("openpyxl")
+    fs = decide([_sca("CVE-1"), _sca("CVE-2", reach=REACHABLE)])
+    paths, warn = write_workbook(fs, _meta(), tmp_path, prefer_xlsx=True)
+    assert warn is None and paths[0].name == "findings.xlsx"
+    wb = openpyxl.load_workbook(paths[0])
+    assert wb.sheetnames == ["Summary", "Findings", "Deduped_CVEs", "Targets", "SAST", "Secret", "Meta"]
+    ws = wb["Deduped_CVEs"]
+    ids = {ws.cell(row=r, column=2).value for r in range(2, ws.max_row + 1)}
+    assert ids == {"CVE-1", "CVE-2"}
+    assert wb.properties.created.isoformat().startswith("2026-09-05")
+    # 문자열 강제: 수식으로 해석되지 않는다
+    fs2 = decide([_sca(cve="=EVIL()")])
+    p2, _ = write_workbook(fs2, _meta(), tmp_path / "b", prefer_xlsx=True)
+    ws2 = openpyxl.load_workbook(p2[0])["Deduped_CVEs"]
+    assert ws2.cell(row=2, column=2).data_type == "s" and ws2.cell(row=2, column=2).value == "'=EVIL()"

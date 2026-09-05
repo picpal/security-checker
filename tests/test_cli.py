@@ -344,3 +344,16 @@ def test_scan_writes_findings_json_with_context(tmp_path, monkeypatch):
     doc = json.loads((tmp_path / "out" / "findings.json").read_text())
     assert doc["@context"] == "secscan-findings/v1" and doc["findings"][0]["disposition"] == "actionable"
     assert rc == 1
+
+
+# --- Task 8: xlsx/CSV 워크북 출력 ---
+
+def test_scan_writes_workbook_or_csv_bundle(tmp_path, monkeypatch):
+    from secscan.scan import ScanResult
+    from secscan.disposition import decide
+    fs = decide([Finding(category="secret", severity="high", rule_id="aws", location=Location("a.properties", 4))])
+    monkeypatch.setattr(cli, "run_scan", lambda *a, **k: ScanResult(findings=fs, raw_results=[]))
+    monkeypatch.setattr(cli, "build_adapters", lambda p: [])
+    cli.main(["scan", "--target", str(tmp_path), "--out", str(tmp_path / "out"), "--profile", "quick", "--no-reachability"])
+    out = tmp_path / "out"
+    assert (out / "findings.xlsx").exists() or (out / "findings-xlsx" / "Secret.csv").exists()

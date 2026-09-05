@@ -227,8 +227,17 @@ def _cmd_scan(args) -> int:
             "secret_policy": result.secret_policy, "excluded_count": result.excluded_count,
         }), encoding="utf-8")
 
+    from .output.xlsx import write_workbook
+    wb_meta = {"target": str(args.target), "profile": args.profile, "run_date": date.today().isoformat(),
+               "scanner_status": [asdict(s) for s in result.scanner_status],
+               "reachability": {"ran": result.reachability_ran, "reason": result.reachability_reason},
+               "secret_policy": result.secret_policy, "excluded_count": result.excluded_count}
+    wb_paths, wb_warn = write_workbook(result.findings, wb_meta, out)
+    if wb_warn:
+        print(f"⚠️ {wb_warn}")
+
     print(render_scan_summary(result))
-    print(f"\n출력: {out / 'report.md'} · {out / 'findings.sarif'} · {out / 'findings.json'}")
+    print(f"\n출력: {out / 'report.md'} · {out / 'findings.sarif'} · {out / 'findings.json'} · {wb_paths[0]}")
     return 1 if _has_actionable(result.findings) else 0
 
 

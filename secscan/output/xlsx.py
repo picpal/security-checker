@@ -185,3 +185,86 @@ def build_sheets(findings: list[Finding], meta: dict) -> dict[str, Sheet]:
         "Secret": (SECRET_HEADER, _san(_rows_secret(fs))),
         "Meta": (["Key", "Value"], _san(_rows_meta(meta))),
     }
+
+
+# --- 라이터부: 시트 분할·CSV 폴백·xlsx(openpyxl 지연 import) ---
+
+import csv
+from datetime import datetime
+from pathlib import Path
+
+
+def split_sheet(name: str, sheet: Sheet, max_rows: int = MAX_ROWS) -> list[tuple[str, Sheet]]:
+    header, rows = sheet
+    per = max(1, max_rows - 1)  # 헤더 1행 제외
+    if len(rows) <= per:
+        return [(name, sheet)]
+    return [(name if i == 0 else f"{name}_{i + 1}", (header, rows[i * per:(i + 1) * per]))
+            for i in range((len(rows) + per - 1) // per)]
+
+
+def _split_all(sheets: dict[str, Sheet], max_rows: int = MAX_ROWS) -> list[tuple[str, Sheet]]:
+    out: list[tuple[str, Sheet]] = []
+    for name, sheet in sheets.items():
+        out += split_sheet(name, sheet, max_rows)
+    return out
+
+
+def write_csv_bundle(sheets: dict[str, Sheet], out_dir, *, max_rows: int = MAX_ROWS) -> list[Path]:
+    """openpyxl 부재 시 폴백. 같은 sanitizer 를 이미 거친 셀을 그대로 쓴다."""
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    written = []
+    for name, (header, rows) in _split_all(sheets, max_rows):
+        p = out / f"{name}.csv"
+        with p.open("w", newline="", encoding="utf-8") as fh:
+            w = csv.writer(fh, quoting=csv.QUOTE_MINIMAL)
+            w.writerow(header)
+            w.writerows(["" if c is None else c for c in r] for r in rows)
+        written.append(p)
+    return written
+
+
+def write_xlsx(sheets: dict[str, Sheet], path, *, created: str, max_rows: int = MAX_ROWS) -> Path:
+    """openpyxl 필요(`pip install secscan[xlsx]`). 문자열 셀은 data_type 's' 로 강제 — '=' 시작 문자열이 수식이 되지 않게."""
+    from openpyxl import Workbook  # 지연 import: 코어 의존성 0 유지
+    from openpyxl.cell.cell import TYPE_STRING
+
+    wb = Workbook()
+    wb.remove(wb.active)
+    for name, (header, rows) in _split_all(sheets, max_rows):
+        ws = wb.create_sheet(title=name[:31])
+        ws.append(header)
+        for r in rows:
+            ws.append(r)
+        for row in ws.iter_rows(min_row=1):
+            for cell in row:
+                if isinstance(cell.value, str):
+                    cell.data_type = TYPE_STRING
+    ts = datetime.fromisoformat(created) if created else datetime(1970, 1, 1)
+    wb.properties.created = ts
+    wb.properties.modified = ts
+    p = Path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    wb.save(p)
+    return p
+
+
+def _openpyxl_available() -> bool:
+    try:
+        import openpyxl  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
+def write_workbook(findings: list[Finding], meta: dict, out_dir, *, prefer_xlsx: bool | None = None,
+                   max_rows: int = MAX_ROWS) -> tuple[list[Path], str | None]:
+    """xlsx 가 가능하면 `<out>/findings.xlsx`, 아니면 `<out>/findings-xlsx/<sheet>.csv` + 경고 1줄."""
+    sheets = build_sheets(findings, meta)
+    out = Path(out_dir)
+    use_xlsx = _openpyxl_available() if prefer_xlsx is None else prefer_xlsx
+    if use_xlsx:
+        return [write_xlsx(sheets, out / "findings.xlsx", created=str(meta.get("run_date", "")), max_rows=max_rows)], None
+    paths = write_csv_bundle(sheets, out / "findings-xlsx", max_rows=max_rows)
+    return paths, "openpyxl 미설치 — 시트별 CSV 번들로 대체(`pip install secscan[xlsx]` 로 xlsx 출력)"

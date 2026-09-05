@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 from secscan.output.json_io import to_json
 from secscan.output.markdown import to_markdown
 from secscan.output.sarif import to_sarif
+from secscan.output.xlsx import write_workbook
 
 if TYPE_CHECKING:
     from secscan.scan import ScanResult, TraceSink
@@ -51,7 +52,7 @@ def tool_versions(*, run=subprocess.run) -> dict[str, str]:
     return out
 
 
-def write_evidence(out_dir, *, result: ScanResult, trace: TraceSink | None, meta: dict) -> list[Path]:
+def write_evidence(out_dir, *, result: ScanResult, trace: TraceSink | None, meta: dict, xlsx: bool = False) -> list[Path]:
     out = Path(out_dir)
     (out / "raw").mkdir(parents=True, exist_ok=True)
     written: list[Path] = []
@@ -83,6 +84,14 @@ def write_evidence(out_dir, *, result: ScanResult, trace: TraceSink | None, meta
     full_meta["reachability"] = {"ran": result.reachability_ran, "reason": result.reachability_reason}
     full_meta["secret_policy"] = result.secret_policy
     full_meta["excluded_count"] = result.excluded_count
+    if xlsx:
+        wb_paths, wb_warn = write_workbook(result.findings, {
+            **meta, "scanner_status": full_meta["scanner_status"], "reachability": full_meta["reachability"],
+            "secret_policy": full_meta["secret_policy"], "run_date": meta.get("run_date", ""),
+        }, out)
+        written += wb_paths
+        if wb_warn:
+            full_meta["xlsx_warning"] = wb_warn
     p = out / "meta.json"
     p.write_text(json.dumps(full_meta, indent=2, ensure_ascii=False), encoding="utf-8"); written.append(p)
     return written
