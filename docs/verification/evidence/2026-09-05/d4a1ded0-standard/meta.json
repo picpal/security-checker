@@ -1,0 +1,42 @@
+{
+  "snapshot": "d4a1ded0",
+  "repo": "/Users/picpal/Desktop/workspace/message-gate",
+  "profile": "standard",
+  "run_date": "2026-09-05",
+  "elapsed_s": 34.1,
+  "children_max_rss_bytes": 468172800,
+  "tool_versions": {
+    "trivy": "Version: 0.71.2 Vulnerability DB: Version: 2 UpdatedAt: 2026-09-05 01:12:13.234084756 +0000 UTC NextUpdate: 2026-09-06 01:12:13.234084357 +0000 UTC DownloadedAt: 2026-09-05 05:47:16.400993 +0000 UTC J",
+    "cdxgen": "\u001b[1mCycloneDX Generator 12.7.0\u001b[0m Runtime: Node.js, Version: 24.5.0",
+    "semgrep": "1.168.0 A new version of Semgrep is available. See https://semgrep.dev/docs/upgrading",
+    "gitleaks": "8.30.1",
+    "depscan": "depscan 6.2.0",
+    "spotbugs": "4.10.2",
+    "java": "openjdk version \"21.0.10\" 2026-01-20 LTS OpenJDK Runtime Environment Corretto-21.0.10.7.1 (build 21.0.10+7-LTS) OpenJDK 64-Bit Server VM Corretto-21.0.10.7.1 (build 21.0.10+7-LTS, mixed mode, sharing)",
+    "gradle": "Welcome to Gradle 9.5.1! Here are the highlights of this release: - Task provenance in reports and failure messages - Type-safe accessors for precompiled Kotlin Settings plugins For more details see h"
+  },
+  "isolated": {
+    "gradle_user_home": "/private/tmp/secscan-verify/d4a1ded0/gradle-home",
+    "secret_policy": "never"
+  },
+  "scanner_status": [
+    {
+      "tool": "gitleaks",
+      "status": "ok"
+    },
+    {
+      "tool": "semgrep",
+      "status": "ok"
+    },
+    {
+      "tool": "trivy",
+      "status": "ok"
+    }
+  ],
+  "reachability": {
+    "ran": false,
+    "reason": "off"
+  },
+  "secret_policy": "never",
+  "excluded_count": 0
+}

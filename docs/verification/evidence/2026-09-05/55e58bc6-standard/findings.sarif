@@ -1,0 +1,3987 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "secscan",
+          "informationUri": "https://github.com/local/secscan",
+          "version": "0.0.1",
+          "rules": [
+            {
+              "id": "generic-api-key",
+              "name": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+              "shortDescription": {
+                "text": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations."
+              },
+              "properties": {
+                "tags": [
+                  "secret"
+                ],
+                "security-severity": "7.0"
+              }
+            },
+            {
+              "id": "private-key",
+              "name": "Identified a Private Key, which may compromise cryptographic security and sensitive data encryption.",
+              "shortDescription": {
+                "text": "Identified a Private Key, which may compromise cryptographic security and sensitive data encryption."
+              },
+              "properties": {
+                "tags": [
+                  "secret"
+                ],
+                "security-severity": "7.0"
+              }
+            },
+            {
+              "id": "yaml.github-actions.security.github-actions-mutable-action-tag.github-actions-mutable-action-tag",
+              "name": "GitHub Actions step uses a mutable tag or branch reference. Tags and branch names can be silently repointed by the action owner, enabling supply-chain attacks — as seen in the trivy-action and kics-gi",
+              "shortDescription": {
+                "text": "GitHub Actions step uses a mutable tag or branch reference. Tags and branch names can be silently repointed by the action owner, enabling supply-chain attacks — as seen in the trivy-action and kics-gi"
+              },
+              "properties": {
+                "tags": [
+                  "sast",
+                  "CWE-1357",
+                  "CWE-353"
+                ],
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "secscan.rules.hardcoded-credential",
+              "name": "하드코딩된 자격증명입니다(CWE-798/259). 환경변수·시크릿 매니저·설정 외부화로 옮기고, 이미 노출된 값은 회수(revoke)·교체하세요.",
+              "shortDescription": {
+                "text": "하드코딩된 자격증명입니다(CWE-798/259). 환경변수·시크릿 매니저·설정 외부화로 옮기고, 이미 노출된 값은 회수(revoke)·교체하세요."
+              },
+              "properties": {
+                "tags": [
+                  "sast",
+                  "CWE-798",
+                  "CWE-259"
+                ],
+                "security-severity": "7.0"
+              }
+            },
+            {
+              "id": "secscan.rules.mybatis-sqli-identifier",
+              "name": "MyBatis 식별자 위치 ${} 치환(CWE-89). 테이블/컬럼명은 #{} 바인딩이 구조적으로 불가하므로, 입력 화이트리스트 검증 관문이 있는지 확인하세요(#305 패턴).",
+              "shortDescription": {
+                "text": "MyBatis 식별자 위치 ${} 치환(CWE-89). 테이블/컬럼명은 #{} 바인딩이 구조적으로 불가하므로, 입력 화이트리스트 검증 관문이 있는지 확인하세요(#305 패턴)."
+              },
+              "properties": {
+                "tags": [
+                  "sast",
+                  "CWE-89"
+                ],
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "CVE-2026-10532",
+              "name": "Deserialization of untrusted data vulnerability in QOS.CH Sarl logback ...",
+              "shortDescription": {
+                "text": "Deserialization of untrusted data vulnerability in QOS.CH Sarl logback ..."
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-502"
+                ],
+                "security-severity": "3.0"
+              }
+            },
+            {
+              "id": "CVE-2026-9828",
+              "name": "Deserialization of untrusted data vulnerability in QOS.CH Sarl logback ...",
+              "shortDescription": {
+                "text": "Deserialization of untrusted data vulnerability in QOS.CH Sarl logback ..."
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-502"
+                ],
+                "security-severity": "3.0"
+              }
+            },
+            {
+              "id": "GHSA-r7wm-3cxj-wff9",
+              "name": "jackson-core: Async parser maxNumberLength bypass via chunked digit accumulation (incomplete fix for GHSA-72hv-8253-57qq)",
+              "shortDescription": {
+                "text": "jackson-core: Async parser maxNumberLength bypass via chunked digit accumulation (incomplete fix for GHSA-72hv-8253-57qq)"
+              },
+              "properties": {
+                "tags": [
+                  "sca"
+                ],
+                "security-severity": "7.0"
+              }
+            },
+            {
+              "id": "CVE-2026-54512",
+              "name": "jackson-databind: jackson-databind: Arbitrary code execution via PolymorphicTypeValidator bypass",
+              "shortDescription": {
+                "text": "jackson-databind: jackson-databind: Arbitrary code execution via PolymorphicTypeValidator bypass"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-184",
+                  "CWE-502"
+                ],
+                "security-severity": "7.0"
+              }
+            },
+            {
+              "id": "CVE-2026-54513",
+              "name": "jackson-databind: Jackson-databind: Security bypass allows arbitrary code execution",
+              "shortDescription": {
+                "text": "jackson-databind: Jackson-databind: Security bypass allows arbitrary code execution"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-184"
+                ],
+                "security-severity": "7.0"
+              }
+            },
+            {
+              "id": "CVE-2026-54514",
+              "name": "jackson-databind: jackson-databind: Information Disclosure via Eager DNS Resolution",
+              "shortDescription": {
+                "text": "jackson-databind: jackson-databind: Information Disclosure via Eager DNS Resolution"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-918"
+                ],
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "CVE-2026-54515",
+              "name": "jackson-databind: jackson-databind: Ignored properties can be unexpectedly modified",
+              "shortDescription": {
+                "text": "jackson-databind: jackson-databind: Ignored properties can be unexpectedly modified"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-915"
+                ],
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "CVE-2026-54516",
+              "name": "jackson-databind: jackson-databind: Security bypass due to improper handling of renamed properties",
+              "shortDescription": {
+                "text": "jackson-databind: jackson-databind: Security bypass due to improper handling of renamed properties"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-915"
+                ],
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "CVE-2026-54517",
+              "name": "jackson-databind: jackson-databind: Information disclosure via improper JsonView filter application",
+              "shortDescription": {
+                "text": "jackson-databind: jackson-databind: Information disclosure via improper JsonView filter application"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-863"
+                ],
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "CVE-2026-54518",
+              "name": "jackson-databind: jackson-databind: Information disclosure and data manipulation via view-based access control bypass",
+              "shortDescription": {
+                "text": "jackson-databind: jackson-databind: Information disclosure and data manipulation via view-based access control bypass"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-863"
+                ],
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "CVE-2026-59888",
+              "name": "com.fasterxml.jackson.core/jackson-databind: tools.jackson.core/jackson-databind: jackson-databind: @JsonIgnore bypass in Java Records",
+              "shortDescription": {
+                "text": "com.fasterxml.jackson.core/jackson-databind: tools.jackson.core/jackson-databind: jackson-databind: @JsonIgnore bypass in Java Records"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-915"
+                ],
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "CVE-2026-59889",
+              "name": "com.fasterxml.jackson.core/jackson-databind: Jackson-databind: Privilege escalation via improper handling of @JsonUnwrapped properties",
+              "shortDescription": {
+                "text": "com.fasterxml.jackson.core/jackson-databind: Jackson-databind: Privilege escalation via improper handling of @JsonUnwrapped properties"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-863"
+                ],
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "GHSA-mhm7-754m-9p8w",
+              "name": "jackson-databind: `@JsonView` bypass for creator properties with `@JsonTypeInfo(include=As.EXTERNAL_PROPERTY)`",
+              "shortDescription": {
+                "text": "jackson-databind: `@JsonView` bypass for creator properties with `@JsonTypeInfo(include=As.EXTERNAL_PROPERTY)`"
+              },
+              "properties": {
+                "tags": [
+                  "sca"
+                ],
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "CVE-2026-40983",
+              "name": "micrometer: micrometer-core: Micrometer: Denial of Service via specially crafted gRPC requests",
+              "shortDescription": {
+                "text": "micrometer: micrometer-core: Micrometer: Denial of Service via specially crafted gRPC requests"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-400",
+                  "CWE-770"
+                ],
+                "security-severity": "7.0"
+              }
+            },
+            {
+              "id": "CVE-2026-40984",
+              "name": "micrometer-core: micrometer-jetty11: micrometer-jetty12: Micrometer: Denial of Service via specially crafted HTTP requests",
+              "shortDescription": {
+                "text": "micrometer-core: micrometer-jetty11: micrometer-jetty12: Micrometer: Denial of Service via specially crafted HTTP requests"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-400",
+                  "CWE-770"
+                ],
+                "security-severity": "7.0"
+              }
+            },
+            {
+              "id": "CVE-2026-49844",
+              "name": "org.apache.logging.log4j/log4j-api: Apache Log4j API: Malformed JSON output due to improper encoding of floating-point values",
+              "shortDescription": {
+                "text": "org.apache.logging.log4j/log4j-api: Apache Log4j API: Malformed JSON output due to improper encoding of floating-point values"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-116"
+                ],
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "CVE-2026-41293",
+              "name": "tomcat-coyote: Apache Tomcat: HTTP/2 request headers not validated",
+              "shortDescription": {
+                "text": "tomcat-coyote: Apache Tomcat: HTTP/2 request headers not validated"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-20"
+                ],
+                "security-severity": "9.0"
+              }
+            },
+            {
+              "id": "CVE-2026-43512",
+              "name": "tomcat-coyote: Apache Tomcat: Authentication bypass via digest authentication",
+              "shortDescription": {
+                "text": "tomcat-coyote: Apache Tomcat: Authentication bypass via digest authentication"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-592"
+                ],
+                "security-severity": "9.0"
+              }
+            },
+            {
+              "id": "CVE-2026-43515",
+              "name": "tomcat-coyote: tomcat: Improper Authorization allows security bypass",
+              "shortDescription": {
+                "text": "tomcat-coyote: tomcat: Improper Authorization allows security bypass"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-285"
+                ],
+                "security-severity": "9.0"
+              }
+            },
+            {
+              "id": "CVE-2026-65182",
+              "name": "Apache Tomcat: Apache Tomcat: Security constraint bypass due to improper access control",
+              "shortDescription": {
+                "text": "Apache Tomcat: Apache Tomcat: Security constraint bypass due to improper access control"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-284",
+                  "CWE-863"
+                ],
+                "security-severity": "9.0"
+              }
+            },
+            {
+              "id": "CVE-2026-65905",
+              "name": "tomcat: Apache Tomcat: Authentication bypass via limited replay attack in DIGEST authenticator",
+              "shortDescription": {
+                "text": "tomcat: Apache Tomcat: Authentication bypass via limited replay attack in DIGEST authenticator"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-294"
+                ],
+                "security-severity": "9.0"
+              }
+            },
+            {
+              "id": "CVE-2026-68525",
+              "name": "org.apache.tomcat/tomcat: Apache Tomcat: Unauthorized resource access via FORM authentication bypass",
+              "shortDescription": {
+                "text": "org.apache.tomcat/tomcat: Apache Tomcat: Unauthorized resource access via FORM authentication bypass"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-863"
+                ],
+                "security-severity": "9.0"
+              }
+            },
+            {
+              "id": "CVE-2026-34483",
+              "name": "Apache Tomcat: Apache Tomcat: Information disclosure due to improper encoding in JsonAccessLogValve",
+              "shortDescription": {
+                "text": "Apache Tomcat: Apache Tomcat: Information disclosure due to improper encoding in JsonAccessLogValve"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-116"
+                ],
+                "security-severity": "7.0"
+              }
+            },
+            {
+              "id": "CVE-2026-34487",
+              "name": "Apache Tomcat: Apache Tomcat: Information disclosure via sensitive data in log files",
+              "shortDescription": {
+                "text": "Apache Tomcat: Apache Tomcat: Information disclosure via sensitive data in log files"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-532"
+                ],
+                "security-severity": "7.0"
+              }
+            },
+            {
+              "id": "CVE-2026-41284",
+              "name": "tomcat: Apache Tomcat: Denial of Service due to uncontrolled resource allocation",
+              "shortDescription": {
+                "text": "tomcat: Apache Tomcat: Denial of Service due to uncontrolled resource allocation"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-770"
+                ],
+                "security-severity": "7.0"
+              }
+            },
+            {
+              "id": "CVE-2026-42498",
+              "name": "tomcat-coyote: Apache Tomcat: Information disclosure due to HTTP Authentication Header exposure during WebSocket authentication.",
+              "shortDescription": {
+                "text": "tomcat-coyote: Apache Tomcat: Information disclosure due to HTTP Authentication Header exposure during WebSocket authentication."
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-200"
+                ],
+                "security-severity": "7.0"
+              }
+            },
+            {
+              "id": "CVE-2026-43513",
+              "name": "tomcat-catalina: Apache Tomcat: Improper Handling of Case Sensitivity in LockOutRealm",
+              "shortDescription": {
+                "text": "tomcat-catalina: Apache Tomcat: Improper Handling of Case Sensitivity in LockOutRealm"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-178"
+                ],
+                "security-severity": "7.0"
+              }
+            },
+            {
+              "id": "CVE-2026-43514",
+              "name": "tomcat-coyote: Apache Tomcat: Information disclosure via AJP secret timing discrepancy",
+              "shortDescription": {
+                "text": "tomcat-coyote: Apache Tomcat: Information disclosure via AJP secret timing discrepancy"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-208"
+                ],
+                "security-severity": "3.0"
+              }
+            },
+            {
+              "id": "CVE-2026-40976",
+              "name": "Spring Boot: Spring Boot: Security bypass due to ineffective default web security",
+              "shortDescription": {
+                "text": "Spring Boot: Spring Boot: Security bypass due to ineffective default web security"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-862",
+                  "CWE-305"
+                ],
+                "security-severity": "9.0"
+              }
+            },
+            {
+              "id": "CVE-2026-40973",
+              "name": "Spring Boot: Spring Boot: Arbitrary Code Execution and Session Hijacking via predictable temporary directory",
+              "shortDescription": {
+                "text": "Spring Boot: Spring Boot: Arbitrary Code Execution and Session Hijacking via predictable temporary directory"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-377"
+                ],
+                "security-severity": "7.0"
+              }
+            },
+            {
+              "id": "CVE-2026-41001",
+              "name": "spring-boot: Spring Boot: Local attacker can manipulate data directory due to predictable path",
+              "shortDescription": {
+                "text": "spring-boot: Spring Boot: Local attacker can manipulate data directory due to predictable path"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-377"
+                ],
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "CVE-2026-40992",
+              "name": "Spring Boot's Mail Auto-Configuration Does Not Enable SSL Hostname Verification",
+              "shortDescription": {
+                "text": "Spring Boot's Mail Auto-Configuration Does Not Enable SSL Hostname Verification"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-295"
+                ],
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "CVE-2026-41695",
+              "name": "Spring Data Commons: Spring Data Commons: Denial of Service via crafted property path strings",
+              "shortDescription": {
+                "text": "Spring Data Commons: Spring Data Commons: Denial of Service via crafted property path strings"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-400"
+                ],
+                "security-severity": "7.0"
+              }
+            },
+            {
+              "id": "CVE-2026-41716",
+              "name": "Spring Data Commons: Spring Data Commons: Denial of Service due to cache exhaustion via attacker-supplied strings",
+              "shortDescription": {
+                "text": "Spring Data Commons: Spring Data Commons: Denial of Service due to cache exhaustion via attacker-supplied strings"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-770"
+                ],
+                "security-severity": "7.0"
+              }
+            },
+            {
+              "id": "CVE-2026-41711",
+              "name": "Spring Data Commons: Spring Data Commons: Denial of Service via parsing Sort parameters",
+              "shortDescription": {
+                "text": "Spring Data Commons: Spring Data Commons: Denial of Service via parsing Sort parameters"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-400"
+                ],
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "CVE-2026-41721",
+              "name": "Spring Data Commons: Spring Data Commons: Denial of Service via specially crafted HTTP request with @ProjectedPayload",
+              "shortDescription": {
+                "text": "Spring Data Commons: Spring Data Commons: Denial of Service via specially crafted HTTP request with @ProjectedPayload"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-400"
+                ],
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "CVE-2026-22753",
+              "name": "Spring Security: Spring Security: Security bypass due to incorrect servlet path matching",
+              "shortDescription": {
+                "text": "Spring Security: Spring Security: Security bypass due to incorrect servlet path matching"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-693"
+                ],
+                "security-severity": "7.0"
+              }
+            },
+            {
+              "id": "CVE-2026-22754",
+              "name": "Spring Security: Spring Security: Authorization bypass due to incorrect servlet path matching",
+              "shortDescription": {
+                "text": "Spring Security: Spring Security: Authorization bypass due to incorrect servlet path matching"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-284",
+                  "CWE-551"
+                ],
+                "security-severity": "7.0"
+              }
+            },
+            {
+              "id": "CVE-2026-22751",
+              "name": "Spring Security: JdbcOneTimeTokenService: Spring Security: Authentication bypass due to race condition in One-Time Token login",
+              "shortDescription": {
+                "text": "Spring Security: JdbcOneTimeTokenService: Spring Security: Authentication bypass due to race condition in One-Time Token login"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-367"
+                ],
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "CVE-2026-22746",
+              "name": "Spring Security: Spring Security: Timing attack defense bypass allows information disclosure",
+              "shortDescription": {
+                "text": "Spring Security: Spring Security: Timing attack defense bypass allows information disclosure"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-208"
+                ],
+                "security-severity": "3.0"
+              }
+            },
+            {
+              "id": "CVE-2026-22747",
+              "name": "Spring Security: Spring Security: User impersonation via malformed X.509 certificate Common Name (CN) values",
+              "shortDescription": {
+                "text": "Spring Security: Spring Security: User impersonation via malformed X.509 certificate Common Name (CN) values"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-297",
+                  "CWE-295"
+                ],
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "CVE-2026-41706",
+              "name": "Spring Security: Open Redirect via Unvalidated Post-Login Redirect URL Stored in CookieRequestCache",
+              "shortDescription": {
+                "text": "Spring Security: Open Redirect via Unvalidated Post-Login Redirect URL Stored in CookieRequestCache"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-601"
+                ],
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "CVE-2026-41848",
+              "name": "spring-framework: Spring Framework: Regular Expression Denial of Service in AntPathMatcher",
+              "shortDescription": {
+                "text": "spring-framework: Spring Framework: Regular Expression Denial of Service in AntPathMatcher"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-1333"
+                ],
+                "security-severity": "3.0"
+              }
+            },
+            {
+              "id": "CVE-2026-41850",
+              "name": "spring-framework: Spring Framework: Denial of Service via specially crafted SpEL expressions",
+              "shortDescription": {
+                "text": "spring-framework: Spring Framework: Denial of Service via specially crafted SpEL expressions"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-407"
+                ],
+                "security-severity": "7.0"
+              }
+            },
+            {
+              "id": "CVE-2026-41851",
+              "name": "Spring Framework: Spring Framework: Denial of Service via unbounded cache growth in SpEL evaluation",
+              "shortDescription": {
+                "text": "Spring Framework: Spring Framework: Denial of Service via unbounded cache growth in SpEL evaluation"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-770"
+                ],
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "CVE-2026-41852",
+              "name": "spring-framework: org.springframework/spring-expression: Spring Framework: SpEL vulnerability allows unintended application logic invocation",
+              "shortDescription": {
+                "text": "spring-framework: org.springframework/spring-expression: Spring Framework: SpEL vulnerability allows unintended application logic invocation"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-863"
+                ],
+                "security-severity": "3.0"
+              }
+            },
+            {
+              "id": "CVE-2026-41854",
+              "name": "spring-framework: Spring Framework: Server-Side Request Forgery via incorrect host parsing",
+              "shortDescription": {
+                "text": "spring-framework: Spring Framework: Server-Side Request Forgery via incorrect host parsing"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-918"
+                ],
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "CVE-2026-41842",
+              "name": "spring-framework: Spring Framework: Denial of Service when resolving static resources",
+              "shortDescription": {
+                "text": "spring-framework: Spring Framework: Denial of Service when resolving static resources"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-400"
+                ],
+                "security-severity": "7.0"
+              }
+            },
+            {
+              "id": "CVE-2026-41845",
+              "name": "org.springframework: Spring Framework: Cross-site scripting (XSS) via incorrect JavaScript escaping",
+              "shortDescription": {
+                "text": "org.springframework: Spring Framework: Cross-site scripting (XSS) via incorrect JavaScript escaping"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-79"
+                ],
+                "security-severity": "7.0"
+              }
+            },
+            {
+              "id": "CVE-2026-22745",
+              "name": "spring-webflux: Spring MVC and Spring WebFlux: Denial of Service via slow static resource resolution on Windows",
+              "shortDescription": {
+                "text": "spring-webflux: Spring MVC and Spring WebFlux: Denial of Service via slow static resource resolution on Windows"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-400"
+                ],
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "CVE-2026-41841",
+              "name": "Spring MVC and WebFlux applications are vulnerable to Information Disc ...",
+              "shortDescription": {
+                "text": "Spring MVC and WebFlux applications are vulnerable to Information Disc ..."
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-524"
+                ],
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "CVE-2026-41843",
+              "name": "spring-webflux: spring-webmvc: Spring Framework: Information Disclosure via Path Traversal",
+              "shortDescription": {
+                "text": "spring-webflux: spring-webmvc: Spring Framework: Information Disclosure via Path Traversal"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-22"
+                ],
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "CVE-2026-41844",
+              "name": "Spring Framework: Spring Framework: Open Redirect via crafted link",
+              "shortDescription": {
+                "text": "Spring Framework: Spring Framework: Open Redirect via crafted link"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-601"
+                ],
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "CVE-2026-41846",
+              "name": "Spring Framework: Spring Framework: Cross-site scripting (XSS) via user-supplied values in JSP form tags",
+              "shortDescription": {
+                "text": "Spring Framework: Spring Framework: Cross-site scripting (XSS) via user-supplied values in JSP form tags"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-79"
+                ],
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "CVE-2026-41853",
+              "name": "Spring Framework: Spring Framework: Request smuggling vulnerability in Spring MVC and WebFlux",
+              "shortDescription": {
+                "text": "Spring Framework: Spring Framework: Request smuggling vulnerability in Spring MVC and WebFlux"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-444"
+                ],
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "CVE-2026-22741",
+              "name": "Spring MVC: Spring WebFlux: Spring MVC and Spring WebFlux: Denial of Service via cache poisoning",
+              "shortDescription": {
+                "text": "Spring MVC: Spring WebFlux: Spring MVC and Spring WebFlux: Denial of Service via cache poisoning"
+              },
+              "properties": {
+                "tags": [
+                  "sca",
+                  "CWE-524"
+                ],
+                "security-severity": "3.0"
+              }
+            },
+            {
+              "id": "GHSA-2m67-wjpj-xhg9",
+              "name": "Jackson Core: Document length constraint bypass in blocking, async, and DataInput parsers",
+              "shortDescription": {
+                "text": "Jackson Core: Document length constraint bypass in blocking, async, and DataInput parsers"
+              },
+              "properties": {
+                "tags": [
+                  "sca"
+                ],
+                "security-severity": "7.0"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "generic-api-key",
+          "level": "error",
+          "message": {
+            "text": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations."
+          },
+          "properties": {
+            "category": "secret",
+            "severity": "high",
+            "tools": [
+              "gitleaks"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "gitleaks"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": [],
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/private/tmp/secscan-verify/55e58bc6/repo/docs/superpowers/plans/2026-06-07-kms-cbc-payload-encryption.md"
+                },
+                "region": {
+                  "startLine": 182,
+                  "endLine": 182
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "generic-api-key",
+          "level": "error",
+          "message": {
+            "text": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations."
+          },
+          "properties": {
+            "category": "secret",
+            "severity": "high",
+            "tools": [
+              "gitleaks"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "gitleaks"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": [],
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/private/tmp/secscan-verify/55e58bc6/repo/src/main/resources/application-loadtest.yml"
+                },
+                "region": {
+                  "startLine": 113,
+                  "endLine": 113
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "generic-api-key",
+          "level": "error",
+          "message": {
+            "text": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations."
+          },
+          "properties": {
+            "category": "secret",
+            "severity": "high",
+            "tools": [
+              "gitleaks"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "gitleaks"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": [],
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/private/tmp/secscan-verify/55e58bc6/repo/src/main/resources/application-example.yml"
+                },
+                "region": {
+                  "startLine": 69,
+                  "endLine": 69
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "generic-api-key",
+          "level": "error",
+          "message": {
+            "text": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations."
+          },
+          "properties": {
+            "category": "secret",
+            "severity": "high",
+            "tools": [
+              "gitleaks"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "gitleaks"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": [],
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/private/tmp/secscan-verify/55e58bc6/repo/docs/superpowers/plans/2026-05-20-sha512-password-encoder.md"
+                },
+                "region": {
+                  "startLine": 953,
+                  "endLine": 953
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "generic-api-key",
+          "level": "error",
+          "message": {
+            "text": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations."
+          },
+          "properties": {
+            "category": "secret",
+            "severity": "high",
+            "tools": [
+              "gitleaks"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "gitleaks"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": [],
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/private/tmp/secscan-verify/55e58bc6/repo/docs/superpowers/plans/2026-05-20-sha512-password-encoder.md"
+                },
+                "region": {
+                  "startLine": 970,
+                  "endLine": 970
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "generic-api-key",
+          "level": "error",
+          "message": {
+            "text": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations."
+          },
+          "properties": {
+            "category": "secret",
+            "severity": "high",
+            "tools": [
+              "gitleaks"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "gitleaks"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": [],
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/private/tmp/secscan-verify/55e58bc6/repo/src/test/java/com/messagegate/auth/AuthServiceTest.java"
+                },
+                "region": {
+                  "startLine": 525,
+                  "endLine": 525
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "private-key",
+          "level": "error",
+          "message": {
+            "text": "Identified a Private Key, which may compromise cryptographic security and sensitive data encryption."
+          },
+          "properties": {
+            "category": "secret",
+            "severity": "high",
+            "tools": [
+              "gitleaks"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "gitleaks"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": [],
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/private/tmp/secscan-verify/55e58bc6/repo/src/test/resources/tls/test-server.key"
+                },
+                "region": {
+                  "startLine": 1,
+                  "endLine": 28
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "generic-api-key",
+          "level": "error",
+          "message": {
+            "text": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations."
+          },
+          "properties": {
+            "category": "secret",
+            "severity": "high",
+            "tools": [
+              "gitleaks"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "gitleaks"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": [],
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/private/tmp/secscan-verify/55e58bc6/repo/src/test/resources/application-test.yml"
+                },
+                "region": {
+                  "startLine": 61,
+                  "endLine": 61
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "generic-api-key",
+          "level": "error",
+          "message": {
+            "text": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations."
+          },
+          "properties": {
+            "category": "secret",
+            "severity": "high",
+            "tools": [
+              "gitleaks"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "gitleaks"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": [],
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/private/tmp/secscan-verify/55e58bc6/repo/src/test/resources/application-test.yml"
+                },
+                "region": {
+                  "startLine": 110,
+                  "endLine": 110
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "yaml.github-actions.security.github-actions-mutable-action-tag.github-actions-mutable-action-tag",
+          "level": "warning",
+          "message": {
+            "text": "GitHub Actions step uses a mutable tag or branch reference. Tags and branch names can be silently repointed by the action owner, enabling supply-chain attacks — as seen in the trivy-action and kics-gi"
+          },
+          "properties": {
+            "category": "sast",
+            "severity": "medium",
+            "tools": [
+              "semgrep"
+            ],
+            "cwe": [
+              "CWE-1357",
+              "CWE-353"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "semgrep"
+              ],
+              "score": 1
+            },
+            "confidence": "high",
+            "sastTier": "actionable"
+          },
+          "suppressions": [],
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/private/tmp/secscan-verify/55e58bc6/repo/.github/workflows/package-src.yml"
+                },
+                "region": {
+                  "startLine": 36,
+                  "endLine": 36
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "yaml.github-actions.security.github-actions-mutable-action-tag.github-actions-mutable-action-tag",
+          "level": "warning",
+          "message": {
+            "text": "GitHub Actions step uses a mutable tag or branch reference. Tags and branch names can be silently repointed by the action owner, enabling supply-chain attacks — as seen in the trivy-action and kics-gi"
+          },
+          "properties": {
+            "category": "sast",
+            "severity": "medium",
+            "tools": [
+              "semgrep"
+            ],
+            "cwe": [
+              "CWE-1357",
+              "CWE-353"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "semgrep"
+              ],
+              "score": 1
+            },
+            "confidence": "high",
+            "sastTier": "actionable"
+          },
+          "suppressions": [],
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/private/tmp/secscan-verify/55e58bc6/repo/.github/workflows/package-src.yml"
+                },
+                "region": {
+                  "startLine": 49,
+                  "endLine": 49
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "secscan.rules.hardcoded-credential",
+          "level": "error",
+          "message": {
+            "text": "하드코딩된 자격증명입니다(CWE-798/259). 환경변수·시크릿 매니저·설정 외부화로 옮기고, 이미 노출된 값은 회수(revoke)·교체하세요."
+          },
+          "properties": {
+            "category": "sast",
+            "severity": "high",
+            "tools": [
+              "semgrep"
+            ],
+            "cwe": [
+              "CWE-798",
+              "CWE-259"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "semgrep"
+              ],
+              "score": 1
+            },
+            "compliance": {
+              "kisa": [
+                {
+                  "code": "SF-06",
+                  "category": "보안기능",
+                  "name": "하드코드된 중요정보"
+                }
+              ],
+              "pci": [
+                "PCI-DSS 6.2.4 — access control"
+              ]
+            },
+            "confidence": "high",
+            "sastTier": "review"
+          },
+          "suppressions": [],
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/private/tmp/secscan-verify/55e58bc6/repo/src/main/java/com/messagegate/config/LoadtestSeederConfig.java"
+                },
+                "region": {
+                  "startLine": 31,
+                  "endLine": 31
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "secscan.rules.mybatis-sqli-identifier",
+          "level": "warning",
+          "message": {
+            "text": "MyBatis 식별자 위치 ${} 치환(CWE-89). 테이블/컬럼명은 #{} 바인딩이 구조적으로 불가하므로, 입력 화이트리스트 검증 관문이 있는지 확인하세요(#305 패턴)."
+          },
+          "properties": {
+            "category": "sast",
+            "severity": "medium",
+            "tools": [
+              "semgrep"
+            ],
+            "cwe": [
+              "CWE-89"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "semgrep"
+              ],
+              "score": 1
+            },
+            "compliance": {
+              "kisa": [
+                {
+                  "code": "IV-01",
+                  "category": "입력데이터 검증 및 표현",
+                  "name": "SQL 삽입"
+                }
+              ],
+              "pci": [
+                "PCI-DSS 6.2.4 — injection"
+              ]
+            },
+            "confidence": "low",
+            "sastTier": "review"
+          },
+          "suppressions": [],
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/private/tmp/secscan-verify/55e58bc6/repo/src/main/java/com/messagegate/mapper/lg/LgCarrierMapper.java"
+                },
+                "region": {
+                  "startLine": 40,
+                  "endLine": 40
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "secscan.rules.mybatis-sqli-identifier",
+          "level": "warning",
+          "message": {
+            "text": "MyBatis 식별자 위치 ${} 치환(CWE-89). 테이블/컬럼명은 #{} 바인딩이 구조적으로 불가하므로, 입력 화이트리스트 검증 관문이 있는지 확인하세요(#305 패턴)."
+          },
+          "properties": {
+            "category": "sast",
+            "severity": "medium",
+            "tools": [
+              "semgrep"
+            ],
+            "cwe": [
+              "CWE-89"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "semgrep"
+              ],
+              "score": 1
+            },
+            "compliance": {
+              "kisa": [
+                {
+                  "code": "IV-01",
+                  "category": "입력데이터 검증 및 표현",
+                  "name": "SQL 삽입"
+                }
+              ],
+              "pci": [
+                "PCI-DSS 6.2.4 — injection"
+              ]
+            },
+            "confidence": "low",
+            "sastTier": "review"
+          },
+          "suppressions": [],
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/private/tmp/secscan-verify/55e58bc6/repo/src/main/resources/mybatis/mapper/lg/LgCarrierMapper.xml"
+                },
+                "region": {
+                  "startLine": 19,
+                  "endLine": 19
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "secscan.rules.mybatis-sqli-identifier",
+          "level": "warning",
+          "message": {
+            "text": "MyBatis 식별자 위치 ${} 치환(CWE-89). 테이블/컬럼명은 #{} 바인딩이 구조적으로 불가하므로, 입력 화이트리스트 검증 관문이 있는지 확인하세요(#305 패턴)."
+          },
+          "properties": {
+            "category": "sast",
+            "severity": "medium",
+            "tools": [
+              "semgrep"
+            ],
+            "cwe": [
+              "CWE-89"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "semgrep"
+              ],
+              "score": 1
+            },
+            "compliance": {
+              "kisa": [
+                {
+                  "code": "IV-01",
+                  "category": "입력데이터 검증 및 표현",
+                  "name": "SQL 삽입"
+                }
+              ],
+              "pci": [
+                "PCI-DSS 6.2.4 — injection"
+              ]
+            },
+            "confidence": "low",
+            "sastTier": "review"
+          },
+          "suppressions": [],
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/private/tmp/secscan-verify/55e58bc6/repo/src/main/resources/mybatis/mapper/lg/LgCarrierMapper.xml"
+                },
+                "region": {
+                  "startLine": 24,
+                  "endLine": 24
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "secscan.rules.mybatis-sqli-identifier",
+          "level": "warning",
+          "message": {
+            "text": "MyBatis 식별자 위치 ${} 치환(CWE-89). 테이블/컬럼명은 #{} 바인딩이 구조적으로 불가하므로, 입력 화이트리스트 검증 관문이 있는지 확인하세요(#305 패턴)."
+          },
+          "properties": {
+            "category": "sast",
+            "severity": "medium",
+            "tools": [
+              "semgrep"
+            ],
+            "cwe": [
+              "CWE-89"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "semgrep"
+              ],
+              "score": 1
+            },
+            "compliance": {
+              "kisa": [
+                {
+                  "code": "IV-01",
+                  "category": "입력데이터 검증 및 표현",
+                  "name": "SQL 삽입"
+                }
+              ],
+              "pci": [
+                "PCI-DSS 6.2.4 — injection"
+              ]
+            },
+            "confidence": "low",
+            "sastTier": "review"
+          },
+          "suppressions": [],
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/private/tmp/secscan-verify/55e58bc6/repo/src/main/resources/mybatis/mapper/oldlg/OldLgCarrierMapper.xml"
+                },
+                "region": {
+                  "startLine": 36,
+                  "endLine": 36
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "secscan.rules.mybatis-sqli-identifier",
+          "level": "warning",
+          "message": {
+            "text": "MyBatis 식별자 위치 ${} 치환(CWE-89). 테이블/컬럼명은 #{} 바인딩이 구조적으로 불가하므로, 입력 화이트리스트 검증 관문이 있는지 확인하세요(#305 패턴)."
+          },
+          "properties": {
+            "category": "sast",
+            "severity": "medium",
+            "tools": [
+              "semgrep"
+            ],
+            "cwe": [
+              "CWE-89"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "semgrep"
+              ],
+              "score": 1
+            },
+            "compliance": {
+              "kisa": [
+                {
+                  "code": "IV-01",
+                  "category": "입력데이터 검증 및 표현",
+                  "name": "SQL 삽입"
+                }
+              ],
+              "pci": [
+                "PCI-DSS 6.2.4 — injection"
+              ]
+            },
+            "confidence": "low",
+            "sastTier": "review"
+          },
+          "suppressions": [],
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/private/tmp/secscan-verify/55e58bc6/repo/src/main/resources/mybatis/mapper/oldlg/OldLgCarrierMapper.xml"
+                },
+                "region": {
+                  "startLine": 41,
+                  "endLine": 41
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "secscan.rules.mybatis-sqli-identifier",
+          "level": "warning",
+          "message": {
+            "text": "MyBatis 식별자 위치 ${} 치환(CWE-89). 테이블/컬럼명은 #{} 바인딩이 구조적으로 불가하므로, 입력 화이트리스트 검증 관문이 있는지 확인하세요(#305 패턴)."
+          },
+          "properties": {
+            "category": "sast",
+            "severity": "medium",
+            "tools": [
+              "semgrep"
+            ],
+            "cwe": [
+              "CWE-89"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "semgrep"
+              ],
+              "score": 1
+            },
+            "compliance": {
+              "kisa": [
+                {
+                  "code": "IV-01",
+                  "category": "입력데이터 검증 및 표현",
+                  "name": "SQL 삽입"
+                }
+              ],
+              "pci": [
+                "PCI-DSS 6.2.4 — injection"
+              ]
+            },
+            "confidence": "low",
+            "sastTier": "review"
+          },
+          "suppressions": [],
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/private/tmp/secscan-verify/55e58bc6/repo/src/main/resources/mybatis/mapper/oldlg/OldLgCarrierMapper.xml"
+                },
+                "region": {
+                  "startLine": 60,
+                  "endLine": 60
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CVE-2026-10532",
+          "level": "note",
+          "message": {
+            "text": "CVE-2026-10532 in ch.qos.logback:logback-core@1.5.32"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "low",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-502"
+            ],
+            "package": "ch.qos.logback:logback-core",
+            "version": "1.5.32",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "1.5.34"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            },
+            "compliance": {
+              "kisa": [
+                {
+                  "code": "CE-05",
+                  "category": "코드오류",
+                  "name": "신뢰할 수 없는 데이터의 역직렬화"
+                }
+              ],
+              "pci": [
+                "PCI-DSS 6.2.4 — injection"
+              ]
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-9828",
+          "level": "note",
+          "message": {
+            "text": "CVE-2026-9828 in ch.qos.logback:logback-core@1.5.32"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "low",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-502"
+            ],
+            "package": "ch.qos.logback:logback-core",
+            "version": "1.5.32",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "1.5.33"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            },
+            "compliance": {
+              "kisa": [
+                {
+                  "code": "CE-05",
+                  "category": "코드오류",
+                  "name": "신뢰할 수 없는 데이터의 역직렬화"
+                }
+              ],
+              "pci": [
+                "PCI-DSS 6.2.4 — injection"
+              ]
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "GHSA-r7wm-3cxj-wff9",
+          "level": "error",
+          "message": {
+            "text": "GHSA-r7wm-3cxj-wff9 in com.fasterxml.jackson.core:jackson-core@2.21.2"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "high",
+            "tools": [
+              "trivy"
+            ],
+            "package": "com.fasterxml.jackson.core:jackson-core",
+            "version": "2.21.2",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "2.18.8",
+              "2.21.4"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-54512",
+          "level": "error",
+          "message": {
+            "text": "CVE-2026-54512 in com.fasterxml.jackson.core:jackson-databind@2.21.2"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "high",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-184",
+              "CWE-502"
+            ],
+            "package": "com.fasterxml.jackson.core:jackson-databind",
+            "version": "2.21.2",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "2.18.8",
+              "3.1.4",
+              "2.21.4"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            },
+            "compliance": {
+              "kisa": [
+                {
+                  "code": "CE-05",
+                  "category": "코드오류",
+                  "name": "신뢰할 수 없는 데이터의 역직렬화"
+                }
+              ],
+              "pci": [
+                "PCI-DSS 6.2.4 — injection"
+              ]
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-54513",
+          "level": "error",
+          "message": {
+            "text": "CVE-2026-54513 in com.fasterxml.jackson.core:jackson-databind@2.21.2"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "high",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-184"
+            ],
+            "package": "com.fasterxml.jackson.core:jackson-databind",
+            "version": "2.21.2",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "2.18.8",
+              "2.21.4",
+              "3.1.4"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-54514",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-54514 in com.fasterxml.jackson.core:jackson-databind@2.21.2"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-918"
+            ],
+            "package": "com.fasterxml.jackson.core:jackson-databind",
+            "version": "2.21.2",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "2.18.8",
+              "2.21.4",
+              "3.1.4"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            },
+            "compliance": {
+              "kisa": [
+                {
+                  "code": "IV-12",
+                  "category": "입력데이터 검증 및 표현",
+                  "name": "서버사이드 요청 위조(SSRF)"
+                }
+              ],
+              "pci": [
+                "PCI-DSS 6.2.4 — business logic"
+              ]
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-54515",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-54515 in com.fasterxml.jackson.core:jackson-databind@2.21.2"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-915"
+            ],
+            "package": "com.fasterxml.jackson.core:jackson-databind",
+            "version": "2.21.2",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "3.1.4",
+              "2.18.9",
+              "2.21.5",
+              "2.22.1"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-54516",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-54516 in com.fasterxml.jackson.core:jackson-databind@2.21.2"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-915"
+            ],
+            "package": "com.fasterxml.jackson.core:jackson-databind",
+            "version": "2.21.2",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "2.21.4",
+              "3.1.4"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-54517",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-54517 in com.fasterxml.jackson.core:jackson-databind@2.21.2"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-863"
+            ],
+            "package": "com.fasterxml.jackson.core:jackson-databind",
+            "version": "2.21.2",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "2.21.4",
+              "3.1.4"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-54518",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-54518 in com.fasterxml.jackson.core:jackson-databind@2.21.2"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-863"
+            ],
+            "package": "com.fasterxml.jackson.core:jackson-databind",
+            "version": "2.21.2",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "2.21.4"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-59888",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-59888 in com.fasterxml.jackson.core:jackson-databind@2.21.2"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-915"
+            ],
+            "package": "com.fasterxml.jackson.core:jackson-databind",
+            "version": "2.21.2",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "2.18.8",
+              "2.21.4"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-59889",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-59889 in com.fasterxml.jackson.core:jackson-databind@2.21.2"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-863"
+            ],
+            "package": "com.fasterxml.jackson.core:jackson-databind",
+            "version": "2.21.2",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "2.21.5",
+              "2.18.9",
+              "2.22.1"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "GHSA-mhm7-754m-9p8w",
+          "level": "warning",
+          "message": {
+            "text": "GHSA-mhm7-754m-9p8w in com.fasterxml.jackson.core:jackson-databind@2.21.2"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "package": "com.fasterxml.jackson.core:jackson-databind",
+            "version": "2.21.2",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "2.18.9",
+              "2.21.5"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-40983",
+          "level": "error",
+          "message": {
+            "text": "CVE-2026-40983 in io.micrometer:micrometer-core@1.16.4"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "high",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-400",
+              "CWE-770"
+            ],
+            "package": "io.micrometer:micrometer-core",
+            "version": "1.16.4",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "1.16.6",
+              "1.15.12"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-40984",
+          "level": "error",
+          "message": {
+            "text": "CVE-2026-40984 in io.micrometer:micrometer-core@1.16.4"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "high",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-400",
+              "CWE-770"
+            ],
+            "package": "io.micrometer:micrometer-core",
+            "version": "1.16.4",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "1.16.6",
+              "1.15.12"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-49844",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-49844 in org.apache.logging.log4j:log4j-api@2.25.3"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-116"
+            ],
+            "package": "org.apache.logging.log4j:log4j-api",
+            "version": "2.25.3",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "2.25.5",
+              "2.26.1"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-41293",
+          "level": "error",
+          "message": {
+            "text": "CVE-2026-41293 in org.apache.tomcat.embed:tomcat-embed-core@11.0.20"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "critical",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-20"
+            ],
+            "package": "org.apache.tomcat.embed:tomcat-embed-core",
+            "version": "11.0.20",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "9.0.118",
+              "10.1.55",
+              "11.0.22"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-43512",
+          "level": "error",
+          "message": {
+            "text": "CVE-2026-43512 in org.apache.tomcat.embed:tomcat-embed-core@11.0.20"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "critical",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-592"
+            ],
+            "package": "org.apache.tomcat.embed:tomcat-embed-core",
+            "version": "11.0.20",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "9.0.118",
+              "10.1.55",
+              "11.0.22"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-43515",
+          "level": "error",
+          "message": {
+            "text": "CVE-2026-43515 in org.apache.tomcat.embed:tomcat-embed-core@11.0.20"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "critical",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-285"
+            ],
+            "package": "org.apache.tomcat.embed:tomcat-embed-core",
+            "version": "11.0.20",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "9.0.118",
+              "10.1.55",
+              "11.0.22"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            },
+            "compliance": {
+              "kisa": [
+                {
+                  "code": "SF-02",
+                  "category": "보안기능",
+                  "name": "부적절한 인가"
+                }
+              ],
+              "pci": [
+                "PCI-DSS 6.2.4 — access control"
+              ]
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-65182",
+          "level": "error",
+          "message": {
+            "text": "CVE-2026-65182 in org.apache.tomcat.embed:tomcat-embed-core@11.0.20"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "critical",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-284",
+              "CWE-863"
+            ],
+            "package": "org.apache.tomcat.embed:tomcat-embed-core",
+            "version": "11.0.20",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "11.0.25",
+              "10.1.58",
+              "9.0.121"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-65905",
+          "level": "error",
+          "message": {
+            "text": "CVE-2026-65905 in org.apache.tomcat.embed:tomcat-embed-core@11.0.20"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "critical",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-294"
+            ],
+            "package": "org.apache.tomcat.embed:tomcat-embed-core",
+            "version": "11.0.20",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "11.0.25",
+              "10.1.58",
+              "9.0.121"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-68525",
+          "level": "error",
+          "message": {
+            "text": "CVE-2026-68525 in org.apache.tomcat.embed:tomcat-embed-core@11.0.20"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "critical",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-863"
+            ],
+            "package": "org.apache.tomcat.embed:tomcat-embed-core",
+            "version": "11.0.20",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "11.0.25",
+              "10.1.58",
+              "9.0.121"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-34483",
+          "level": "error",
+          "message": {
+            "text": "CVE-2026-34483 in org.apache.tomcat.embed:tomcat-embed-core@11.0.20"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "high",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-116"
+            ],
+            "package": "org.apache.tomcat.embed:tomcat-embed-core",
+            "version": "11.0.20",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "9.0.116",
+              "10.1.54",
+              "11.0.21"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-34487",
+          "level": "error",
+          "message": {
+            "text": "CVE-2026-34487 in org.apache.tomcat.embed:tomcat-embed-core@11.0.20"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "high",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-532"
+            ],
+            "package": "org.apache.tomcat.embed:tomcat-embed-core",
+            "version": "11.0.20",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "9.0.117",
+              "10.1.54",
+              "11.0.21"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-41284",
+          "level": "error",
+          "message": {
+            "text": "CVE-2026-41284 in org.apache.tomcat.embed:tomcat-embed-core@11.0.20"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "high",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-770"
+            ],
+            "package": "org.apache.tomcat.embed:tomcat-embed-core",
+            "version": "11.0.20",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "9.0.118",
+              "10.1.55",
+              "11.0.22"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-42498",
+          "level": "error",
+          "message": {
+            "text": "CVE-2026-42498 in org.apache.tomcat.embed:tomcat-embed-core@11.0.20"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "high",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-200"
+            ],
+            "package": "org.apache.tomcat.embed:tomcat-embed-core",
+            "version": "11.0.20",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "9.0.118",
+              "10.1.55",
+              "11.0.22"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-43513",
+          "level": "error",
+          "message": {
+            "text": "CVE-2026-43513 in org.apache.tomcat.embed:tomcat-embed-core@11.0.20"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "high",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-178"
+            ],
+            "package": "org.apache.tomcat.embed:tomcat-embed-core",
+            "version": "11.0.20",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "9.0.118",
+              "10.1.55",
+              "11.0.22"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-43514",
+          "level": "note",
+          "message": {
+            "text": "CVE-2026-43514 in org.apache.tomcat.embed:tomcat-embed-core@11.0.20"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "low",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-208"
+            ],
+            "package": "org.apache.tomcat.embed:tomcat-embed-core",
+            "version": "11.0.20",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "9.0.118",
+              "10.1.55",
+              "11.0.22"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-40976",
+          "level": "error",
+          "message": {
+            "text": "CVE-2026-40976 in org.springframework.boot:spring-boot@4.0.5"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "critical",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-862",
+              "CWE-305"
+            ],
+            "package": "org.springframework.boot:spring-boot",
+            "version": "4.0.5",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "4.0.6"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-40973",
+          "level": "error",
+          "message": {
+            "text": "CVE-2026-40973 in org.springframework.boot:spring-boot@4.0.5"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "high",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-377"
+            ],
+            "package": "org.springframework.boot:spring-boot",
+            "version": "4.0.5",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "4.0.6",
+              "3.5.14"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-41001",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-41001 in org.springframework.boot:spring-boot-autoconfigure@4.0.5"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-377"
+            ],
+            "package": "org.springframework.boot:spring-boot-autoconfigure",
+            "version": "4.0.5",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "4.0.7",
+              "3.5.15"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-40992",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-40992 in org.springframework.boot:spring-boot-starter-mail@4.0.5"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-295"
+            ],
+            "package": "org.springframework.boot:spring-boot-starter-mail",
+            "version": "4.0.5",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "4.0.7",
+              "3.5.15"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            },
+            "compliance": {
+              "kisa": [
+                {
+                  "code": "SF-11",
+                  "category": "보안기능",
+                  "name": "부적절한 인증서 유효성 검증"
+                }
+              ],
+              "pci": [
+                "PCI-DSS 6.2.4 — cryptography"
+              ]
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-41695",
+          "level": "error",
+          "message": {
+            "text": "CVE-2026-41695 in org.springframework.data:spring-data-commons@4.0.4"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "high",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-400"
+            ],
+            "package": "org.springframework.data:spring-data-commons",
+            "version": "4.0.4",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "4.0.6",
+              "3.5.12"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-41716",
+          "level": "error",
+          "message": {
+            "text": "CVE-2026-41716 in org.springframework.data:spring-data-commons@4.0.4"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "high",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-770"
+            ],
+            "package": "org.springframework.data:spring-data-commons",
+            "version": "4.0.4",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "4.0.6",
+              "3.5.12"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-41711",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-41711 in org.springframework.data:spring-data-commons@4.0.4"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-400"
+            ],
+            "package": "org.springframework.data:spring-data-commons",
+            "version": "4.0.4",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "4.0.6",
+              "3.5.12"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-41721",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-41721 in org.springframework.data:spring-data-commons@4.0.4"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-400"
+            ],
+            "package": "org.springframework.data:spring-data-commons",
+            "version": "4.0.4",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "4.0.6",
+              "3.5.12"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-22753",
+          "level": "error",
+          "message": {
+            "text": "CVE-2026-22753 in org.springframework.security:spring-security-config@7.0.4"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "high",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-693"
+            ],
+            "package": "org.springframework.security:spring-security-config",
+            "version": "7.0.4",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "7.0.5"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-22754",
+          "level": "error",
+          "message": {
+            "text": "CVE-2026-22754 in org.springframework.security:spring-security-config@7.0.4"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "high",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-284",
+              "CWE-551"
+            ],
+            "package": "org.springframework.security:spring-security-config",
+            "version": "7.0.4",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "7.0.5"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-22751",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-22751 in org.springframework.security:spring-security-core@7.0.4"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-367"
+            ],
+            "package": "org.springframework.security:spring-security-core",
+            "version": "7.0.4",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "6.5.10",
+              "7.0.5"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            },
+            "compliance": {
+              "kisa": [
+                {
+                  "code": "TS-01",
+                  "category": "시간 및 상태",
+                  "name": "경쟁조건: 검사시점과 사용시점(TOCTOU)"
+                }
+              ],
+              "pci": [
+                "PCI-DSS 6.2.4 — business logic"
+              ]
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-22746",
+          "level": "note",
+          "message": {
+            "text": "CVE-2026-22746 in org.springframework.security:spring-security-core@7.0.4"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "low",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-208"
+            ],
+            "package": "org.springframework.security:spring-security-core",
+            "version": "7.0.4",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "6.5.10",
+              "7.0.5"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-22747",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-22747 in org.springframework.security:spring-security-web@7.0.4"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-297",
+              "CWE-295"
+            ],
+            "package": "org.springframework.security:spring-security-web",
+            "version": "7.0.4",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "7.0.5"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            },
+            "compliance": {
+              "kisa": [
+                {
+                  "code": "SF-11",
+                  "category": "보안기능",
+                  "name": "부적절한 인증서 유효성 검증"
+                }
+              ],
+              "pci": [
+                "PCI-DSS 6.2.4 — cryptography"
+              ]
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-41706",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-41706 in org.springframework.security:spring-security-web@7.0.4"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-601"
+            ],
+            "package": "org.springframework.security:spring-security-web",
+            "version": "7.0.4",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "7.0.6",
+              "6.5.11"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            },
+            "compliance": {
+              "kisa": [
+                {
+                  "code": "IV-07",
+                  "category": "입력데이터 검증 및 표현",
+                  "name": "신뢰되지 않는 URL 주소로 자동접속 연결"
+                }
+              ],
+              "pci": [
+                "PCI-DSS 6.2.4 — business logic"
+              ]
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-41848",
+          "level": "note",
+          "message": {
+            "text": "CVE-2026-41848 in org.springframework:spring-core@7.0.6"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "low",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-1333"
+            ],
+            "package": "org.springframework:spring-core",
+            "version": "7.0.6",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "7.0.8",
+              "6.2.19"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-41850",
+          "level": "error",
+          "message": {
+            "text": "CVE-2026-41850 in org.springframework:spring-expression@7.0.6"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "high",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-407"
+            ],
+            "package": "org.springframework:spring-expression",
+            "version": "7.0.6",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "7.0.8",
+              "6.2.19"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-41851",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-41851 in org.springframework:spring-expression@7.0.6"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-770"
+            ],
+            "package": "org.springframework:spring-expression",
+            "version": "7.0.6",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "7.0.8",
+              "6.2.19"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-41852",
+          "level": "note",
+          "message": {
+            "text": "CVE-2026-41852 in org.springframework:spring-expression@7.0.6"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "low",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-863"
+            ],
+            "package": "org.springframework:spring-expression",
+            "version": "7.0.6",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "7.0.8",
+              "6.2.19"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-41854",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-41854 in org.springframework:spring-web@7.0.6"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-918"
+            ],
+            "package": "org.springframework:spring-web",
+            "version": "7.0.6",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "7.0.8",
+              "6.2.19"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            },
+            "compliance": {
+              "kisa": [
+                {
+                  "code": "IV-12",
+                  "category": "입력데이터 검증 및 표현",
+                  "name": "서버사이드 요청 위조(SSRF)"
+                }
+              ],
+              "pci": [
+                "PCI-DSS 6.2.4 — business logic"
+              ]
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-41842",
+          "level": "error",
+          "message": {
+            "text": "CVE-2026-41842 in org.springframework:spring-webmvc@7.0.6"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "high",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-400"
+            ],
+            "package": "org.springframework:spring-webmvc",
+            "version": "7.0.6",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "7.0.8",
+              "6.2.19"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-41845",
+          "level": "error",
+          "message": {
+            "text": "CVE-2026-41845 in org.springframework:spring-webmvc@7.0.6"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "high",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-79"
+            ],
+            "package": "org.springframework:spring-webmvc",
+            "version": "7.0.6",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "7.0.8",
+              "6.2.19"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            },
+            "compliance": {
+              "kisa": [
+                {
+                  "code": "IV-04",
+                  "category": "입력데이터 검증 및 표현",
+                  "name": "크로스사이트 스크립트(XSS)"
+                }
+              ],
+              "pci": [
+                "PCI-DSS 6.2.4 — injection"
+              ]
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-22745",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-22745 in org.springframework:spring-webmvc@7.0.6"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-400"
+            ],
+            "package": "org.springframework:spring-webmvc",
+            "version": "7.0.6",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "7.0.7",
+              "6.2.18"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-41841",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-41841 in org.springframework:spring-webmvc@7.0.6"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-524"
+            ],
+            "package": "org.springframework:spring-webmvc",
+            "version": "7.0.6",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "7.0.8",
+              "6.2.19"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-41843",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-41843 in org.springframework:spring-webmvc@7.0.6"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-22"
+            ],
+            "package": "org.springframework:spring-webmvc",
+            "version": "7.0.6",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "7.0.8",
+              "6.2.19"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            },
+            "compliance": {
+              "kisa": [
+                {
+                  "code": "IV-03",
+                  "category": "입력데이터 검증 및 표현",
+                  "name": "경로 조작 및 자원 삽입"
+                }
+              ],
+              "pci": [
+                "PCI-DSS 6.2.4 — injection"
+              ]
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-41844",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-41844 in org.springframework:spring-webmvc@7.0.6"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-601"
+            ],
+            "package": "org.springframework:spring-webmvc",
+            "version": "7.0.6",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "7.0.8",
+              "6.2.19"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            },
+            "compliance": {
+              "kisa": [
+                {
+                  "code": "IV-07",
+                  "category": "입력데이터 검증 및 표현",
+                  "name": "신뢰되지 않는 URL 주소로 자동접속 연결"
+                }
+              ],
+              "pci": [
+                "PCI-DSS 6.2.4 — business logic"
+              ]
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-41846",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-41846 in org.springframework:spring-webmvc@7.0.6"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-79"
+            ],
+            "package": "org.springframework:spring-webmvc",
+            "version": "7.0.6",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "7.0.8",
+              "6.2.19"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            },
+            "compliance": {
+              "kisa": [
+                {
+                  "code": "IV-04",
+                  "category": "입력데이터 검증 및 표현",
+                  "name": "크로스사이트 스크립트(XSS)"
+                }
+              ],
+              "pci": [
+                "PCI-DSS 6.2.4 — injection"
+              ]
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-41853",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-41853 in org.springframework:spring-webmvc@7.0.6"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-444"
+            ],
+            "package": "org.springframework:spring-webmvc",
+            "version": "7.0.6",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "7.0.8",
+              "6.2.19"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-22741",
+          "level": "note",
+          "message": {
+            "text": "CVE-2026-22741 in org.springframework:spring-webmvc@7.0.6"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "low",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-524"
+            ],
+            "package": "org.springframework:spring-webmvc",
+            "version": "7.0.6",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "7.0.7",
+              "6.2.18"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "GHSA-2m67-wjpj-xhg9",
+          "level": "error",
+          "message": {
+            "text": "GHSA-2m67-wjpj-xhg9 in tools.jackson.core:jackson-core@3.1.0"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "high",
+            "tools": [
+              "trivy"
+            ],
+            "package": "tools.jackson.core:jackson-core",
+            "version": "3.1.0",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "3.1.1"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "GHSA-r7wm-3cxj-wff9",
+          "level": "error",
+          "message": {
+            "text": "GHSA-r7wm-3cxj-wff9 in tools.jackson.core:jackson-core@3.1.0"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "high",
+            "tools": [
+              "trivy"
+            ],
+            "package": "tools.jackson.core:jackson-core",
+            "version": "3.1.0",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "3.1.4"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-54512",
+          "level": "error",
+          "message": {
+            "text": "CVE-2026-54512 in tools.jackson.core:jackson-databind@3.1.0"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "high",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-184",
+              "CWE-502"
+            ],
+            "package": "tools.jackson.core:jackson-databind",
+            "version": "3.1.0",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "3.1.4"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            },
+            "compliance": {
+              "kisa": [
+                {
+                  "code": "CE-05",
+                  "category": "코드오류",
+                  "name": "신뢰할 수 없는 데이터의 역직렬화"
+                }
+              ],
+              "pci": [
+                "PCI-DSS 6.2.4 — injection"
+              ]
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-54513",
+          "level": "error",
+          "message": {
+            "text": "CVE-2026-54513 in tools.jackson.core:jackson-databind@3.1.0"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "high",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-184"
+            ],
+            "package": "tools.jackson.core:jackson-databind",
+            "version": "3.1.0",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "3.1.4"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-54514",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-54514 in tools.jackson.core:jackson-databind@3.1.0"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-918"
+            ],
+            "package": "tools.jackson.core:jackson-databind",
+            "version": "3.1.0",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "2.21.4",
+              "3.1.4"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            },
+            "compliance": {
+              "kisa": [
+                {
+                  "code": "IV-12",
+                  "category": "입력데이터 검증 및 표현",
+                  "name": "서버사이드 요청 위조(SSRF)"
+                }
+              ],
+              "pci": [
+                "PCI-DSS 6.2.4 — business logic"
+              ]
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-54515",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-54515 in tools.jackson.core:jackson-databind@3.1.0"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-915"
+            ],
+            "package": "tools.jackson.core:jackson-databind",
+            "version": "3.1.0",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "3.1.4"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-54516",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-54516 in tools.jackson.core:jackson-databind@3.1.0"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-915"
+            ],
+            "package": "tools.jackson.core:jackson-databind",
+            "version": "3.1.0",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "3.1.4"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-54517",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-54517 in tools.jackson.core:jackson-databind@3.1.0"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-863"
+            ],
+            "package": "tools.jackson.core:jackson-databind",
+            "version": "3.1.0",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "3.1.4"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-54518",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-54518 in tools.jackson.core:jackson-databind@3.1.0"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-863"
+            ],
+            "package": "tools.jackson.core:jackson-databind",
+            "version": "3.1.0",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "3.1.4"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-59888",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-59888 in tools.jackson.core:jackson-databind@3.1.0"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-915"
+            ],
+            "package": "tools.jackson.core:jackson-databind",
+            "version": "3.1.0",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "3.1.4"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        },
+        {
+          "ruleId": "CVE-2026-59889",
+          "level": "warning",
+          "message": {
+            "text": "CVE-2026-59889 in tools.jackson.core:jackson-databind@3.1.0"
+          },
+          "properties": {
+            "category": "sca",
+            "severity": "medium",
+            "tools": [
+              "trivy"
+            ],
+            "cwe": [
+              "CWE-863"
+            ],
+            "package": "tools.jackson.core:jackson-databind",
+            "version": "3.1.0",
+            "ecosystem": "maven",
+            "fixedVersions": [
+              "3.1.5",
+              "3.2.1"
+            ],
+            "reachability": "unknown",
+            "consensus": {
+              "tools": [
+                "trivy"
+              ],
+              "score": 1
+            }
+          },
+          "suppressions": []
+        }
+      ]
+    }
+  ]
+}
