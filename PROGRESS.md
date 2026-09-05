@@ -145,3 +145,4 @@ crypto 안티패턴 → **커스텀 룰(D)** (3종: MyBatis `${}`/하드코딩/z
     gate.md 표 전체 인용, 플랜 1 대비 변화, 변이 픽스처 V6 pytest 결과, needs_human, 백로그
     P1(안전성→재현성→FN 순, spec §9), reconcile `--measurement` 통과) — 백로그 상세는 이 문서
     참조. spec 정오표 (a)("18건") 해소 문구 추가(원문 보존).
+- 최종 브랜치 리뷰(플랜 2) 잔여 Minor — 플랜 3/백로그 후보(검사 약화·값 변동 없음): M2 fidelity.deterministic 은 동일 프로세스 2회 렌더 비교(프로세스 간 비교 아님) · M3 xlsx 계약이 `source` 를 손실로 선언하나 레거시 경로(occurrence 없는 SCA)에서 실림 · M4 spec §7.4 "네 출력 actionable 집합 동일" 을 xlsx 포함 한 테스트로 관통하지 않음(fidelity 생성기가 실측으로 대체) · M5 gate._ratio 가 `a/b` 아닌 fact 에 예외(write_all 은 격리 없음) · M6 레거시 gate-v2/v3 에 "판정 열 손기입" 표시 없음 · M7 플랜 1 대비 비교의 옛 값은 검사 밖(마커 정규식 `:` 배제) · M8 파일 중간·함수 안 import 산재 · M9 테스트의 `Finding(**{**f.__dict__})` 패턴 · M10 CLI 가 워크북을 항상 쓰고 폴백 시 성공 줄이 CSV 한 장만 가리킴 · M12 Summary 시트 행 레이아웃 테스트 미고정. 툴링 갭: 마커 id `:` 미지원(attrition.normalize:*), reconcile-report 인용표 헤더 `|`(플랜 1 N4 계열).
