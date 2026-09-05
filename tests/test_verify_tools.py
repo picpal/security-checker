@@ -556,12 +556,75 @@ def test_raw_vs_typed_cardinality():
     assert (r["raw_count"], r["typed_count"], r["only_raw"], r["only_typed"]) == (2, 1, ["CVE-2"], [])
 
 
+def test_unmarked_numbers_ignores_table_inside_code_fence():
+    """M5 — 펜스 코드블록 안의 `|` 로 시작하는 줄(pytest 표 예시 등)은 표로 오인하지 않는다."""
+    md = ("## 요약\n| 축 | 측정값 |\n|---|---|\n| 1 | 3 <!-- fact:x --> |\n\n"
+          "```\n| 축 | 측정값 |\n|---|---|\n| z | 99 |\n```\n")
+    assert unmarked_numbers(md, "요약") == []
+
+
+def test_table_stats_counts_tables_and_missing_value_column():
+    """M6 — 값 열이 없어 검사에서 빠진 표의 개수를 노출한다(사각지대를 보이게 한다)."""
+    from tools.verify.reconcile import table_stats
+    md = ("## 요약\n"
+          "| 축 | 측정값 |\n|---|---|\n| 1 | 3 |\n\n"
+          "| 축 | 기준 |\n|---|---|\n| 2 | ≥ 1 |\n")
+    assert table_stats(md, "요약") == (2, 1)  # 표 2개, 그중 값 열 없는 표 1개("기준" 헤더만)
+
+
+def test_check_quoted_tables_identical_ok_and_changed_cell_mismatch():
+    """I8 — 측정 문서의 "전체 인용" 표를 원본 문서의 동일 헤더 표와 행 단위로 대조한다."""
+    from tools.verify.reconcile import check_quoted_tables
+    src = "# 미탐\n\n| advisory | 패키지 |\n|---|---|\n| CVE-1 | g:a |\n| CVE-2 | g:b |\n"
+    md_ok = "### 미탐 (`src.md` 표 전체 인용)\n\n| advisory | 패키지 |\n|---|---|\n| CVE-1 | g:a |\n| CVE-2 | g:b |\n"
+    md_bad = "### 미탐 (`src.md` 표 전체 인용)\n\n| advisory | 패키지 |\n|---|---|\n| CVE-1 | g:a |\n| CVE-9 | g:b |\n"
+
+    def _run(md, tmp_path):
+        (tmp_path / "src.md").write_text(src, encoding="utf-8")
+        return check_quoted_tables(md, tmp_path)
+
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        rows_ok = _run(md_ok, td)
+        assert len(rows_ok) == 1 and rows_ok[0]["ok"] is True
+        rows_bad = _run(md_bad, td)
+        assert len(rows_bad) == 1 and rows_bad[0]["ok"] is False and rows_bad[0]["note"]
+
+
+def test_check_quoted_tables_ignores_fact_markers_when_comparing():
+    """마커(<!-- fact:... -->)는 표 대조에서 제거하고 비교한다 — 마커 유무만으로 불일치를 만들지 않는다."""
+    from tools.verify.reconcile import check_quoted_tables
+    src = "# gt\n\n| 축 | 값 |\n|---|---|\n| a | 3 |\n"
+    md = "### 요약 (`gt.md` 전체 인용)\n\n| 축 | 값 |\n|---|---|\n| a | 3 <!-- fact:x --> |\n"
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        (td / "gt.md").write_text(src, encoding="utf-8")
+        rows = check_quoted_tables(md, td)
+        assert len(rows) == 1 and rows[0]["ok"] is True
+
+
+def test_check_quoted_tables_finds_preceding_table_when_none_follows():
+    """`위 표는 …전체 인용이며` 처럼 표를 먼저 보여준 뒤 인용을 선언하는 경우도 대응한다."""
+    from tools.verify.reconcile import check_quoted_tables
+    src = "# gt\n\n| 축 | 값 |\n|---|---|\n| a | 3 |\n"
+    md = "| 축 | 값 |\n|---|---|\n| a | 3 |\n\n위 표는 `gt.md` 의 전체 인용이며 정본과 동일하다.\n\n## 다음 절\n"
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        (td / "gt.md").write_text(src, encoding="utf-8")
+        rows = check_quoted_tables(md, td)
+        assert len(rows) == 1 and rows[0]["ok"] is True
+
+
 def _fake_results(tmp_path):
     """가짜 증거 + 그 증거로 생성한 결과 문서 — 재생성 비교의 양성 케이스."""
     from tools.verify import differential, report
+    from tools.verify._facts import facts_text
     from tools.verify.jar_surface import render_doc as render_surface
-    from tools.verify.known_fp import check_known_fp, render as render_fp
-    from tools.verify.profile_contract import render_doc as render_profiles
+    from tools.verify.known_fp import check_known_fp, collect_facts as knownfp_facts, render as render_fp
+    from tools.verify.profile_contract import collect_facts as profile_facts, render_doc as render_profiles
     from secscan.output.json_io import to_json
     ev = tmp_path / "evidence"; std = ev / "a483b3b1-standard"; (std / "raw").mkdir(parents=True)
     fs = [_sca("org.apache.tomcat.embed:tomcat-embed-core", "11.0.22", "CVE-2026-1"),
@@ -583,14 +646,16 @@ def _fake_results(tmp_path):
     r = check_known_fp((std / "raw" / "bom.cdx.json").read_text(), (std / "raw" / "trivy.json").read_text(),
                        package="com.microsoft.sqlserver:mssql-jdbc", advisory="CVE-2025-59250", expected_version="13.2.1.jre11")
     (res / "known-fp.md").write_text(render_fp(r), encoding="utf-8")
-    (res / "profile-contract.md").write_text(render_profiles({"trivy": "ok", "spotbugs": "ok"}), encoding="utf-8")
+    (res / "facts-knownfp.json").write_text(facts_text(knownfp_facts(r)), encoding="utf-8")
+    statuses = {"trivy": "ok", "spotbugs": "ok"}
+    (res / "profile-contract.md").write_text(render_profiles(statuses), encoding="utf-8")
+    (res / "facts-profile.json").write_text(facts_text(profile_facts(statuses)), encoding="utf-8")
     (res / "input-surface.trivy-fs.json").write_text("{}", encoding="utf-8")
     (res / "input-surface.status.json").write_text(json.dumps({"jar_build_scan_ok": False}), encoding="utf-8")
     from secscan.measure import load_gt_manifest
     (res / "input-surface.md").write_text(render_surface(False, (std / "raw" / "bom.cdx.json").read_text(), "{}", load_gt_manifest(gt_b)), encoding="utf-8")
     from tools.verify.jar_surface import collect_facts as surface_facts
-    (res / "facts-surface.json").write_text(json.dumps(surface_facts(False, (std / "raw" / "bom.cdx.json").read_text(), "{}", load_gt_manifest(gt_b)),
-                                                       ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    (res / "facts-surface.json").write_text(facts_text(surface_facts(False, (std / "raw" / "bom.cdx.json").read_text(), "{}", load_gt_manifest(gt_b))), encoding="utf-8")
     return res, ev, gt_b, gt_a
 
 
@@ -623,14 +688,59 @@ def test_reconcile_main_writes_facts_reconcile_json(tmp_path):
     assert main(["--results", str(res), "--evidence-root", str(ev), "--gt-b", gt_b, "--gt-a", gt_a]) == 0
     fr = json.loads((res / "facts-reconcile.json").read_text(encoding="utf-8"))
     assert set(fr) == {"reconcile.regen_mismatch", "reconcile.marker_mismatch", "reconcile.unmarked",
-                       "reconcile.provenance_violations", "reconcile.raw_typed_mismatch", "reconcile.verdict"}
+                       "reconcile.provenance_violations", "reconcile.raw_typed_mismatch",
+                       "reconcile.raw_count", "reconcile.typed_count", "reconcile.only_raw", "reconcile.only_typed",
+                       "reconcile.quote_mismatch", "reconcile.verdict"}
     assert fr["reconcile.verdict"] == "통과"
-    # 판정(spec §4.5)을 좌우하는 4종은 이 픽스처에서 전부 0 — 통과.
+    # 판정(spec §4.5)을 좌우하는 5종(재생성·마커·출처불명·provenance·인용표)은 이 픽스처에서 전부 0 — 통과.
     assert all(fr[k] == 0 for k in ("reconcile.regen_mismatch", "reconcile.marker_mismatch",
-                                    "reconcile.unmarked", "reconcile.provenance_violations"))
+                                    "reconcile.unmarked", "reconcile.provenance_violations",
+                                    "reconcile.quote_mismatch"))
     # raw_typed_mismatch 는 기록용(spec §4.5 "차이는 사실로 기록") — 판정을 좌우하지 않는다.
     # 이 픽스처는 findings.json 에 CVE-2020-9 를 typed 전용으로 넣어(raw trivy.json 에는 없음)
     # 0 이 아닌 값도 통과를 막지 않음을 함께 확인한다.
     assert fr["reconcile.raw_typed_mismatch"] == 1
+    assert (fr["reconcile.raw_count"], fr["reconcile.typed_count"]) == (1, 2)
+    assert (fr["reconcile.only_raw"], fr["reconcile.only_typed"]) == (0, 1)
     raw = (res / "facts-reconcile.json").read_text(encoding="utf-8")
     assert raw == json.dumps(fr, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+
+
+def test_reconcile_does_not_trust_stale_self_citation(tmp_path):
+    """I7 — reconcile.* 마커는 직전 실행의 facts-reconcile.json 이 아니라 이번 실행 값과 대조해야 한다.
+    문서가 "위반 1건 존재"라고 스스로 인용하면서 최종 판정이 통과일 수는 없다(자기모순 금지).
+    (재현: 직전 facts-reconcile.json 이 marker_mismatch=1 로 낡아 있고, gate-v2.md 가 같은 값을
+    인용하면 예전 코드는 우연히 일치를 "확인됨"으로 착각해 통과를 내줬다.)"""
+    from tools.verify.reconcile import main
+    res, ev, gt_b, gt_a = _fake_results(tmp_path)
+    facts = json.loads((res / "facts.json").read_text(encoding="utf-8"))
+    (res / "gate-v2.md").write_text(
+        f"# 게이트\n| 축 | 값 |\n|---|---|\n| recall | {facts['sca.recall_cve']} <!-- fact:sca.recall_cve --> |\n"
+        "| 재귀 | 1 <!-- fact:reconcile.marker_mismatch --> |\n", encoding="utf-8")
+    # 직전 실행의 결과라고 가정하고 낡은 facts-reconcile.json 을 먼저 놓는다 — 우연히 문서의
+    # 거짓 주장("1")과 값이 같다.
+    (res / "facts-reconcile.json").write_text(json.dumps({
+        "reconcile.regen_mismatch": 0, "reconcile.marker_mismatch": 1, "reconcile.unmarked": 0,
+        "reconcile.provenance_violations": 0, "reconcile.raw_typed_mismatch": 0, "reconcile.quote_mismatch": 0,
+        "reconcile.raw_count": 0, "reconcile.typed_count": 0, "reconcile.only_raw": 0, "reconcile.only_typed": 0,
+        "reconcile.verdict": "위반",
+    }, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    rc = main(["--results", str(res), "--evidence-root", str(ev), "--gt-b", gt_b, "--gt-a", gt_a])
+    report_text = (res / "reconcile-report.md").read_text(encoding="utf-8")
+    # 문서가 "위반이 있다"고 스스로 적었는데 판정이 통과인 자기모순은 금지 — exit 1 이어야 한다.
+    assert rc == 1
+    assert report_text.rstrip().endswith("✓ 통과") is False
+    # 이번 실행이 실제로 계산한 값(직전의 낡은 값이 아니라)이 기록돼야 한다: 자기인용 행 자체가
+    # 이제 doc="1" vs fact="0" 불일치로 잡히므로 marker_mismatch >= 1.
+    fr = json.loads((res / "facts-reconcile.json").read_text(encoding="utf-8"))
+    assert fr["reconcile.marker_mismatch"] >= 1
+
+
+def test_regenerate_suppresses_generator_stdout(tmp_path, capsys):
+    """M11 — regenerate 는 report.main/differential.main 의 print 출력을 흘리지 않는다."""
+    res, ev, gt_b, gt_a = _fake_results(tmp_path)
+    capsys.readouterr()  # _fake_results 내부에서 이미 호출된 report.main/differential.main 출력 비우기
+    regenerate(res, ev, gt_b, gt_a)
+    captured = capsys.readouterr()
+    assert captured.out == ""
