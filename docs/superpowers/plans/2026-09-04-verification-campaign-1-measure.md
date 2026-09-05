@@ -1377,7 +1377,7 @@ git commit -m "docs(V1): 증거 동결 — a483b3b1 standard/deep + GT-A 스냅�
 - `report.render_human_verdicts(manifest: GtManifest, findings: list[Finding]) -> str`
 - `report.published_dates(trivy_payload: str) -> dict[str, str]` (raw trivy JSON 의 `PublishedDate`)
 - `report.main(argv)` CLI: `--evidence <dir> --gt <gt-b-sca.json> --out <md> [--facts <json>]` — `--facts` 는 `collect_facts(...)` 결과를 JSON 으로 저장.
-- `report.collect_facts(report: MatchReport, classes: dict, findings, trace: dict, meta: dict) -> dict[str, str|int]` — 정본 수치(id → 값): `sca.recall_cve`("m/t"), `sca.recall_entry_strict`, `sca.recall_entry_loose`, `sca.missed`, `sca.missed_high_important`(severity_team 이 HIGH 또는 Important 인 미탐 수 — spec §5 축 2 게이트 "HIGH/Important 미탐 ≤ 1"; 보안팀 trivy 벤더 심각도와 개발자 추가분의 Tomcat 척도 Important/Moderate/Low 가 섞여 있음), `sca.false_positive`, `sca.extras`, `sca.extras.<class>`(4분류별), **`sca.extras.unclassified`**(항상 출력, 미분류 건수 — 0 이어도 인용 가능해야 함), `findings.total`, `findings.<category>`, `attrition.<stage>`, `scanner.<tool>`(status), `reach.<status>`(SCA 도달성 status 별 건수; 없음=`none`), **`sca.recall_cve.<origin>`**(origin 별 CVE 단위 recall "m/t" — `team`/`dev-found`; spec §5 축 2 도구 상관 편향 분리).
+- `report.collect_facts(report: MatchReport, classes: dict, findings, trace: dict, meta: dict) -> dict[str, str|int]` — 정본 수치(id → 값): `sca.recall_cve`("m/t"), `sca.recall_entry_strict`, `sca.recall_entry_loose`, `sca.missed`, `sca.missed_high_important`(severity_team 이 HIGH 또는 Important 인 미탐 수 — spec §5 축 2 게이트 "HIGH/Important 미탐 ≤ 1"; 보안팀 trivy 벤더 심각도와 개발자 추가분의 Tomcat 척도 Important/Moderate/Low 가 섞여 있음), `sca.false_positive`, `sca.extras`, `sca.extras.<class>`(4분류별), **`sca.extras.unclassified`**(항상 출력, 미분류 건수 — 0 이어도 인용 가능해야 함), `findings.total`, `findings.<category>`, `attrition.<stage>`, `scanner.<tool>`(status), `reach.<status>`(SCA 도달성 status 별 건수 — `reachable`·`unreachable`·`unknown` 세 키는 0 이어도 항상 출력, 그 외 status(`none` 등)는 있을 때만), **`sca.recall_cve.<origin>`**(origin 별 CVE 단위 recall "m/t" — `team`/`dev-found`; spec §5 축 2 도구 상관 편향 분리).
 - `known_fp.render(result: dict) -> str` — `# known-FP CVE-2025-59250 (mssql-jdbc) 3단계` 제목 + `| 단계 | 결과 |` 표 전체 문서.
 - `profile_contract.render_doc(statuses: dict[str, str]) -> str` — `# 프로파일 계약 (spec §8 vs 구현 vs 실제)` 제목 + `render(compare_profiles(), statuses)` 전체 문서.
 - `profile_contract.SPEC_PROFILES: dict[str, frozenset[str]]`, `compare_profiles() -> list[dict]`, `render(rows, statuses: dict[str, str]) -> str`
@@ -1685,8 +1685,10 @@ def collect_facts(report: MatchReport, classes: dict[str, str], findings: list[F
         facts[f"attrition.{s['stage']}"] = s["count"]
     for s in meta.get("scanner_status", []):
         facts[f"scanner.{s['tool']}"] = s["status"]
-    for st, n in sorted(Counter((f.reachability.status if f.reachability else "none")
-                                for f in findings if f.category == "sca").items()):
+    reach = Counter((f.reachability.status if f.reachability else "none") for f in findings if f.category == "sca")
+    for st in ("reachable", "unreachable", "unknown"):  # 세 상태는 0 이어도 인용 가능해야 한다(축 6 (c) unknown 비율)
+        facts[f"reach.{st}"] = reach.pop(st, 0)
+    for st, n in sorted(reach.items()):
         facts[f"reach.{st}"] = n
     return facts
 
@@ -2252,7 +2254,7 @@ git commit -m "test(V3): reach-app 도달성 쌍 픽스처 — 취약 API reacha
 - `find_expected(findings, entry: dict) -> list[Finding]` — `rule_id.endswith(expected_rule_suffix)` ∧ `location.file.endswith(file_suffix)`.
 - `evaluate_pair(entry: dict, vuln_findings, fixed_findings) -> dict` with `present_in_vulnerable`, `absent_in_fixed`, `tier_vulnerable`, `passed`(in-category 만 판정), `observed`(measure-then-classify: 취약 스냅샷에서 해당 파일에 걸린 rule_id 목록).
 - `render(rows) -> str`
-- CLI `main`: `--evidence-root <EVD> --gt gt-a-source.json --out <md> [--facts <json>]` — `<EVD>/<sha>-standard/findings.json` 을 읽는다(Task 6 산출물). `--facts` 는 `collect_facts(rows)` 를 저장(`gta.in_category_pass`="m/t", 행별 `gta.row<i>.<cwe>.passed`, measure-then-classify 는 `gta.row<i>.<cwe>.observed`).
+- CLI `main`: `--evidence-root <EVD> --gt gt-a-source.json --out <md> [--facts <json>]` — `<EVD>/<sha>-standard/findings.json` 을 읽는다(Task 6 산출물). `--facts` 는 `collect_facts(rows)` 를 저장(`gta.in_category_pass`="m/t", 행별 `gta.row<i>.<cwe>.passed` 와 **`gta.row<i>.<cwe>.fixed_residual`**(수정 스냅샷에 남은 기대 룰 매칭 건수 — FAIL 의 사실 근거), measure-then-classify 는 `gta.row<i>.<cwe>.observed`).
 - `collect_facts(rows: list[dict]) -> dict`
 
 - [ ] **Step 1: 실패하는 테스트 작성**
@@ -2339,7 +2341,7 @@ def evaluate_pair(entry: dict, vuln_findings: list[Finding], fixed_findings: lis
     v, x = find_expected(vuln_findings, entry), find_expected(fixed_findings, entry)
     tier = sast_tier(v[0]) if v else None
     row.update({
-        "present_in_vulnerable": bool(v), "absent_in_fixed": not x,
+        "present_in_vulnerable": bool(v), "absent_in_fixed": not x, "fixed_residual": len(x),
         "tier_vulnerable": tier, "tier_ok": (tier == entry.get("expected_tier")) if v else False,
         "passed": bool(v) and not x,
     })
@@ -2392,6 +2394,7 @@ def collect_facts(rows: list[dict]) -> dict:
     for i, r in enumerate(rows):
         if r["class"] == "in-category":
             facts[f"gta.row{i}.{r['cwe']}.passed"] = str(r["passed"])
+            facts[f"gta.row{i}.{r['cwe']}.fixed_residual"] = r.get("fixed_residual", 0)
         elif r["class"] == "measure-then-classify":
             facts[f"gta.row{i}.{r['cwe']}.observed"] = ", ".join(r.get("observed", [])) or "없음"
     return facts
@@ -2419,11 +2422,11 @@ export VDATE=<Task 6 날짜>; export EVD=docs/verification/evidence/$VDATE; expo
 .venv/bin/python -m tools.verify.differential --evidence-root $EVD \
   --gt docs/verification/ground-truth/gt-a-source.json --out $RES/gt-a-differential.md --facts $RES/facts-gta.json
 ```
-Expected: 범주 내 4행(259·760·#305 ×2) PASS 여부 + measure-then-classify 2행의 관측 룰. FAIL 이면 해당 증거 디렉토리의 `raw/semgrep.json` 에서 룰 id·파일을 확인해 원인(룰 미로드 / 경로 제외 / 파일명 불일치)을 `gate-v3.md` 에 적는다.
+Expected: 범주 내 4행(259·760·#305 ×2) PASS 여부 + measure-then-classify 2행의 관측 룰. FAIL 이면 `gate-v3.md` 에 **사실만** 적는다: 해당 행의 `fixed_residual` 값(fact 마커)과 수정 스냅샷 `findings.json` 에서 해당 파일·룰의 잔존 건수(별도 fact 없음 → 위 `fixed_residual` 이 그 값). 원인(룰 특이도 / 수정 범위 / GT-A 기대 정의)은 실행자가 판단하지 않고 `gate-v3.md` 끝 `## needs_human` 절에 질문으로만 적는다(spec §4.5).
 
 - [ ] **Step 6: 게이트 기록 + 커밋**
 
-`$RES/gate-v3.md`(모든 수치에 `<!-- fact:<id> -->` 마커 — `facts-gta.json`·`facts.json` 값만 인용; reach-app xfail 수는 pytest 출력 줄을 코드블록으로 인용): 축 6 — (a) 사람 판정 비교표는 `gt-b-match.md` 하단, (b) false-unreachable: `tests/test_reach_app.py` xfail 1건 = **게이트 미통과, 백로그 P1**(프레임워크 활성화 라이브러리), (c) 증거 `findings.json` 의 unknown 비율. 축 7 — differential PASS 수, tier 기대 일치, measure-then-classify 관측 결과와 사후 분류.
+`$RES/gate-v3.md`(모든 수치에 `<!-- fact:<id> -->` 마커 — `facts-gta.json`·`facts.json` 값만 인용; reach-app xfail 수는 pytest 출력 줄을 코드블록으로 인용): 축 6 — (a) 사람 판정 비교표는 `gt-b-match.md` 하단, (b) false-unreachable: `tests/test_reach_app.py` xfail(strict) 2건 = **게이트 미통과, 백로그 P1**(prefix 불일치·프레임워크 활성화) — pytest `-v` 출력 4줄을 코드블록으로 인용, (c) 증거의 SCA 도달성 분포: `reach.reachable`·`reach.unreachable`·`reach.unknown`·`findings.sca` 를 `facts.json` 마커로 인용(비율 계산식은 문장으로, 값은 마커). 축 7 — differential PASS 수, tier 기대 일치, measure-then-classify 관측 결과와 사후 분류.
 
 ```bash
 git add docs/verification/results
