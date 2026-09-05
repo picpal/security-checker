@@ -14,6 +14,7 @@
   "reach.unreachable": 48,
   "sca.extras": 1,
   "sca.extras.inventory-diff": 1,
+  "sca.extras.unclassified": 0,
   "sca.false_positive": 0,
   "sca.missed": 9,
   "sca.missed_high_important": 3,
