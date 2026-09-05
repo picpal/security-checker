@@ -470,3 +470,126 @@ def test_evaluate_pair_measure_then_classify_records_observed_rules():
             _sast("other.rule", "src/main/java/t/Other.java")]
     r = evaluate_pair(entry, vuln, [])
     assert r["passed"] is None and r["observed"] == ["java.lang.security.audit.x"]
+
+
+# --- V3: 정본 검증기 (spec §4.5) ---
+from tools.verify.reconcile import (check_markers, check_provenance, parse_markers, raw_vs_typed,
+                                    regenerate, unmarked_numbers)
+
+
+def test_parse_and_check_markers():
+    md = "| recall | 38/46 <!-- fact:sca.recall_cve --> | 미탐 3 <!-- fact:sca.missed --> |"
+    assert parse_markers(md) == [("sca.recall_cve", "38/46"), ("sca.missed", "3")]
+    rows = check_markers(md, {"sca.recall_cve": "38/46", "sca.missed": 4})
+    assert [r["ok"] for r in rows] == [True, False] and rows[1]["fact"] == "4"
+    assert check_markers("7 <!-- fact:nope -->", {})[0]["ok"] is False
+
+
+def test_unmarked_numbers_only_in_section_tables_and_value_columns():
+    md = ("## 요약\n| 축 | 기준 | 측정값 | 판정 |\n|---|---|---|---|\n"
+          "| 1 a | ≥ 44/46 | 38/46 <!-- fact:x --> | ✓ |\n| 2 b | ≤ 1 | 7 | ✗ |\n| 3 c | - | 2026-09-05 | ✓ |\n"
+          "## 기타\n| 축 | 값 |\n|---|---|\n| z | 99 |\n| w | 5 |\n")
+    assert unmarked_numbers(md, "요약") == ["7"]          # 행 라벨 1·2·3 과 기준 열 44/46·1 은 대상 아님
+    assert unmarked_numbers(md, None) == ["7", "99", "5"]  # "값" 열도 검사 대상
+
+
+def test_unmarked_numbers_catches_attached_tokens_and_skips_ids():
+    md = ("| 축 | 측정값 |\n|---|---|\n"
+          "| 2 a | 미탐 9건 · 미분류 0(키 없음) · 기준 44/46 |\n"
+          "| 4 b | 3 <!-- fact:m -->건 · a483b3b1 · CVE-2026-40992 · 13.2.1.jre11 · spec §5 · 2026-09-05 |\n"
+          "| 표 없는 헤더 | 77 |\n")
+    assert unmarked_numbers(md, None) == ["9", "0", "44/46", "77"]
+    assert unmarked_numbers("| a | b |\n|---|---|\n| 1 | 2 |\n", None) == []  # 측정값/값 열이 없는 표는 검사 안 함
+
+
+def test_check_provenance_requires_human():
+    t = {"overrides": [{"dedup_key": "k1", "provenance": "human:picpal"}, {"dedup_key": "k2", "provenance": "ai:claude"},
+                       {"dedup_key": "k3"}]}
+    assert [r["ok"] for r in check_provenance(t)] == [True, False, False]
+    assert check_provenance({"overrides": []}) == []
+
+
+def test_raw_vs_typed_cardinality():
+    trivy = json.dumps({"Results": [{"Vulnerabilities": [{"VulnerabilityID": "CVE-1"}, {"VulnerabilityID": "CVE-2"}]}]})
+    r = raw_vs_typed(trivy, [_sca("g:a", "1.0", "CVE-1")])
+    assert (r["raw_count"], r["typed_count"], r["only_raw"], r["only_typed"]) == (2, 1, ["CVE-2"], [])
+
+
+def _fake_results(tmp_path):
+    """가짜 증거 + 그 증거로 생성한 결과 문서 — 재생성 비교의 양성 케이스."""
+    from tools.verify import differential, report
+    from tools.verify.jar_surface import render_doc as render_surface
+    from tools.verify.known_fp import check_known_fp, render as render_fp
+    from tools.verify.profile_contract import render_doc as render_profiles
+    from secscan.output.json_io import to_json
+    ev = tmp_path / "evidence"; std = ev / "a483b3b1-standard"; (std / "raw").mkdir(parents=True)
+    fs = [_sca("org.apache.tomcat.embed:tomcat-embed-core", "11.0.22", "CVE-2026-1"),
+          _sca("com.microsoft.sqlserver:mssql-jdbc", "13.2.1.jre11", "CVE-2020-9")]
+    (std / "findings.json").write_text(to_json(fs), encoding="utf-8")
+    (std / "trace.json").write_text(json.dumps({"raw": [{"tool": "trivy", "status": "ok", "bytes": 1}],
+                                                "stages": [{"stage": "merge", "count": 2}, {"stage": "final", "count": 2}]}), encoding="utf-8")
+    (std / "meta.json").write_text(json.dumps({"scanner_status": [{"tool": "trivy", "status": "ok"}]}), encoding="utf-8")
+    (std / "raw" / "trivy.json").write_text(json.dumps({"Results": [{"Target": "Java", "Vulnerabilities": [
+        {"VulnerabilityID": "CVE-2026-1", "PkgName": "org.apache.tomcat.embed:tomcat-embed-core", "InstalledVersion": "11.0.22", "PublishedDate": "2026-08-25T00:00:00Z"}]}]}), encoding="utf-8")
+    (std / "raw" / "bom.cdx.json").write_text(json.dumps({"components": [
+        {"group": "com.microsoft.sqlserver", "name": "mssql-jdbc", "version": "13.2.1.jre11", "purl": "pkg:maven/com.microsoft.sqlserver/mssql-jdbc@13.2.1.jre11?type=jar"}]}), encoding="utf-8")
+    deep = ev / "a483b3b1-deep"; deep.mkdir()
+    (deep / "meta.json").write_text(json.dumps({"scanner_status": [{"tool": "trivy", "status": "ok"}, {"tool": "spotbugs", "status": "ok"}]}), encoding="utf-8")
+    res = tmp_path / "results"; res.mkdir()
+    gt_b = "docs/verification/ground-truth/gt-b-sca.json"; gt_a = "docs/verification/ground-truth/gt-a-source.json"
+    report.main(["--evidence", str(std), "--gt", gt_b, "--out", str(res / "gt-b-match.md"), "--facts", str(res / "facts.json")])
+    differential.main(["--evidence-root", str(ev), "--gt", gt_a, "--out", str(res / "gt-a-differential.md"), "--facts", str(res / "facts-gta.json")])
+    r = check_known_fp((std / "raw" / "bom.cdx.json").read_text(), (std / "raw" / "trivy.json").read_text(),
+                       package="com.microsoft.sqlserver:mssql-jdbc", advisory="CVE-2025-59250", expected_version="13.2.1.jre11")
+    (res / "known-fp.md").write_text(render_fp(r), encoding="utf-8")
+    (res / "profile-contract.md").write_text(render_profiles({"trivy": "ok", "spotbugs": "ok"}), encoding="utf-8")
+    (res / "input-surface.trivy-fs.json").write_text("{}", encoding="utf-8")
+    (res / "input-surface.status.json").write_text(json.dumps({"jar_build_scan_ok": False}), encoding="utf-8")
+    from secscan.measure import load_gt_manifest
+    (res / "input-surface.md").write_text(render_surface(False, (std / "raw" / "bom.cdx.json").read_text(), "{}", load_gt_manifest(gt_b)), encoding="utf-8")
+    from tools.verify.jar_surface import collect_facts as surface_facts
+    (res / "facts-surface.json").write_text(json.dumps(surface_facts(False, (std / "raw" / "bom.cdx.json").read_text(), "{}", load_gt_manifest(gt_b)),
+                                                       ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return res, ev, gt_b, gt_a
+
+
+def test_regenerate_passes_then_detects_tampering(tmp_path):
+    res, ev, gt_b, gt_a = _fake_results(tmp_path)
+    rows = regenerate(res, ev, gt_b, gt_a)
+    assert rows and all(r["ok"] for r in rows), rows
+    p = res / "gt-b-match.md"; p.write_text(p.read_text(encoding="utf-8") + "\n손으로 고친 줄", encoding="utf-8")
+    rows = regenerate(res, ev, gt_b, gt_a)
+    assert [r["doc"] for r in rows if not r["ok"]] == ["gt-b-match.md"]
+
+
+def test_reconcile_main_exit_code(tmp_path):
+    from tools.verify.reconcile import main
+    res, ev, gt_b, gt_a = _fake_results(tmp_path)
+    facts = json.loads((res / "facts.json").read_text(encoding="utf-8"))
+    (res / "gate-v2.md").write_text(f"# 게이트\n| 축 | 값 |\n|---|---|\n| recall | {facts['sca.recall_cve']} <!-- fact:sca.recall_cve --> |\n", encoding="utf-8")
+    assert main(["--results", str(res), "--evidence-root", str(ev), "--gt-b", gt_b, "--gt-a", gt_a]) == 0
+    assert (res / "reconcile-report.md").read_text(encoding="utf-8").rstrip().endswith("✓ 통과")
+    (res / "gate-v2.md").write_text("# 게이트\n| 축 | 값 |\n|---|---|\n| recall | 46/46 <!-- fact:sca.recall_cve --> | 3 |\n", encoding="utf-8")
+    assert main(["--results", str(res), "--evidence-root", str(ev), "--gt-b", gt_b, "--gt-a", gt_a]) == 1
+
+
+def test_reconcile_main_writes_facts_reconcile_json(tmp_path):
+    """컨트롤러 룰링 1: main 은 reconcile-report.md 외에 facts-reconcile.json 도 같은 직렬화로 남긴다."""
+    from tools.verify.reconcile import main
+    res, ev, gt_b, gt_a = _fake_results(tmp_path)
+    facts = json.loads((res / "facts.json").read_text(encoding="utf-8"))
+    (res / "gate-v2.md").write_text(f"# 게이트\n| 축 | 값 |\n|---|---|\n| recall | {facts['sca.recall_cve']} <!-- fact:sca.recall_cve --> |\n", encoding="utf-8")
+    assert main(["--results", str(res), "--evidence-root", str(ev), "--gt-b", gt_b, "--gt-a", gt_a]) == 0
+    fr = json.loads((res / "facts-reconcile.json").read_text(encoding="utf-8"))
+    assert set(fr) == {"reconcile.regen_mismatch", "reconcile.marker_mismatch", "reconcile.unmarked",
+                       "reconcile.provenance_violations", "reconcile.raw_typed_mismatch", "reconcile.verdict"}
+    assert fr["reconcile.verdict"] == "통과"
+    # 판정(spec §4.5)을 좌우하는 4종은 이 픽스처에서 전부 0 — 통과.
+    assert all(fr[k] == 0 for k in ("reconcile.regen_mismatch", "reconcile.marker_mismatch",
+                                    "reconcile.unmarked", "reconcile.provenance_violations"))
+    # raw_typed_mismatch 는 기록용(spec §4.5 "차이는 사실로 기록") — 판정을 좌우하지 않는다.
+    # 이 픽스처는 findings.json 에 CVE-2020-9 를 typed 전용으로 넣어(raw trivy.json 에는 없음)
+    # 0 이 아닌 값도 통과를 막지 않음을 함께 확인한다.
+    assert fr["reconcile.raw_typed_mismatch"] == 1
+    raw = (res / "facts-reconcile.json").read_text(encoding="utf-8")
+    assert raw == json.dumps(fr, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
