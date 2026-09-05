@@ -1,0 +1,4 @@
+#!/bin/sh
+# 픽스처: 시스템 gradle 없이 wrapper 만 있는 프로젝트를 흉내낸다. 항상 빌드 실패.
+echo "simulated wrapper build failure" >&2
+exit 1
