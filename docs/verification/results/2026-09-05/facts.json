@@ -11,6 +11,8 @@
   "findings.sca": 48,
   "findings.secret": 13,
   "findings.total": 73,
+  "human.verdict_advisories": 24,
+  "human.verdict_rows": 34,
   "reach.reachable": 0,
   "reach.unknown": 0,
   "reach.unreachable": 48,
