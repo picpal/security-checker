@@ -4,5 +4,11 @@
     {"rule": "aws-access-token", "file": "config/application.properties", "line": 4},
     {"rule": "generic-api-key", "file": "config/application.properties", "line": 5},
     {"rule": "github-pat", "file": "config/application.properties", "line": 8}
-  ]
+  ],
+  "variants": {
+    "low_entropy_password": {"file": "src/main/java/com/example/Config.java", "gitleaks": "absent",
+                             "custom_rule": "hardcoded-credential", "expected_tier": "actionable"},
+    "allowlisted_inline": {"file": "config/application.properties", "marker": "gitleaks:allow", "gitleaks": "absent"},
+    "history_only": {"mode_dir": "absent", "mode_git": "present", "note": "gitleaks dir 는 working tree 만 본다 — 히스토리 시크릿은 git 모드 필요"}
+  }
 }
