@@ -1377,7 +1377,7 @@ git commit -m "docs(V1): 증거 동결 — a483b3b1 standard/deep + GT-A 스냅�
 - `report.render_human_verdicts(manifest: GtManifest, findings: list[Finding]) -> str`
 - `report.published_dates(trivy_payload: str) -> dict[str, str]` (raw trivy JSON 의 `PublishedDate`)
 - `report.main(argv)` CLI: `--evidence <dir> --gt <gt-b-sca.json> --out <md> [--facts <json>]` — `--facts` 는 `collect_facts(...)` 결과를 JSON 으로 저장.
-- `report.collect_facts(report: MatchReport, classes: dict, findings, trace: dict, meta: dict) -> dict[str, str|int]` — 정본 수치(id → 값): `sca.recall_cve`("m/t"), `sca.recall_entry_strict`, `sca.recall_entry_loose`, `sca.missed`, `sca.missed_high_important`(severity_team 이 HIGH 또는 Important 인 미탐 수 — spec §5 축 2 게이트 "HIGH/Important 미탐 ≤ 1"; 보안팀 trivy 벤더 심각도와 개발자 추가분의 Tomcat 척도 Important/Moderate/Low 가 섞여 있음), `sca.false_positive`, `sca.extras`, `sca.extras.<class>`(4분류별), **`sca.extras.unclassified`**(항상 출력, 미분류 건수 — 0 이어도 인용 가능해야 함), `findings.total`, `findings.<category>`, `attrition.<stage>`, `scanner.<tool>`(status), `reach.<status>`(SCA 도달성 status 별 건수 — `reachable`·`unreachable`·`unknown` 세 키는 0 이어도 항상 출력, 그 외 status(`none` 등)는 있을 때만), **`sca.recall_cve.<origin>`**(origin 별 CVE 단위 recall "m/t" — `team`/`dev-found`; spec §5 축 2 도구 상관 편향 분리).
+- `report.collect_facts(report: MatchReport, classes: dict, findings, trace: dict, meta: dict) -> dict[str, str|int]` — 정본 수치(id → 값): `sca.recall_cve`("m/t"), `sca.recall_entry_strict`, `sca.recall_entry_loose`, `sca.missed`, `sca.missed_high_important`(severity_team 이 HIGH 또는 Important 인 미탐 수 — spec §5 축 2 게이트 "HIGH/Important 미탐 ≤ 1"; 보안팀 trivy 벤더 심각도와 개발자 추가분의 Tomcat 척도 Important/Moderate/Low 가 섞여 있음), `sca.false_positive`, `sca.extras`, `sca.extras.<class>`(4분류별), **`sca.extras.unclassified`**(항상 출력, 미분류 건수 — 0 이어도 인용 가능해야 함), `findings.total`, `findings.<category>`, `attrition.<stage>`, `scanner.<tool>`(status), `reach.<status>`(SCA 도달성 status 별 건수 — `reachable`·`unreachable`·`unknown` 세 키는 0 이어도 항상 출력, 그 외 status(`none` 등)는 있을 때만), **`sca.recall_cve.<origin>`**(origin 별 CVE 단위 recall "m/t" — `team`/`dev-found`; spec §5 축 2 도구 상관 편향 분리), **`human.verdict_rows`**(사람 도달성 판정이 있는 정답지 항목 수 = 비교표 행 수)·**`human.verdict_advisories`**(그중 고유 advisory 수) — 축 6(a) 인용용(2026-09-05 사후 개정: 실행자가 spec 의 "18" 을 옮겨 적은 사고 재발 방지).
 - `known_fp.render(result: dict) -> str` — `# known-FP CVE-2025-59250 (mssql-jdbc) 3단계` 제목 + `| 단계 | 결과 |` 표 전체 문서.
 - `profile_contract.render_doc(statuses: dict[str, str]) -> str` — `# 프로파일 계약 (spec §8 vs 구현 vs 실제)` 제목 + `render(compare_profiles(), statuses)` 전체 문서.
 - `profile_contract.SPEC_PROFILES: dict[str, frozenset[str]]`, `compare_profiles() -> list[dict]`, `render(rows, statuses: dict[str, str]) -> str`
@@ -1679,6 +1679,9 @@ def collect_facts(report: MatchReport, classes: dict[str, str], findings: list[F
     facts["sca.extras.unclassified"] = sum(1 for f in report.extras if f.dedup_key not in classes)
     for origin, (hit, tot) in sorted(recall_by_origin(report).items()):
         facts[f"sca.recall_cve.{origin}"] = f"{hit}/{tot}"
+    hv = [m.entry for m in report.matches if m.entry.human_verdict]
+    facts["human.verdict_rows"] = len(hv)
+    facts["human.verdict_advisories"] = len({e.advisory for e in hv})
     for cat, n in sorted(Counter(f.category for f in findings).items()):
         facts[f"findings.{cat}"] = n
     for s in trace.get("stages", []):
@@ -1731,6 +1734,7 @@ def test_collect_facts_ids_and_values():
     assert facts["sca.extras"] == 1 and facts["sca.extras.inventory-diff"] == 1 and facts["sca.extras.unclassified"] == 0
     assert facts["attrition.final"] == 2 and facts["scanner.trivy"] == "ok" and facts["findings.sca"] == 2
     assert facts["sca.recall_cve.team"] == "1/2" and "sca.recall_cve.dev-found" not in facts
+    assert facts["human.verdict_rows"] == 0 and facts["human.verdict_advisories"] == 0
 
 
 def test_known_fp_render_and_profile_render_doc_are_full_docs():
@@ -2427,7 +2431,7 @@ Expected: 범주 내 4행(259·760·#305 ×2) PASS 여부 + measure-then-classif
 
 - [ ] **Step 6: 게이트 기록 + 커밋**
 
-`$RES/gate-v3.md`(모든 수치에 `<!-- fact:<id> -->` 마커 — `facts-gta.json`·`facts.json` 값만 인용; reach-app xfail 수는 pytest 출력 줄을 코드블록으로 인용): 축 6 — (a) 사람 판정 비교표는 `gt-b-match.md` 하단, (b) false-unreachable: `tests/test_reach_app.py` xfail(strict) 2건 = **게이트 미통과, 백로그 P1**(prefix 불일치·프레임워크 활성화) — pytest `-v` 출력 4줄을 코드블록으로 인용, (c) 증거의 SCA 도달성 분포: `reach.reachable`·`reach.unreachable`·`reach.unknown`·`findings.sca` 를 `facts.json` 마커로 인용(비율 계산식은 문장으로, 값은 마커). 축 7 — differential PASS 수, tier 기대 일치, measure-then-classify 관측 결과와 사후 분류.
+`$RES/gate-v3.md`(모든 수치에 `<!-- fact:<id> -->` 마커 — `facts-gta.json`·`facts.json` 값만 인용; reach-app xfail 수는 pytest 출력 줄을 코드블록으로 인용): 축 6 — (a) 사람 판정 비교표는 `gt-b-match.md` 하단(행 수는 `human.verdict_rows`·고유 advisory 수는 `human.verdict_advisories` 마커로 인용 — spec 의 "18" 을 옮겨 적지 말 것), (b) false-unreachable: `tests/test_reach_app.py` xfail(strict) 2건 = **게이트 미통과, 백로그 P1**(prefix 불일치·프레임워크 활성화) — pytest `-v` 출력 4줄을 코드블록으로 인용, (c) 증거의 SCA 도달성 분포: `reach.reachable`·`reach.unreachable`·`reach.unknown`·`findings.sca` 를 `facts.json` 마커로 인용(비율 계산식은 문장으로, 값은 마커). 축 7 — differential PASS 수, tier 기대 일치, measure-then-classify 관측 결과와 사후 분류.
 
 ```bash
 git add docs/verification/results
