@@ -2437,7 +2437,7 @@ git commit -m "docs(V3): GT-A differential 실측 + 도달성 축 게이트 기�
 
 - [ ] **Step 1: 측정 문서 작성**
 
-`docs/verification/results/<date>/` 의 md 들을 절로 묶는다. 구성(spec §5 순서): 요약(축별 게이트 ✓/✗ 표) → 환경·격리·도구 버전(meta.json) → 축 1 프로파일 계약 → 축 2~4 SCA(recall 표·미탐·known-FP 3단계·초과분 분류) → 축 5 입력면 → 축 6 도달성(사람 판정 비교표 + reach-app 결과) → 축 7 GT-A differential → 부수 측정(시간·메모리) → **백로그 후보(우선순위)**: 게이트 미통과 항목을 P1 로, 관측된 갭을 P2 로. 마지막에 "플랜 2(V4~V7)에서 확정" 표기. 수치는 `facts*.json` 의 값을 그대로 옮기고 **요약 표의 모든 수치 셀에 `<!-- fact:<id> -->` 마커**를 단다(Task 13 정본 검증기가 대조). 추정치·해석 수치 금지. 생성 문서(`gt-b-match.md` 등)는 내용을 바꾸지 말고 인용(파일 경로 + 핵심 표 복사)한다.
+`docs/verification/results/<date>/` 의 md 들을 절로 묶는다. 구성(spec §5 순서): 요약(축별 게이트 ✓/✗ 표) → 환경·격리·도구 버전(meta.json) → 축 1 프로파일 계약 → 축 2~4 SCA(recall 표·미탐·known-FP 3단계·초과분 분류) → 축 5 입력면 → 축 6 도달성(사람 판정 비교표 + reach-app 결과) → 축 7 GT-A differential → 부수 측정(시간·메모리) → **백로그 후보(우선순위)**: 게이트 미통과 항목을 P1 로, 관측된 갭을 P2 로. 마지막에 "플랜 2(V4~V7)에서 확정" 표기. 수치는 `facts*.json` 의 값을 그대로 옮기고 **요약 표는 `| 축 | 기준 | 측정값 | 판정 |` 형식으로 쓰고 측정값 열의 모든 수치에 `<!-- fact:<id> -->` 마커**를 단다(Task 13 정본 검증기가 측정값/값 열을 대조; 기준 열은 spec 상수). 추정치·해석 수치 금지. 생성 문서(`gt-b-match.md` 등)는 내용을 바꾸지 말고 인용(파일 경로 + 핵심 표 복사)한다.
 
 - [ ] **Step 2: PROGRESS.md 에 V 절 추가**
 
@@ -2491,17 +2491,21 @@ def test_parse_and_check_markers():
     assert check_markers("7 <!-- fact:nope -->", {})[0]["ok"] is False
 
 
-def test_unmarked_numbers_only_in_section_tables():
-    md = ("## 요약\n| 축 | 값 |\n|---|---|\n| a | 38/46 <!-- fact:x --> |\n| b | 7 |\n| c | 2026-09-05 |\n"
-          "## 기타\n| z | 99 |\n")
-    assert unmarked_numbers(md, "요약") == ["7"]
-    assert unmarked_numbers(md, None) == ["7", "99"]
+def test_unmarked_numbers_only_in_section_tables_and_value_columns():
+    md = ("## 요약\n| 축 | 기준 | 측정값 | 판정 |\n|---|---|---|---|\n"
+          "| 1 a | ≥ 44/46 | 38/46 <!-- fact:x --> | ✓ |\n| 2 b | ≤ 1 | 7 | ✗ |\n| 3 c | - | 2026-09-05 | ✓ |\n"
+          "## 기타\n| 축 | 값 |\n|---|---|\n| z | 99 |\n| w | 5 |\n")
+    assert unmarked_numbers(md, "요약") == ["7"]          # 행 라벨 1·2·3 과 기준 열 44/46·1 은 대상 아님
+    assert unmarked_numbers(md, None) == ["7", "99", "5"]  # "값" 열도 검사 대상
 
 
 def test_unmarked_numbers_catches_attached_tokens_and_skips_ids():
-    md = ("| a | 미탐 9건 · 미분류 0(키 없음) · 기준 44/46 |\n"
-          "| b | 3 <!-- fact:m -->건 · a483b3b1 · CVE-2026-40992 · 13.2.1.jre11 · spec §5 · 2026-09-05 |\n")
-    assert unmarked_numbers(md, None) == ["9", "0", "44/46"]
+    md = ("| 축 | 측정값 |\n|---|---|\n"
+          "| 2 a | 미탐 9건 · 미분류 0(키 없음) · 기준 44/46 |\n"
+          "| 4 b | 3 <!-- fact:m -->건 · a483b3b1 · CVE-2026-40992 · 13.2.1.jre11 · spec §5 · 2026-09-05 |\n"
+          "| 표 없는 헤더 | 77 |\n")
+    assert unmarked_numbers(md, None) == ["9", "0", "44/46", "77"]
+    assert unmarked_numbers("| a | b |\n|---|---|\n| 1 | 2 |\n", None) == []  # 측정값/값 열이 없는 표는 검사 안 함
 
 
 def test_check_provenance_requires_human():
@@ -2622,22 +2626,36 @@ def check_markers(md: str, facts: dict) -> list[dict]:
     return rows
 
 
+_VALUE_HEADERS = ("측정값", "값")
+
+
 def unmarked_numbers(md: str, section: str | None) -> list[str]:
-    """`## <section>` 절(None=문서 전체)의 표 셀 중 수치 토큰(`N` 또는 `N/M`)인데 마커가 없는 것 = 출처 불명.
-    "9건"·"0(…)" 처럼 붙은 표기도 잡는다. 날짜·버전·SHA·CVE id·`§5` 는 수치로 보지 않는다."""
+    """`## <section>` 절(None=문서 전체)의 표에서 **측정값/값 열**의 셀 중 수치 토큰(`N`·`N/M`)인데 마커가 없는 것 = 출처 불명.
+    행 라벨("2 SCA")·기준 열("≥ 44/46")은 대상이 아니다. "9건"·"0(…)" 처럼 붙은 표기도 잡는다.
+    날짜·버전·SHA·CVE id·`§5` 는 수치로 보지 않는다. 헤더에 측정값/값 열이 없는 표는 검사하지 않는다."""
     out: list[str] = []
     inside = section is None
+    cols: list[int] | None = None  # 현재 표에서 검사할 열 인덱스
     for ln in md.splitlines():
         if ln.startswith("## "):
             if section is not None:
                 inside = ln[3:].strip().startswith(section)
+            cols = None
             continue
         s = ln.strip()
-        if not inside or not s.startswith("|") or set(s) <= set("|-: "):
+        if not s.startswith("|"):
+            cols = None
             continue
-        for cell in s.strip("|").split("|"):
-            bare = _MARK_TOKEN.sub(" ", cell)  # 마커 붙은 값은 제거하고 남은 수치만 본다
-            out.extend(m.group(1) for m in _NUM.finditer(bare))
+        if not inside or set(s) <= set("|-: "):
+            continue
+        cells = [c.strip() for c in s.strip("|").split("|")]
+        if cols is None:  # 표의 첫 줄 = 헤더
+            cols = [i for i, c in enumerate(cells) if c in _VALUE_HEADERS]
+            continue
+        for i in cols:
+            if i < len(cells):
+                bare = _MARK_TOKEN.sub(" ", cells[i])  # 마커 붙은 값은 제거하고 남은 수치만 본다
+                out.extend(m.group(1) for m in _NUM.finditer(bare))
     return out
 
 

@@ -125,7 +125,7 @@ secscan 의 각 탐지 프로세스(SCA·도달성·Secret·SAST·deep·병합·
 - **정본** = 스크립트가 증거(`findings.json`·`trace.json`·`raw/*`·매니페스트)에서 파생한 `facts.json`(id → 값). 결과 문서는 정본을 인용만 하며, 인용 수치 옆에 `<!-- fact:<id> -->` 마커를 단다.
 - **생성 문서**(`gt-b-match.md`·`known-fp.md`·`profile-contract.md`·`input-surface.md`·`gt-a-differential.md`)는 생성기 함수의 결정적 출력이다. 손으로 고치지 않는다.
 - **판단 격리**: 초과분 triage 의 override(`our-fp` 등)는 `provenance: "human:<이름>"` 이 있어야 유효. `ai:*`·누락은 위반. 실행자는 판단이 필요한 항목을 `needs_human` 목록으로만 보고한다.
-- **검증기** `tools/verify/reconcile.py`: (a) 생성 문서를 같은 증거로 재생성해 바이트 비교 (b) 문서의 fact 마커 값 ↔ `facts.json` 대조 (c) 게이트 문서·측정 문서 요약 절의 마커 없는 수치 = 출처 불명 (d) override provenance 검사 (e) raw↔typed 카디널리티(raw trivy 고유 VulnerabilityID vs typed SCA 고유 advisory — 정규화 손실 검출). 산출 `reconcile-report.md` + exit code.
+- **검증기** `tools/verify/reconcile.py`: (a) 생성 문서를 같은 증거로 재생성해 바이트 비교 (b) 문서의 fact 마커 값 ↔ `facts.json` 대조 (c) 게이트 문서·측정 문서 요약 절의 표에서 측정값/값 열의 마커 없는 수치 = 출처 불명(행 라벨·기준 열은 제외) (d) override provenance 검사 (e) raw↔typed 카디널리티(raw trivy 고유 VulnerabilityID vs typed SCA 고유 advisory — 정규화 손실 검출). 산출 `reconcile-report.md` + exit code.
 - **인용 스코프**: 수치를 인용할 때 "대상(message-gate a483b3b1) · 정답지(GT-B = 보안팀 trivy 1회 + 개발자 발견 12) 대비" 스코프를 병기한다. 절대 recall 로 읽히는 문장("secscan recall 80%")을 쓰지 않는다. SCA recall 은 origin 별 수치와 함께만 인용한다(축 2).
 - **게이트**: 재생성 불일치 0 · 마커 불일치 0 · 출처 불명 수치 0 · 비인가 override 0 · raw↔typed 차이는 전건 사실로 기록. 미통과 시 **문서를 고친다**(정본은 고치지 않는다). 플랜 1 끝(V3)과 플랜 2 끝(V7)에서 실행.
 
