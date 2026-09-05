@@ -36,15 +36,32 @@ def inventory_from_bom(bom_json: str) -> dict[str, str]:
 
 
 def inventory_from_trivy(trivy_json: str) -> dict[str, str]:
-    inv: dict[str, str] = {}
+    """패키지별로 관측된 모든 버전을 모은다(덮어쓰지 않음) — 같은 jar 안에서 trivy 가
+
+    같은 패키지를 서로 다른 버전으로 이중 보고하는 경우(예: mssql-jdbc 13.2.1 /
+    13.2.1.jre11)를 감춰서는 안 된다(spec §5 축 5). 버전이 하나뿐이면 평문 문자열,
+    여럿이면 정렬해 " | "로 병기한다.
+    """
+    versions: dict[str, set[str]] = {}
     for res in json.loads(trivy_json or "{}").get("Results", []) or []:
         for p in res.get("Packages") or []:
             if p.get("Name") and p.get("Version"):
-                inv[p["Name"]] = p["Version"]
+                versions.setdefault(p["Name"], set()).add(p["Version"])
         for v in res.get("Vulnerabilities") or []:
             if v.get("PkgName") and v.get("InstalledVersion"):
-                inv.setdefault(v["PkgName"], v["InstalledVersion"])
-    return inv
+                versions.setdefault(v["PkgName"], set()).add(v["InstalledVersion"])
+    return {k: " | ".join(sorted(vs)) for k, vs in versions.items()}
+
+
+def vuln_installed_versions(trivy_json: str) -> list[tuple[str, str, str]]:
+    """(advisory, 패키지, InstalledVersion) — jar 표면에서 취약점이 실제로 부착된 버전(spec §5 축 5)."""
+    rows: list[tuple[str, str, str]] = []
+    for res in json.loads(trivy_json or "{}").get("Results", []) or []:
+        for v in res.get("Vulnerabilities") or []:
+            vid, pkg, ver = v.get("VulnerabilityID"), v.get("PkgName"), v.get("InstalledVersion")
+            if vid and pkg and ver:
+                rows.append((vid, pkg, ver))
+    return sorted(rows)
 
 
 def diff_inventories(a: dict[str, str], b: dict[str, str]) -> dict:
@@ -66,7 +83,7 @@ def compare_installed(inv: dict[str, str], manifest: GtManifest) -> list[dict]:
     return rows
 
 
-def render(diff: dict, cmp_bom: list[dict], cmp_jar: list[dict]) -> str:
+def render(diff: dict, cmp_bom: list[dict], cmp_jar: list[dict], vulns_for_gt: list[tuple[str, str, str]]) -> str:
     L = ["## 인벤토리 차이 (BOM=a, jar=b)",
          f"- BOM 에만: {len(diff['only_a'])} — {', '.join(diff['only_a'][:30])}",
          f"- jar 에만: {len(diff['only_b'])} — {', '.join(diff['only_b'][:30])}",
@@ -76,6 +93,8 @@ def render(diff: dict, cmp_bom: list[dict], cmp_jar: list[dict]) -> str:
     for r in cmp_bom:
         j = jar_by.get(r["package"], {})
         L.append(f"| {r['package']} | {r['manifest']} | {r['inventory'] or '-'} | {j.get('inventory') or '-'} |")
+    L += ["", "## jar 표면의 취약점 부착 버전(정답지 패키지만)", "| advisory | 패키지 | InstalledVersion |", "|---|---|---|"]
+    L += [f"| {vid} | {pkg} | {ver} |" for vid, pkg, ver in vulns_for_gt]
     return "\n".join(L)
 
 
@@ -115,8 +134,11 @@ def render_doc(ok: bool, bom_json: str, jar_json: str, manifest: GtManifest) -> 
     """입력면 교차 문서 전체(생성기 — reconcile 이 같은 입력으로 재생성해 비교한다)."""
     inv_bom = inventory_from_bom(bom_json)
     inv_jar = inventory_from_trivy(jar_json or "{}")
+    gt_packages = {e.package for e in manifest.entries}
+    vulns_for_gt = [row for row in vuln_installed_versions(jar_json or "{}") if row[1] in gt_packages]
     return f"# 입력면 교차 — jar 빌드/스캔 {'성공' if ok else '실패(부분)'}\n\n" + render(
-        diff_inventories(inv_bom, inv_jar), compare_installed(inv_bom, manifest), compare_installed(inv_jar, manifest))
+        diff_inventories(inv_bom, inv_jar), compare_installed(inv_bom, manifest), compare_installed(inv_jar, manifest),
+        vulns_for_gt)
 
 
 if __name__ == "__main__":

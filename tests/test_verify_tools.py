@@ -271,15 +271,18 @@ def test_inventories_and_diff():
     bom = json.dumps({"components": [
         {"group": "g", "name": "a", "version": "1.0", "purl": "pkg:maven/g/a@1.0"},
         {"group": "g", "name": "b", "version": "2.0", "purl": "pkg:maven/g/b@2.0"}]})
+    # g:a 는 jar 쪽에서 두 버전으로 이중 보고된다(예: mssql-jdbc 13.2.1 / 13.2.1.jre11 재현) —
+    # 덮어쓰지 않고 " | "로 병기되어야 한다.
     trivy = json.dumps({"Results": [{"Target": "Java", "Packages": [
-        {"Name": "g:a", "Version": "1.0"}, {"Name": "g:c", "Version": "3.0"}],
+        {"Name": "g:a", "Version": "1.0"}, {"Name": "g:a", "Version": "1.0.1"},
+        {"Name": "g:c", "Version": "3.0"}],
         "Vulnerabilities": [{"PkgName": "g:b", "InstalledVersion": "2.0.jre11", "VulnerabilityID": "CVE-1"}]}]})
     ia, ib = inventory_from_bom(bom), inventory_from_trivy(trivy)
     assert ia == {"g:a": "1.0", "g:b": "2.0"}
-    assert ib == {"g:a": "1.0", "g:c": "3.0", "g:b": "2.0.jre11"}
+    assert ib == {"g:a": "1.0 | 1.0.1", "g:c": "3.0", "g:b": "2.0.jre11"}
     d = diff_inventories(ia, ib)
     assert d["only_a"] == [] and d["only_b"] == ["g:c"]
-    assert d["version_differs"] == {"g:b": ("2.0", "2.0.jre11")}
+    assert d["version_differs"] == {"g:a": ("1.0", "1.0 | 1.0.1"), "g:b": ("2.0", "2.0.jre11")}
 
 
 def test_compare_installed_against_manifest():
@@ -370,3 +373,33 @@ def test_render_doc_empty_jar_payload_shapes_are_equivalent():
     b = render_doc(False, bom, "{}", m)
     assert a == b
     assert a.startswith("# 입력면 교차 — jar 빌드/스캔 실패(부분)")
+
+
+def test_vuln_installed_versions_sorted_tuples():
+    from tools.verify.jar_surface import vuln_installed_versions
+
+    trivy = json.dumps({"Results": [{"Vulnerabilities": [
+        {"VulnerabilityID": "CVE-2025-59250", "PkgName": "com.microsoft.sqlserver:mssql-jdbc", "InstalledVersion": "13.2.1"},
+        {"VulnerabilityID": "CVE-1", "PkgName": "g:z", "InstalledVersion": "9.9"}]}]})
+    assert vuln_installed_versions(trivy) == [
+        ("CVE-1", "g:z", "9.9"),
+        ("CVE-2025-59250", "com.microsoft.sqlserver:mssql-jdbc", "13.2.1"),
+    ]
+
+
+def test_render_doc_vuln_table_lists_gt_packages_only():
+    from tools.verify.jar_surface import render_doc
+
+    bom = json.dumps({"components": [
+        {"group": "com.microsoft.sqlserver", "name": "mssql-jdbc", "version": "13.2.1.jre11"}]})
+    trivy = json.dumps({"Results": [{"Vulnerabilities": [
+        {"VulnerabilityID": "CVE-2025-59250", "PkgName": "com.microsoft.sqlserver:mssql-jdbc", "InstalledVersion": "13.2.1"},
+        {"VulnerabilityID": "CVE-9", "PkgName": "not:in-gt", "InstalledVersion": "9.9"}]}]})
+    m = GtManifest("sca", "s", "2026-08-31",
+                   (GtEntry("CVE-2025-59250", "com.microsoft.sqlserver:mssql-jdbc", "13.2.1.jre11"),), [])
+    doc = render_doc(True, bom, trivy, m)
+    assert "## jar 표면의 취약점 부착 버전(정답지 패키지만)" in doc
+    assert "| CVE-2025-59250 | com.microsoft.sqlserver:mssql-jdbc | 13.2.1 |" in doc
+    # not:in-gt 는 정답지에 없는 패키지이므로 취약점 부착 버전 표에서는 빠져야 한다
+    # (인벤토리 차이 섹션에는 별개로 등장할 수 있음 — 여기서는 표의 행만 확인).
+    assert "| CVE-9 | not:in-gt | 9.9 |" not in doc
