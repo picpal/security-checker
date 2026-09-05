@@ -406,3 +406,39 @@ def test_render_doc_vuln_table_lists_gt_packages_only():
     # not:in-gt 는 정답지에 없는 패키지이므로 취약점 부착 버전 표에서는 빠져야 한다
     # (인벤토리 차이 섹션에는 별개로 등장할 수 있음 — 여기서는 표의 행만 확인).
     assert "| CVE-9 | not:in-gt | 9.9 |" not in doc
+
+
+# --- V3: GT-A differential ---
+from secscan.models import Location, sast_tier
+from tools.verify.differential import evaluate_pair, find_expected
+
+
+def _sast(rule, file, conf="high", sev="high"):
+    return Finding(category="sast", severity=sev, tool="semgrep", rule_id=rule, confidence=conf,
+                   location=Location(file, 5))
+
+
+def test_evaluate_pair_in_category_present_then_absent():
+    entry = {"cwe": "CWE-760", "file_suffix": "LoadtestSeederConfig.java", "expected_rule_suffix": "zero-salt",
+             "expected_tier": "review", "class": "in-category"}
+    vuln = [_sast("secscan.rules.zero-salt", "src/main/java/x/loadtest/LoadtestSeederConfig.java")]
+    r = evaluate_pair(entry, vuln, [])
+    assert r["present_in_vulnerable"] and r["absent_in_fixed"] and r["passed"]
+    assert r["tier_vulnerable"] == "review" and r["tier_ok"]
+
+
+def test_evaluate_pair_fails_when_still_present_in_fixed():
+    entry = {"cwe": "CWE-89", "file_suffix": "LgCarrierMapper.xml", "expected_rule_suffix": "mybatis-sqli-identifier",
+             "expected_tier": "review", "class": "in-category"}
+    f = _sast("secscan.rules.mybatis-sqli-identifier", "src/main/resources/mybatis/mapper/lg/LgCarrierMapper.xml", conf="low")
+    r = evaluate_pair(entry, [f], [f])
+    assert r["present_in_vulnerable"] and not r["absent_in_fixed"] and not r["passed"]
+
+
+def test_evaluate_pair_measure_then_classify_records_observed_rules():
+    entry = {"cwe": "CWE-497", "file_suffix": "TestDbReset.java", "expected_rule_suffix": None,
+             "expected_tier": None, "class": "measure-then-classify"}
+    vuln = [_sast("java.lang.security.audit.x", "src/main/java/t/TestDbReset.java"),
+            _sast("other.rule", "src/main/java/t/Other.java")]
+    r = evaluate_pair(entry, vuln, [])
+    assert r["passed"] is None and r["observed"] == ["java.lang.security.audit.x"]
