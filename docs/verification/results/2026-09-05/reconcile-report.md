@@ -8,7 +8,9 @@
 | gt-a-differential.md | ✓ |  |
 | facts-gta.json | ✓ |  |
 | known-fp.md | ✓ |  |
+| facts-knownfp.json | ✓ |  |
 | profile-contract.md | ✓ |  |
+| facts-profile.json | ✓ |  |
 | input-surface.md | ✓ |  |
 | facts-surface.json | ✓ |  |
 
@@ -22,6 +24,12 @@
 | gate-v2.md | sca.recall_cve.dev-found | 3/12 | 3/12 | ✓ |
 | gate-v2.md | sca.missed_high_important | 3 | 3 | ✓ |
 | gate-v2.md | sca.missed | 9 | 9 | ✓ |
+| gate-v2.md | sca.missed_by_stage.scanner | 9 | 9 | ✓ |
+| gate-v2.md | sca.missed_by_stage.normalize | 0 | 0 | ✓ |
+| gate-v2.md | knownfp.component_present | True | True | ✓ |
+| gate-v2.md | knownfp.version_preserved | True | True | ✓ |
+| gate-v2.md | knownfp.not_reported | True | True | ✓ |
+| gate-v2.md | knownfp.found_version | 13.2.1.jre11 | 13.2.1.jre11 | ✓ |
 | gate-v2.md | sca.extras | 1 | 1 | ✓ |
 | gate-v2.md | sca.extras.inventory-diff | 1 | 1 | ✓ |
 | gate-v2.md | sca.extras.unclassified | 0 | 0 | ✓ |
@@ -61,6 +69,11 @@
 | measurement | sca.recall_cve.team | 34/34 | 34/34 | ✓ |
 | measurement | sca.recall_cve.dev-found | 3/12 | 3/12 | ✓ |
 | measurement | sca.missed_high_important | 3 | 3 | ✓ |
+| measurement | sca.missed_by_stage.scanner | 9 | 9 | ✓ |
+| measurement | sca.missed_by_stage.normalize | 0 | 0 | ✓ |
+| measurement | knownfp.component_present | True | True | ✓ |
+| measurement | knownfp.version_preserved | True | True | ✓ |
+| measurement | knownfp.not_reported | True | True | ✓ |
 | measurement | sca.extras | 1 | 1 | ✓ |
 | measurement | sca.extras.inventory-diff | 1 | 1 | ✓ |
 | measurement | sca.extras.unclassified | 0 | 0 | ✓ |
@@ -78,6 +91,7 @@
 | measurement | reconcile.marker_mismatch | 0 | 0 | ✓ |
 | measurement | reconcile.unmarked | 0 | 0 | ✓ |
 | measurement | reconcile.provenance_violations | 0 | 0 | ✓ |
+| measurement | reconcile.quote_mismatch | 0 | 0 | ✓ |
 | measurement | reconcile.raw_typed_mismatch | 0 | 0 | ✓ |
 | measurement | sca.recall_cve | 37/46 | 37/46 | ✓ |
 | measurement | sca.recall_cve.dev-found | 3/12 | 3/12 | ✓ |
@@ -122,7 +136,10 @@
 | measurement | reconcile.marker_mismatch | 0 | 0 | ✓ |
 | measurement | reconcile.unmarked | 0 | 0 | ✓ |
 | measurement | reconcile.provenance_violations | 0 | 0 | ✓ |
+| measurement | reconcile.raw_count | 38 | 38 | ✓ |
+| measurement | reconcile.typed_count | 38 | 38 | ✓ |
 | measurement | reconcile.raw_typed_mismatch | 0 | 0 | ✓ |
+| measurement | reconcile.quote_mismatch | 0 | 0 | ✓ |
 | measurement | sca.recall_cve | 37/46 | 37/46 | ✓ |
 | measurement | sca.missed_high_important | 3 | 3 | ✓ |
 | measurement | surface.version_differs | 1 | 1 | ✓ |
@@ -135,6 +152,22 @@
 
 ## 출처 불명 수치(마커 없음)
 - 없음
+
+## 표 검사 범위(M6 — 값 열 없는 표는 출처 불명 검사에서 빠진다)
+- gate-v2.md: 검사 대상 표 1 / 값 열 없는 표 0
+- gate-v3.md: 검사 대상 표 2 / 값 열 없는 표 1
+- measurement: 검사 대상 표 1 / 값 열 없는 표 0
+
+## 인용 표 대조(spec §4.5 (f))
+| 인용 | 원본 | 일치 |
+|---|---|---|
+| | 프로파일 | spec §8 | 구현 | 누락 | 초과 | 실제 status | | profile-contract.md | ✓ |
+| | 단계 | 건수 | 증감 | | gt-b-match.md | ✓ |
+| | advisory | 패키지 | 설치 | 심각도(보안팀) | origin | 단계 | | gt-b-match.md | ✓ |
+| | advisory | 패키지 | 설치 | 분류 | | gt-b-match.md | ✓ |
+| | 단계 | 결과 | | known-fp.md | ✓ |
+| | 패키지 | 보안팀 | BOM | jar | | input-surface.md | ✓ |
+| | CWE | 분류 | 파일 | 룰 | 취약에서 출현 | 수정에서 소멸 | tier(기대) | 판정 | | gt-a-differential.md | ✓ |
 
 ## override provenance
 - override 없음

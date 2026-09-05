@@ -11,7 +11,7 @@
 4. `PROGRESS.md`
 5. `git log --oneline`
 
-## 상태: M0~M5 + post-M5 + D(커스텀 룰셋) 완료 ✅ (234 tests green, 2026-06-29) · V 플랜1 완료(측정 문서 docs/measurements/2026-09-05-message-gate-verification.md)
+## 상태: M0~M5 + post-M5 + D(커스텀 룰셋) 완료 ✅ (302 tests green, 2026-09-05) · V 플랜1 완료(측정 문서 docs/measurements/2026-09-05-message-gate-verification.md, 최종 리뷰 수정 라운드 반영)
 <!-- goal 의 모든 마일스톤·전체 완료 기준 충족. 이후 도그푸딩/실프로젝트 기반 강화. -->
 - **post-M5**: detect 노이즈제외 / exclude(기본제외+`.gitignore`) / **BOM-SCA**(cdxgen→trivy sbom, 락파일없는 gradle SCA 0→34) / SARIF locations / **컴플라이언스 매핑**(compliance.py: CWE→KISA49/PCI6.2.4) / **SAST 확대(B)**: Semgrep 팩 확대 + confidence 계층화(sast_tier actionable/review, missing→review) + severity 한글 + exit-code 게이팅(review 비차단) + merge 보수적 + doctor 런타임점검. / **D(커스텀 룰셋)**: semgrep 룰 3종(secscan/rules/: MyBatis ${} value=actionable·identifier=review 위치분기 / 하드코딩 자격증명 / zero-salt) + `--config` 통합(코어무변경) + is_test_path 경로강등(test/loadtest→review, 전 SAST) + 외부repo비의존 픽스처(fixtures/custom-rule-app) 회귀게이트(양성+음성 FP0). d4a1ded 취약시점 대조로 갭 3종 실증(gitleaks/semgrep 미탐→커스텀룰 탐지). **C(함수간 taint) 불필요 확정** — spotbugs 실행돼도 CWE-476/754/404 미탐(IDE 인스펙션 범주, taint 아님). docs/measurements/2026-06-28-gap-map.md.
 - **M0** doctor / **M1** 정확한 SCA(FP 89%↓, GT 100%) / **M2** Secret(gitleaks+trufflehog 정책) / **M3** SAST(semgrep, CE taint 한계) / **M4** 억제(provenance/evidence/expiry/scope, baseline, stale 무효화, 자동억제 금지) / **M5** deep(spotbugs+findsecbugs 바이트코드 — CE 놓친 CWE-78 탐지, 빌드실패 격리).

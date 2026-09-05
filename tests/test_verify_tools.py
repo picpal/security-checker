@@ -675,6 +675,14 @@ def test_check_quoted_tables_finds_preceding_table_when_none_follows():
         assert len(rows) == 1 and rows[0]["ok"] is True
 
 
+def test_check_quoted_tables_skips_explicit_non_quote_negation():
+    """"…전체 인용 아님(요약만)" 처럼 명시적으로 전체 인용이 아니라고 선언한 문장은 대상이 아니다."""
+    from tools.verify.reconcile import check_quoted_tables
+    md = "전체 결과는 `docs/reconcile-report.md`(전체 인용 아님 — 요약만) 참조.\n"
+    rows = check_quoted_tables(md, Path("/nonexistent"))
+    assert rows == []
+
+
 def _fake_results(tmp_path):
     """가짜 증거 + 그 증거로 생성한 결과 문서 — 재생성 비교의 양성 케이스."""
     from tools.verify import differential, report

@@ -21,6 +21,8 @@
   "sca.extras.unclassified": 0,
   "sca.false_positive": 0,
   "sca.missed": 9,
+  "sca.missed_by_stage.normalize": 0,
+  "sca.missed_by_stage.scanner": 9,
   "sca.missed_high_important": 3,
   "sca.recall_cve": "37/46",
   "sca.recall_cve.dev-found": "3/12",

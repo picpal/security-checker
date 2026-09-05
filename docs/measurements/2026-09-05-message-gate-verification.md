@@ -2,7 +2,7 @@
 
 **대상**: message-gate `a483b3b1` · **정답지**: GT-B(보안팀 trivy 결과 + 개발자 발견분) / GT-A(외부 소스 점검 fix 커밋) 대비 — 절대 recall 이 아니다.
 
-본 문서의 모든 측정값은 `docs/verification/results/2026-09-05/facts.json` · `facts-profile.json` · `facts-gta.json` · `facts-surface.json` (이하 정본)에서 그대로 옮겼다(spec §4.5). 인용 수치 옆에는 `fact:` 로 시작하는 HTML 주석 마커가 정본 위치를 가리킨다. 이 문서는 원인·해석을 담지 않는다 — 게이트 미통과는 `docs/superpowers/specs/2026-09-04-verification-campaign-design.md` §5 에 따라 캠페인 실패가 아니라 백로그 P1 등록 사유다.
+본 문서의 모든 측정값은 `docs/verification/results/2026-09-05/facts.json` · `facts-profile.json` · `facts-knownfp.json` · `facts-gta.json` · `facts-surface.json` · `facts-reconcile.json` (이하 정본)에서 그대로 옮겼다(spec §4.5). 인용 수치 옆에는 `fact:` 로 시작하는 HTML 주석 마커가 정본 위치를 가리킨다. 이 문서는 원인·해석을 담지 않는다 — 게이트 미통과는 `docs/superpowers/specs/2026-09-04-verification-campaign-design.md` §5 에 따라 캠페인 실패가 아니라 백로그 P1 등록 사유다.
 
 축 8(보고서 충실성)은 spec §9 실행 순서상 V6(플랜 2) 범위이므로 이 문서에 포함하지 않는다.
 
@@ -11,13 +11,13 @@
 | 축 | 기준 | 측정값 | 판정 |
 |---|---|---|---|
 | 1 프로파일 계약 | spec §5: 드리프트 전건 문서화 + spec 갱신 백로그 | profile-contract.md 행 수 4 <!-- fact:profile.rows -->건 · 드리프트 3 <!-- fact:profile.drift -->건(전건 `osv-scanner` 누락) | ✓ (문서화됨) |
-| 2 SCA recall(GT-B 대비) | spec §5: CVE 단위 GT-B 합산 ≥ 44/46, HIGH/Important 미탐 ≤ 1, 미탐 전건 단계 특정(origin 별 병기 필수) | 합산 37/46 <!-- fact:sca.recall_cve --> · team 34/34 <!-- fact:sca.recall_cve.team --> · dev-found 3/12 <!-- fact:sca.recall_cve.dev-found --> · HIGH/Important 미탐 3 <!-- fact:sca.missed_high_important -->건 | ✗ → 백로그 P1 후보 |
-| 3 SCA known-FP(CVE-2025-59250, mssql-jdbc) | spec §5: 3단계(component_present/version_preserved/not_reported) 모두 True | component_present=True · version_preserved=True · not_reported=True | ✓ |
+| 2 SCA recall(GT-B 대비) | spec §5: CVE 단위 GT-B 합산 ≥ 44/46, HIGH/Important 미탐 ≤ 1, 미탐 전건 단계 특정(origin 별 병기 필수) | 합산 37/46 <!-- fact:sca.recall_cve --> · team 34/34 <!-- fact:sca.recall_cve.team --> · dev-found 3/12 <!-- fact:sca.recall_cve.dev-found --> · HIGH/Important 미탐 3 <!-- fact:sca.missed_high_important -->건 · 미탐 단계: scanner 9 <!-- fact:sca.missed_by_stage.scanner --> · normalize 0 <!-- fact:sca.missed_by_stage.normalize --> | ✗ → 백로그 P1 후보 |
+| 3 SCA known-FP(CVE-2025-59250, mssql-jdbc) | spec §5: 3단계(component_present/version_preserved/not_reported) 모두 True | component_present: True <!-- fact:knownfp.component_present --> · version_preserved: True <!-- fact:knownfp.version_preserved --> · not_reported: True <!-- fact:knownfp.not_reported --> | ✓ |
 | 4 SCA 초과분 분류 | spec §5: 미분류 0 | 초과 1 <!-- fact:sca.extras -->건 · inventory-diff 1 <!-- fact:sca.extras.inventory-diff -->건 · 미분류 0 <!-- fact:sca.extras.unclassified -->건 | ✓ |
 | 5 입력면 교차 | spec §5: 인벤토리 차 전건 원인 특정, 해석 버전 불일치 0 | BOM 전용 77 <!-- fact:surface.bom_only -->건 · jar 전용 9 <!-- fact:surface.jar_only -->건 · 버전 차이 1 <!-- fact:surface.version_differs -->건 · 정답지 대비 일치 BOM 16/16 <!-- fact:surface.gt_match_bom --> / jar 15/16 <!-- fact:surface.gt_match_jar --> | ✗ → 백로그 P1 후보* |
 | 6 도달성 | spec §5: false-unreachable = 0(프레임워크 활성화 케이스 포함) | reach.reachable 0 <!-- fact:reach.reachable --> · reach.unreachable 48 <!-- fact:reach.unreachable --> · reach.unknown 0 <!-- fact:reach.unknown --> (findings.sca 48 <!-- fact:findings.sca -->) · false-unreachable 목록은 `gate-v3.md` 코드블록 참조 | ✗ → 백로그 P1 |
 | 7 GT-A differential(범주 내) | spec §5: 범주 내 출현·소멸 100% | gta.in_category_pass 2/4 <!-- fact:gta.in_category_pass --> | ✗ → 백로그 P1 후보 |
-| 9 측정 사실성(정본 검증) | spec §5: 재생성 불일치 0 · 마커 불일치 0 · 출처 불명 0 · 비인가 override 0 | 재생성 불일치 0 <!-- fact:reconcile.regen_mismatch -->건 · 마커 불일치 0 <!-- fact:reconcile.marker_mismatch -->건 · 출처 불명 0 <!-- fact:reconcile.unmarked -->건 · 비인가 override 0 <!-- fact:reconcile.provenance_violations -->건 · raw↔typed 불일치 0 <!-- fact:reconcile.raw_typed_mismatch -->건 | ✓ |
+| 9 측정 사실성(정본 검증) | spec §5: 재생성 불일치 0 · 마커 불일치 0 · 출처 불명 0 · 비인가 override 0 | 재생성 불일치 0 <!-- fact:reconcile.regen_mismatch -->건 · 마커 불일치 0 <!-- fact:reconcile.marker_mismatch -->건 · 출처 불명 0 <!-- fact:reconcile.unmarked -->건 · 비인가 override 0 <!-- fact:reconcile.provenance_violations -->건 · 인용 표 불일치 0 <!-- fact:reconcile.quote_mismatch -->건 · raw↔typed 불일치 0 <!-- fact:reconcile.raw_typed_mismatch -->건 | ✓ |
 
 \* 축 5 는 `gate-v2.md`/`gate-v3.md` 에 판정이 없다 — 두 문서가 작성될 시점에는 축 5 의 정본 수치(`facts-surface.json`)가 없었다(이 문서와 같은 태스크에서 사후 추가). 위 판정은 spec §5 축 5 기준을 `facts-surface.json` 수치에 기계적으로 적용한 결과다: 버전 차이(`surface.version_differs`)가 0 이 아니고, 인벤토리 차(BOM 전용/jar 전용) 개별 항목에 원인 분류가 부여되어 있지 않다(아래 축 5 절 참조).
 
@@ -47,9 +47,10 @@ raw: trivy=ok(313797B), gitleaks=ok(9393B), semgrep=ok(57924B)
 | 단계 | 건수 | 증감 |
 |---|---|---|
 | normalize:gitleaks | 13 |  |
-| normalize:semgrep | 15 | +2 |
-| normalize:trivy | 48 | +33 |
-| merge | 73 | +25 |
+| normalize:semgrep | 15 |  |
+| normalize:trivy | 48 |  |
+| normalize(합계) | 76 |  |
+| merge | 73 | -3 |
 | exclude | 73 | +0 |
 | compliance | 73 | +0 |
 | reachability | 73 | +0 |
@@ -65,17 +66,17 @@ raw: trivy=ok(313797B), gitleaks=ok(9393B), semgrep=ok(57924B)
 
 ### 미탐 (`gt-b-match.md` 표 전체 인용) — 9 <!-- fact:sca.missed -->건
 
-| advisory | 패키지 | 설치 | 심각도(보안팀) | origin |
-|---|---|---|---|---|
-| CVE-2026-68763 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Important | dev-found |
-| CVE-2026-68569 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Important | dev-found |
-| CVE-2026-65927 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Important | dev-found |
-| CVE-2026-65637 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Moderate | dev-found |
-| CVE-2026-73180 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Low | dev-found |
-| CVE-2026-66422 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Low | dev-found |
-| CVE-2026-66299 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Low | dev-found |
-| CVE-2026-65183 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Low | dev-found |
-| CVE-2026-19880 | ch.qos.logback:logback-core | 1.5.32 | - | dev-found |
+| advisory | 패키지 | 설치 | 심각도(보안팀) | origin | 단계 |
+|---|---|---|---|---|---|
+| CVE-2026-68763 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Important | dev-found | scanner |
+| CVE-2026-68569 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Important | dev-found | scanner |
+| CVE-2026-65927 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Important | dev-found | scanner |
+| CVE-2026-65637 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Moderate | dev-found | scanner |
+| CVE-2026-73180 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Low | dev-found | scanner |
+| CVE-2026-66422 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Low | dev-found | scanner |
+| CVE-2026-66299 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Low | dev-found | scanner |
+| CVE-2026-65183 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Low | dev-found | scanner |
+| CVE-2026-19880 | ch.qos.logback:logback-core | 1.5.32 | - | dev-found | scanner |
 
 HIGH/Important 미탐 3 <!-- fact:sca.missed_high_important -->건(CVE-2026-68763·CVE-2026-68569·CVE-2026-65927).
 
@@ -183,11 +184,12 @@ reach.unknown / findings.sca = 0 <!-- fact:reach.unknown --> / 48 <!-- fact:find
 
 정본 검증기(`tools/verify/reconcile.py`)를 `docs/verification/results/2026-09-05/` 의 생성 문서·게이트 문서·이 문서에 대해 실행했다. 전체 결과는 `docs/verification/results/2026-09-05/reconcile-report.md`(전체 인용 아님 — 요약만) 참조.
 
-- **생성 문서 재생성 비교**(`gt-b-match.md`·`facts.json`·`gt-a-differential.md`·`facts-gta.json`·`known-fp.md`·`profile-contract.md`·`input-surface.md`·`facts-surface.json` 8건): 전건 동일 바이트 재생성 — 불일치 0 <!-- fact:reconcile.regen_mismatch -->건.
+- **생성 문서 재생성 비교**(`gt-b-match.md`·`facts.json`·`gt-a-differential.md`·`facts-gta.json`·`known-fp.md`·`facts-knownfp.json`·`profile-contract.md`·`facts-profile.json`·`input-surface.md`·`facts-surface.json` 10건 — 이번 수정 라운드에서 `facts-knownfp.json`/`facts-profile.json` 이 재생성 비교 대상에 새로 합류했다, I3·I4): 전건 동일 바이트 재생성 — 불일치 0 <!-- fact:reconcile.regen_mismatch -->건.
 - **fact 마커 대조**(`gate-v2.md`·`gate-v3.md`·이 문서 `## 요약` 절): 전 마커가 정본과 일치 — 불일치 0 <!-- fact:reconcile.marker_mismatch -->건.
 - **출처 불명 수치**(`gate-v2.md`·`gate-v3.md`·이 문서 `## 요약` 절의 측정값/값 열): 0 <!-- fact:reconcile.unmarked -->건(최초 실행에서 `gate-v3.md` 축 6(b) 손기입 수치 "2건" 1건이 잡혀 마커 없이 정본화할 수 없는 값이므로 문서에서 제거하고 pytest 코드블록 인용만 남겼다 — 축 9 스스로가 찾은 위반이며, 이 문서에서 발견 사실로 남긴다).
 - **override provenance**(`extras-triage.json`): override 없음 — 비인가(비 `human:`) override 0 <!-- fact:reconcile.provenance_violations -->건.
-- **raw↔typed 카디널리티**(`a483b3b1-standard`): raw trivy 고유 VulnerabilityID 38건 = typed SCA 고유 advisory 38건 — 불일치 0 <!-- fact:reconcile.raw_typed_mismatch -->건(spec §5 축 9 의 4개 기준에는 포함되지 않는 부수 기록이나, 정본 검증기가 산출하므로 함께 인용한다).
+- **raw↔typed 카디널리티**(`a483b3b1-standard`): raw trivy 고유 VulnerabilityID 38 <!-- fact:reconcile.raw_count -->건 = typed SCA 고유 advisory 38 <!-- fact:reconcile.typed_count -->건 — 불일치 0 <!-- fact:reconcile.raw_typed_mismatch -->건(spec §5 축 9 의 4개 기준에는 포함되지 않는 부수 기록이나, 정본 검증기가 산출하므로 함께 인용한다).
+- **인용 표 대조**(spec §4.5 (f)): 측정 문서가 "전체 인용"이라고 선언한 표를 원본 결과 문서의 동일 헤더 표와 마커 제거 후 행 단위로 대조 — 불일치 0 <!-- fact:reconcile.quote_mismatch -->건.
 
 판정: ✓ 통과(spec §5: 4개 기준 모두 0).
 

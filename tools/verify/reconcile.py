@@ -29,8 +29,9 @@ _MARK_TOKEN = re.compile(r"\S*\d\S*\s*<!--\s*fact:[^>]*-->")
 _FACT_COMMENT = re.compile(r"\s*<!--\s*fact:[^>]*-->")
 _KNOWN_FP = dict(package="com.microsoft.sqlserver:mssql-jdbc", advisory="CVE-2025-59250", expected_version="13.2.1.jre11")
 # 측정 문서의 "표 전체 인용" 선언 — `<파일명>.md` 뒤 20자 이내에 "전체 인용"이 오면 그 표를
-# 대상 파일의 같은 헤더 표와 바이트 대조한다(spec §4.5 (f), 리뷰 I8).
-_QUOTE_DECL = re.compile(r"`([^`\n]+\.md)`[^\n]{0,20}?전체 인용")
+# 대상 파일의 같은 헤더 표와 바이트 대조한다(spec §4.5 (f), 리뷰 I8). "전체 인용 아님"(부정)은
+# 제외한다 — 예: "reconcile-report.md(전체 인용 아님 — 요약만) 참조".
+_QUOTE_DECL = re.compile(r"`([^`\n]+\.md)`[^\n]{0,20}?전체 인용(?!\s*아님)")
 
 
 def parse_markers(md: str) -> list[tuple[str, str]]:

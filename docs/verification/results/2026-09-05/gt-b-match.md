@@ -7,9 +7,10 @@ raw: trivy=ok(313797B), gitleaks=ok(9393B), semgrep=ok(57924B)
 | 단계 | 건수 | 증감 |
 |---|---|---|
 | normalize:gitleaks | 13 |  |
-| normalize:semgrep | 15 | +2 |
-| normalize:trivy | 48 | +33 |
-| merge | 73 | +25 |
+| normalize:semgrep | 15 |  |
+| normalize:trivy | 48 |  |
+| normalize(합계) | 76 |  |
+| merge | 73 | -3 |
 | exclude | 73 | +0 |
 | compliance | 73 | +0 |
 | reachability | 73 | +0 |
@@ -23,17 +24,17 @@ raw: trivy=ok(313797B), gitleaks=ok(9393B), semgrep=ok(57924B)
 - 종류별: {'exact': 47, 'missed': 9}
 
 ### 미탐
-| advisory | 패키지 | 설치 | 심각도(보안팀) | origin |
-|---|---|---|---|---|
-| CVE-2026-68763 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Important | dev-found |
-| CVE-2026-68569 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Important | dev-found |
-| CVE-2026-65927 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Important | dev-found |
-| CVE-2026-65637 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Moderate | dev-found |
-| CVE-2026-73180 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Low | dev-found |
-| CVE-2026-66422 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Low | dev-found |
-| CVE-2026-66299 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Low | dev-found |
-| CVE-2026-65183 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Low | dev-found |
-| CVE-2026-19880 | ch.qos.logback:logback-core | 1.5.32 | - | dev-found |
+| advisory | 패키지 | 설치 | 심각도(보안팀) | origin | 단계 |
+|---|---|---|---|---|---|
+| CVE-2026-68763 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Important | dev-found | scanner |
+| CVE-2026-68569 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Important | dev-found | scanner |
+| CVE-2026-65927 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Important | dev-found | scanner |
+| CVE-2026-65637 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Moderate | dev-found | scanner |
+| CVE-2026-73180 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Low | dev-found | scanner |
+| CVE-2026-66422 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Low | dev-found | scanner |
+| CVE-2026-66299 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Low | dev-found | scanner |
+| CVE-2026-65183 | org.apache.tomcat.embed:tomcat-embed-core | 11.0.22 | Low | dev-found | scanner |
+| CVE-2026-19880 | ch.qos.logback:logback-core | 1.5.32 | - | dev-found | scanner |
 
 ### 초과 탐지
 | advisory | 패키지 | 설치 | 분류 |
