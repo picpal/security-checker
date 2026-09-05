@@ -6,9 +6,11 @@ import argparse
 import json
 from pathlib import Path
 
-from secscan.measure import GtManifest, MatchReport, classify_extras, load_gt_manifest, match_ground_truth
+from secscan.measure import GtManifest, MatchReport, _ids, classify_extras, load_gt_manifest, match_ground_truth
 from secscan.models import Finding
 from secscan.output.json_io import from_json
+
+from ._facts import facts_text
 
 OUR_METHOD = "패키지 prefix 존재(atom usage 슬라이스에 해당 타입 호출 유무)"
 
@@ -59,7 +61,7 @@ def render_human_verdicts(manifest: GtManifest, findings: list[Finding]) -> str:
     by = {}
     for f in findings:
         if f.component and f.advisory:
-            for i in (f.advisory.id, *f.advisory.aliases):
+            for i in _ids(f):
                 by[(i, f.component.package)] = f
     L = ["| advisory | 패키지 | 사람 판정 | 사람 근거 분류 | 우리 판정 | 우리 근거 | 판정 방법 차이 |",
          "|---|---|---|---|---|---|---|"]
@@ -163,8 +165,7 @@ def main(argv: list[str] | None = None) -> int:
     ])
     Path(a.out).write_text(md, encoding="utf-8")
     if a.facts:
-        Path(a.facts).write_text(json.dumps(collect_facts(report, classes, findings, trace, meta),
-                                            ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        Path(a.facts).write_text(facts_text(collect_facts(report, classes, findings, trace, meta)), encoding="utf-8")
     print(a.out)
     return 0
 

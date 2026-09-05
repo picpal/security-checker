@@ -38,3 +38,13 @@ def render(rows: list[dict], statuses: dict[str, str]) -> str:
 def render_doc(statuses: dict[str, str]) -> str:
     """프로파일 계약 문서(생성기 — reconcile 재생성 비교 대상)."""
     return "# 프로파일 계약 (spec §8 vs 구현 vs 실제)\n\n" + render(compare_profiles(), statuses) + "\n"
+
+
+def collect_facts(statuses: dict[str, str]) -> dict:
+    """정본 수치(spec §4.5, 축 1). `compare_profiles()` 의 missing/extra 리스트에서 직접 계산한다 —
+    렌더된 마크다운을 되파싱하지 않는다(리뷰 I3)."""
+    rows = compare_profiles()
+    return {
+        "profile.rows": len(rows),
+        "profile.drift": sum(1 for r in rows if r["missing"] or r["extra"]),
+    }

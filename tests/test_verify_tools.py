@@ -268,6 +268,47 @@ def test_known_fp_render_and_profile_render_doc_are_full_docs():
     assert doc.startswith("# 프로파일 계약") and "standard" in doc
 
 
+def test_facts_text_is_canonical_serialization():
+    """I3/I4/I6 의 공통 헬퍼(M2) — 네 곳의 직렬화가 전부 이 함수 하나로 통일된다."""
+    from tools.verify._facts import facts_text
+    assert facts_text({"b": 1, "a": 2}) == '{\n  "a": 2,\n  "b": 1\n}\n'
+    assert facts_text({"k": "한글"}) == '{\n  "k": "한글"\n}\n'  # ensure_ascii=False
+
+
+def test_profile_contract_collect_facts_from_compare_profiles_rows():
+    """I3 — profile.rows/profile.drift 는 렌더된 마크다운을 되파싱하지 않고 compare_profiles() 에서 직접 계산한다."""
+    from tools.verify.profile_contract import collect_facts
+    facts = collect_facts({"trivy": "ok", "gitleaks": "ok"})
+    assert facts["profile.rows"] == 4
+    assert facts["profile.drift"] == 3  # quick 은 spec·구현 일치, 나머지 3개는 osv-scanner 누락
+
+
+def test_known_fp_collect_facts_ids_and_string_values():
+    """I4 — 축 3 값에도 fact id 를 부여해 손전사를 막는다. 값은 비수치라 문자열로 인용된다."""
+    from tools.verify.known_fp import collect_facts
+    result = {"component_present": True, "version_preserved": True, "not_reported": True, "found_version": "13.2.1.jre11"}
+    facts = collect_facts(result)
+    assert facts == {
+        "knownfp.component_present": "True",
+        "knownfp.version_preserved": "True",
+        "knownfp.not_reported": "True",
+        "knownfp.found_version": "13.2.1.jre11",
+    }
+
+
+def test_parse_markers_resolves_non_numeric_tokens():
+    """비수치 마커(True/버전 문자열) — parse_markers 는 토큰 전체를 값으로 쓴다(단, 새 facts:knownfp.* 용).
+    마커 직전 토큰이 값 그 자체여야 한다("키=값" 형태로 값에 접두어가 붙으면 안 됨) — 문서는
+    "component_present: True <!-- fact:... -->" 처럼 값과 마커 사이만 공백으로 둔다."""
+    from tools.verify.reconcile import parse_markers
+    md = ("| component_present: True <!-- fact:knownfp.component_present --> |\n"
+          "| found_version: 13.2.1.jre11 <!-- fact:knownfp.found_version --> |\n")
+    assert parse_markers(md) == [
+        ("knownfp.component_present", "True"),
+        ("knownfp.found_version", "13.2.1.jre11"),
+    ]
+
+
 # --- V2: 입력면 교차 ---
 from tools.verify.jar_surface import compare_installed, diff_inventories, inventory_from_bom, inventory_from_trivy
 

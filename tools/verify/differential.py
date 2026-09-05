@@ -13,6 +13,8 @@ from secscan.measure import load_gt_manifest
 from secscan.models import Finding, sast_tier
 from secscan.output.json_io import from_json
 
+from ._facts import facts_text
+
 
 def find_expected(findings: list[Finding], entry: dict) -> list[Finding]:
     suf, fsuf = entry.get("expected_rule_suffix"), entry.get("file_suffix")
@@ -76,7 +78,7 @@ def main(argv: list[str] | None = None) -> int:
     md = (f"# GT-A differential — 범주 내 {sum(1 for r in in_cat if r['passed'])}/{len(in_cat)} PASS\n\n" + render(rows))
     Path(a.out).write_text(md, encoding="utf-8")
     if a.facts:
-        Path(a.facts).write_text(json.dumps(collect_facts(rows), ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        Path(a.facts).write_text(facts_text(collect_facts(rows)), encoding="utf-8")
     print(a.out)
     return 0
 

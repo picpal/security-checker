@@ -18,6 +18,8 @@ from pathlib import Path
 
 from secscan.measure import GtManifest, load_gt_manifest
 
+from ._facts import facts_text
+
 
 def inventory_from_bom(bom_json: str) -> dict[str, str]:
     inv: dict[str, str] = {}
@@ -143,16 +145,14 @@ def main(argv: list[str] | None = None) -> int:
     out = Path(a.out)
     jar_json = out.with_suffix(".trivy-fs.json")
     ok = build_and_scan_jar(Path(a.repo_dir), jar_json)
-    jar_text = jar_json.read_text(encoding="utf-8") if jar_json.exists() else "{}"
     if not jar_json.exists():
         jar_json.write_text("{}", encoding="utf-8")  # reconcile 재생성용 — 실패도 파일로 남긴다
+    jar_text = jar_json.read_text(encoding="utf-8")
     out.with_name("input-surface.status.json").write_text(json.dumps({"jar_build_scan_ok": ok}) + "\n", encoding="utf-8")
     bom_text = Path(a.bom).read_text(encoding="utf-8")
     manifest = load_gt_manifest(a.gt)
     out.write_text(render_doc(ok, bom_text, jar_text, manifest), encoding="utf-8")
-    out.with_name("facts-surface.json").write_text(
-        json.dumps(collect_facts(ok, bom_text, jar_text, manifest), ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8")
+    out.with_name("facts-surface.json").write_text(facts_text(collect_facts(ok, bom_text, jar_text, manifest)), encoding="utf-8")
     print(out)
     return 0
 

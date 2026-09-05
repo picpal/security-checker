@@ -28,6 +28,16 @@ def check_known_fp(bom_json: str, trivy_json: str, *, package: str, advisory: st
     }
 
 
+def collect_facts(result: dict) -> dict:
+    """정본 수치(spec §4.5, 축 3). 값이 비수치(True/False/버전 문자열)라 문자열로 인용한다(리뷰 I4)."""
+    return {
+        "knownfp.component_present": str(result["component_present"]),
+        "knownfp.version_preserved": str(result["version_preserved"]),
+        "knownfp.not_reported": str(result["not_reported"]),
+        "knownfp.found_version": str(result["found_version"]),
+    }
+
+
 def render(result: dict) -> str:
     """known-FP 3단계 문서(생성기 — reconcile 이 같은 함수로 재생성해 비교한다)."""
     rows = "\n".join(f"| {k} | {v} |" for k, v in result.items())
