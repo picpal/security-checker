@@ -1377,7 +1377,7 @@ git commit -m "docs(V1): 증거 동결 — a483b3b1 standard/deep + GT-A 스냅�
 - `report.render_human_verdicts(manifest: GtManifest, findings: list[Finding]) -> str`
 - `report.published_dates(trivy_payload: str) -> dict[str, str]` (raw trivy JSON 의 `PublishedDate`)
 - `report.main(argv)` CLI: `--evidence <dir> --gt <gt-b-sca.json> --out <md> [--facts <json>]` — `--facts` 는 `collect_facts(...)` 결과를 JSON 으로 저장.
-- `report.collect_facts(report: MatchReport, classes: dict, findings, trace: dict, meta: dict) -> dict[str, str|int]` — 정본 수치(id → 값): `sca.recall_cve`("m/t"), `sca.recall_entry_strict`, `sca.recall_entry_loose`, `sca.missed`, `sca.missed_high_important`(severity_team 이 HIGH 또는 Important 인 미탐 수 — spec §5 축 2 게이트 "HIGH/Important 미탐 ≤ 1"; 보안팀 trivy 벤더 심각도와 개발자 추가분의 Tomcat 척도 Important/Moderate/Low 가 섞여 있음), `sca.false_positive`, `sca.extras`, `sca.extras.<class>`(4분류별), `findings.total`, `findings.<category>`, `attrition.<stage>`, `scanner.<tool>`(status), `reach.<status>`(SCA 도달성 status 별 건수; 없음=`none`), **`sca.recall_cve.<origin>`**(origin 별 CVE 단위 recall "m/t" — `team`/`dev-found`; spec §5 축 2 도구 상관 편향 분리).
+- `report.collect_facts(report: MatchReport, classes: dict, findings, trace: dict, meta: dict) -> dict[str, str|int]` — 정본 수치(id → 값): `sca.recall_cve`("m/t"), `sca.recall_entry_strict`, `sca.recall_entry_loose`, `sca.missed`, `sca.missed_high_important`(severity_team 이 HIGH 또는 Important 인 미탐 수 — spec §5 축 2 게이트 "HIGH/Important 미탐 ≤ 1"; 보안팀 trivy 벤더 심각도와 개발자 추가분의 Tomcat 척도 Important/Moderate/Low 가 섞여 있음), `sca.false_positive`, `sca.extras`, `sca.extras.<class>`(4분류별), **`sca.extras.unclassified`**(항상 출력, 미분류 건수 — 0 이어도 인용 가능해야 함), `findings.total`, `findings.<category>`, `attrition.<stage>`, `scanner.<tool>`(status), `reach.<status>`(SCA 도달성 status 별 건수; 없음=`none`), **`sca.recall_cve.<origin>`**(origin 별 CVE 단위 recall "m/t" — `team`/`dev-found`; spec §5 축 2 도구 상관 편향 분리).
 - `known_fp.render(result: dict) -> str` — `# known-FP CVE-2025-59250 (mssql-jdbc) 3단계` 제목 + `| 단계 | 결과 |` 표 전체 문서.
 - `profile_contract.render_doc(statuses: dict[str, str]) -> str` — `# 프로파일 계약 (spec §8 vs 구현 vs 실제)` 제목 + `render(compare_profiles(), statuses)` 전체 문서.
 - `profile_contract.SPEC_PROFILES: dict[str, frozenset[str]]`, `compare_profiles() -> list[dict]`, `render(rows, statuses: dict[str, str]) -> str`
@@ -1676,6 +1676,7 @@ def collect_facts(report: MatchReport, classes: dict[str, str], findings: list[F
     }
     for cls, n in sorted(Counter(classes.get(f.dedup_key, "미분류") for f in report.extras).items()):
         facts[f"sca.extras.{cls}"] = n
+    facts["sca.extras.unclassified"] = sum(1 for f in report.extras if f.dedup_key not in classes)
     for origin, (hit, tot) in sorted(recall_by_origin(report).items()):
         facts[f"sca.recall_cve.{origin}"] = f"{hit}/{tot}"
     for cat, n in sorted(Counter(f.category for f in findings).items()):
@@ -1725,7 +1726,7 @@ def test_collect_facts_ids_and_values():
                           {"stages": [{"stage": "merge", "count": 2}, {"stage": "final", "count": 2}]},
                           {"scanner_status": [{"tool": "trivy", "status": "ok"}]})
     assert facts["sca.recall_cve"] == "1/2" and facts["sca.missed"] == 1 and facts["sca.missed_high_important"] == 0
-    assert facts["sca.extras"] == 1 and facts["sca.extras.inventory-diff"] == 1
+    assert facts["sca.extras"] == 1 and facts["sca.extras.inventory-diff"] == 1 and facts["sca.extras.unclassified"] == 0
     assert facts["attrition.final"] == 2 and facts["scanner.trivy"] == "ok" and facts["findings.sca"] == 2
     assert facts["sca.recall_cve.team"] == "1/2" and "sca.recall_cve.dev-found" not in facts
 
@@ -1838,7 +1839,7 @@ EOF
 | 1 프로파일 계약 | 드리프트 전건 문서화 | profile-contract.md 행 수 N <!-- fact:profile.rows --> · 드리프트 M <!-- fact:profile.drift --> | ✓ (문서화됨) |
 | 2 SCA recall | CVE 단위 GT-B 합산 ≥ 44/46, HIGH/Important 미탐 ≤ 1 (origin 별 병기 필수) | 합산 38/46 <!-- fact:sca.recall_cve --> · team 34/34 <!-- fact:sca.recall_cve.team --> · dev-found 4/12 <!-- fact:sca.recall_cve.dev-found --> · HIGH/Important 미탐 3 <!-- fact:sca.missed_high_important --> | ✗ → 백로그 P1 후보 |
 | 3 known-FP | 3단계 모두 True | known-fp.md 참조 (component_present/version_preserved/not_reported) | ✓/✗ |
-| 4 초과분 | 미분류 0 | 초과 7 <!-- fact:sca.extras --> · 미분류 0 <!-- fact:sca.extras.미분류 --> | ✓ |
+| 4 초과분 | 미분류 0 | 초과 7 <!-- fact:sca.extras --> · 미분류 0 <!-- fact:sca.extras.unclassified --> | ✓ |
 ```
 (위 숫자는 형식 예시다 — 실제 값은 `facts.json` 에서 옮긴다. `profile.rows`/`profile.drift` 는 `profile-contract.md` 표에서 세어 `facts.json` 에 `facts-profile.json` 으로 별도 저장: `{"profile.rows": N, "profile.drift": M}` — 세는 스크립트 한 줄을 문서에 남긴다.)
 
@@ -2497,6 +2498,12 @@ def test_unmarked_numbers_only_in_section_tables():
     assert unmarked_numbers(md, None) == ["7", "99"]
 
 
+def test_unmarked_numbers_catches_attached_tokens_and_skips_ids():
+    md = ("| a | 미탐 9건 · 미분류 0(키 없음) · 기준 44/46 |\n"
+          "| b | 3 <!-- fact:m -->건 · a483b3b1 · CVE-2026-40992 · 13.2.1.jre11 · spec §5 · 2026-09-05 |\n")
+    assert unmarked_numbers(md, None) == ["9", "0", "44/46"]
+
+
 def test_check_provenance_requires_human():
     t = {"overrides": [{"dedup_key": "k1", "provenance": "human:picpal"}, {"dedup_key": "k2", "provenance": "ai:claude"},
                        {"dedup_key": "k3"}]}
@@ -2595,7 +2602,9 @@ from .known_fp import check_known_fp, render as render_fp
 from .profile_contract import render_doc as render_profiles
 
 _MARK = re.compile(r"(\S+)\s*<!--\s*fact:([A-Za-z0-9_.\-/가-힣]+)\s*-->")
-_NUM = re.compile(r"^\d+(?:/\d+)?$")
+# 수치 토큰: 앞뒤가 영숫자·'.'·'/'·'-'·'§' 가 아닌 정수 또는 N/M ("9건"·"0(" 은 잡고, 날짜·버전·SHA·CVE id·§5 는 제외)
+_NUM = re.compile(r"(?<![0-9A-Za-z./§-])(\d+(?:/\d+)?)(?![0-9A-Za-z./-])")
+_MARK_TOKEN = re.compile(r"\S*\d\S*\s*<!--\s*fact:[^>]*-->")
 _KNOWN_FP = dict(package="com.microsoft.sqlserver:mssql-jdbc", advisory="CVE-2025-59250", expected_version="13.2.1.jre11")
 
 
@@ -2614,7 +2623,8 @@ def check_markers(md: str, facts: dict) -> list[dict]:
 
 
 def unmarked_numbers(md: str, section: str | None) -> list[str]:
-    """`## <section>` 절(None=문서 전체)의 표 셀 중 수치 토큰(`N` 또는 `N/M`)인데 마커가 없는 것 = 출처 불명."""
+    """`## <section>` 절(None=문서 전체)의 표 셀 중 수치 토큰(`N` 또는 `N/M`)인데 마커가 없는 것 = 출처 불명.
+    "9건"·"0(…)" 처럼 붙은 표기도 잡는다. 날짜·버전·SHA·CVE id·`§5` 는 수치로 보지 않는다."""
     out: list[str] = []
     inside = section is None
     for ln in md.splitlines():
@@ -2626,9 +2636,8 @@ def unmarked_numbers(md: str, section: str | None) -> list[str]:
         if not inside or not s.startswith("|") or set(s) <= set("|-: "):
             continue
         for cell in s.strip("|").split("|"):
-            if "<!-- fact:" in cell:
-                continue
-            out.extend(tok for tok in cell.split() if _NUM.match(tok))
+            bare = _MARK_TOKEN.sub(" ", cell)  # 마커 붙은 값은 제거하고 남은 수치만 본다
+            out.extend(m.group(1) for m in _NUM.finditer(bare))
     return out
 
 
