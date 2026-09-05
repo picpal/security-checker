@@ -24,12 +24,12 @@ CONTRACTS: dict[str, Contract] = {
     "markdown": _c(
         ["id", "severity", "rule_id", "cwe", "component", "reachability", "consensus", "compliance"],
         {"category": "절(SCA/시크릿 문구)로만 드러남", "advisory": "fixed_versions 만", "location": "file·start_line 만",
-         "suppression": "reason·provenance·expiry 만"},
-        # disposition/tier: markdown.py 는 disposition 을 "어느 절에 넣을지" 판단에만 쓰고 값 자체는
-        # 리터럴로 출력하지 않는다(섹션 제목도 한글 고정 문구뿐). tier 는 어디서도 참조되지 않는다.
-        # SARIF 와 달리 실제로 값이 텍스트에 실리지 않으므로 loses 로 기재(계약은 사실을 적는다).
-        ["title", "tool", "owasp", "confidence", "source", "references", "verified", "occurrences",
-         "disposition", "tier"]),
+         "suppression": "reason·provenance·expiry 만",
+         # disposition/tier: markdown.py 는 값 문자열 자체는 출력하지 않지만, 어느 절(우선 조치=actionable ·
+         # 검토 후보=review/tier review · 낮은 우선순위=demoted · 억제됨=suppressed)에 실리는지로 복원 가능하다
+         # (ruling H). SARIF 는 props.disposition/sastTier 로 값 자체가 실려 includes 유지.
+         "disposition": "절 제목으로만 드러남(값 문자열 미출력)", "tier": "검토 후보 절 = review(값 미출력)"},
+        ["title", "tool", "owasp", "confidence", "source", "references", "verified", "occurrences"]),
     "sarif": _c(
         ["id", "category", "severity", "title", "tool", "rule_id", "cwe", "confidence", "component", "reachability",
          "consensus", "compliance", "disposition", "tier"],
@@ -60,10 +60,21 @@ PROBES = {
     "occurrences": lambda f: f.occurrences[0].target, "disposition": lambda f: f.disposition,
     "tier": lambda f: f.tier or "",
 }
-# severity: markdown 은 한글 라벨("위험" 등)만, SARIF 는 "error"/"warning" 레벨이 아니라
-# properties.severity 원문(영문, "high" 등)만 싣는다 — 포맷별 표현이 갈려 위 PROBES["severity"]
-# 단일 문자열로는 양쪽을 동시에 검증할 수 없다. tests/test_contracts.py 가 sarif 검증 시
-# f.severity(원문)를 별도로 쓴다(sarif.py 가 props["severity"] 에 원문을 싣는다).
+# 포맷별 프로브 오버라이드 — 같은 필드라도 포맷마다 표현이 달라(예: severity 는 markdown 한글 라벨 vs
+# SARIF 영문 원문, disposition/tier 는 markdown 절 제목으로만 드러남) PROBES 단일 문자열로 양쪽을 동시에
+# 검증할 수 없는 필드만 여기 재정의한다. 없는 필드는 probe_for() 가 PROBES 로 폴백한다.
+_MD_SECTION = {"actionable": "우선 조치", "review": "검토 후보", "demoted": "낮은 우선순위", "suppressed": "억제됨"}
+_SEV_KO = {"critical": "심각", "high": "위험", "medium": "보통", "low": "일반", "unknown": "미상"}
+PROBES_BY_FORMAT = {
+    "markdown": {"disposition": lambda f: _MD_SECTION[f.disposition],
+                 "tier": lambda f: _MD_SECTION["review" if f.tier == "review" else "actionable"],
+                 "severity": lambda f: _SEV_KO[f.severity], "category": lambda f: "SCA" if f.category == "sca" else f.category},
+    "sarif": {"severity": lambda f: f.severity, "category": lambda f: f.category},
+}
+
+
+def probe_for(fmt: str, field: str):
+    return PROBES_BY_FORMAT.get(fmt, {}).get(field) or PROBES[field]
 
 
 def render_contracts() -> str:

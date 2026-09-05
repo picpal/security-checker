@@ -5,7 +5,7 @@ from pathlib import Path
 from secscan.disposition import decide_one
 from secscan.models import (Advisory, Component, Compliance, Consensus, Cvss, Finding, KisaWeakness, Location,
                             Occurrence, Reachability, Suppression, UNREACHABLE)
-from secscan.output.contracts import CONTRACTS, FIELDS, PROBES, render_contracts
+from secscan.output.contracts import CONTRACTS, FIELDS, probe_for, render_contracts
 from secscan.output.markdown import to_markdown
 from secscan.output.sarif import to_sarif
 
@@ -48,10 +48,5 @@ def test_markdown_and_sarif_contain_probe_for_every_included_field():
     md, sarif = to_markdown(findings), str(to_sarif(findings))
     for fmt, text in (("markdown", md), ("sarif", sarif)):
         for field in CONTRACTS[fmt].includes | set(CONTRACTS[fmt].partial):
-            # severity: markdown 은 한글 라벨("위험")만, SARIF 는 properties.severity 에 원문("high")만
-            # 싣는다 — 포맷마다 표현이 달라 단일 프로브로 양쪽을 동시에 검증할 수 없다.
-            if field == "severity" and fmt == "sarif":
-                probe = suppressed.severity
-            else:
-                probe = PROBES[field](suppressed)
+            probe = probe_for(fmt, field)(suppressed)
             assert probe.lower() in text.lower(), f"{fmt}: {field} 포함 선언인데 출력에 없음 ({probe})"

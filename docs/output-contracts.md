@@ -26,8 +26,8 @@
 | `suppression` | ✓ | ◐ reason·provenance·expiry 만 | ◐ reason·provenance·evidence·expiry·state(scope·basis 손실) | ◐ 상태 열(reason 만) |
 | `compliance` | ✓ | ✓ | ✓ | ✓ |
 | `occurrences` | ✓ | ✗ | ✗ | ✓ |
-| `disposition` | ✓ | ✗ | ✓ | ✓ |
-| `tier` | ✓ | ✗ | ✓ | ✓ |
+| `disposition` | ✓ | ◐ 절 제목으로만 드러남(값 문자열 미출력) | ✓ | ✓ |
+| `tier` | ✓ | ◐ 검토 후보 절 = review(값 미출력) | ✓ | ✓ |
 | `id` | ✓ | ✓ | ✓ | ✓ |
 
 ## markdown 추가 규칙
