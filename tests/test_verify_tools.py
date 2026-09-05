@@ -252,6 +252,8 @@ def test_collect_facts_ids_and_values():
     assert facts["sca.extras"] == 1 and facts["sca.extras.inventory-diff"] == 1 and facts["sca.extras.unclassified"] == 0
     assert facts["attrition.final"] == 2 and facts["scanner.trivy"] == "ok" and facts["findings.sca"] == 2
     assert facts["sca.recall_cve.team"] == "1/2" and "sca.recall_cve.dev-found" not in facts
+    # human.verdict_rows/verdict_advisories — 픽스처 엔트리는 human_verdict 가 없으므로 0.
+    assert facts["human.verdict_rows"] == 0 and facts["human.verdict_advisories"] == 0
     # reach.reachable/unreachable/unknown 은 값이 0 이어도 항상 출력된다(부재가 아니라 "관측 0건").
     # _sca() 기본값은 UNKNOWN 이므로 fs 두 건 모두 unknown 으로 집계된다.
     assert facts["reach.reachable"] == 0 and facts["reach.unreachable"] == 0 and facts["reach.unknown"] == 2

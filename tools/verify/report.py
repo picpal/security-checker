@@ -120,6 +120,9 @@ def collect_facts(report: MatchReport, classes: dict[str, str], findings: list[F
     facts["sca.extras.unclassified"] = sum(1 for f in report.extras if f.dedup_key not in classes)
     for origin, (hit, tot) in sorted(recall_by_origin(report).items()):
         facts[f"sca.recall_cve.{origin}"] = f"{hit}/{tot}"
+    hv = [m.entry for m in report.matches if m.entry.human_verdict]
+    facts["human.verdict_rows"] = len(hv)
+    facts["human.verdict_advisories"] = len({e.advisory for e in hv})
     for cat, n in sorted(Counter(f.category for f in findings).items()):
         facts[f"findings.{cat}"] = n
     for s in trace.get("stages", []):
