@@ -1,0 +1,13 @@
+{
+  "gta.CWE-259.LoadtestSeederConfig.fixed_residual": 0,
+  "gta.CWE-259.LoadtestSeederConfig.passed": "True",
+  "gta.CWE-489.application.observed": "없음",
+  "gta.CWE-497.TestDbReset.observed": "없음",
+  "gta.CWE-760.LoadtestSeederConfig.fixed_residual": 0,
+  "gta.CWE-760.LoadtestSeederConfig.passed": "True",
+  "gta.CWE-89.LgCarrierMapper.fixed_residual": 8,
+  "gta.CWE-89.LgCarrierMapper.passed": "False",
+  "gta.CWE-89.OldLgCarrierMapper.fixed_residual": 5,
+  "gta.CWE-89.OldLgCarrierMapper.passed": "False",
+  "gta.in_category_pass": "2/4"
+}

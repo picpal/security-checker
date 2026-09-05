@@ -1,0 +1,11 @@
+{
+  "surface.bom_only": 77,
+  "surface.bom_packages": 195,
+  "surface.gt_match_bom": "16/16",
+  "surface.gt_match_jar": "15/16",
+  "surface.jar_ok": "True",
+  "surface.jar_only": 9,
+  "surface.jar_packages": 127,
+  "surface.version_differs": 1,
+  "surface.vuln_rows_gt": 48
+}

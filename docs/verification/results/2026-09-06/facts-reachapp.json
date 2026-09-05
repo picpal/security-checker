@@ -1,0 +1,5 @@
+{
+  "reachapp.cases": 3,
+  "reachapp.false_unreachable": 2,
+  "reachapp.reachable_expected_hit": "1/1"
+}
