@@ -198,7 +198,7 @@ def test_render_match_lists_recall_and_extra_classes():
     m = GtManifest("sca", "s", "2026-08-31", (GtEntry("CVE-1", "g:a", "1.0"), GtEntry("CVE-2", "g:b", "1.0")), [])
     r = match_ground_truth([_sca("g:a", "1.0", "CVE-1"), _sca("g:z", "1.0", "CVE-9")], m)
     md = render_match(r, {r.extras[0].dedup_key: "inventory-diff"})
-    assert "CVE 단위 recall: 1/2" in md and "CVE-2" in md and "inventory-diff" in md
+    assert "CVE 단위 recall(GT-B 합산): 1/2" in md and "origin 별 CVE recall:" in md and "CVE-2" in md and "inventory-diff" in md
 
 
 def test_render_human_verdicts_compares_reason_classes():
@@ -248,9 +248,10 @@ def test_collect_facts_ids_and_values():
     facts = collect_facts(rep, {fs[1].dedup_key: "inventory-diff"}, fs,
                           {"stages": [{"stage": "merge", "count": 2}, {"stage": "final", "count": 2}]},
                           {"scanner_status": [{"tool": "trivy", "status": "ok"}]})
-    assert facts["sca.recall_cve"] == "1/2" and facts["sca.missed"] == 1 and facts["sca.missed_high"] == 0
+    assert facts["sca.recall_cve"] == "1/2" and facts["sca.missed"] == 1 and facts["sca.missed_high_important"] == 0
     assert facts["sca.extras"] == 1 and facts["sca.extras.inventory-diff"] == 1
     assert facts["attrition.final"] == 2 and facts["scanner.trivy"] == "ok" and facts["findings.sca"] == 2
+    assert facts["sca.recall_cve.team"] == "1/2" and "sca.recall_cve.dev-found" not in facts
 
 
 def test_known_fp_render_and_profile_render_doc_are_full_docs():

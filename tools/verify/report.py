@@ -30,7 +30,9 @@ def render_match(report: MatchReport, classes: dict[str, str]) -> str:
     c_hit, c_tot = report.recall_cve()
     e_hit, e_tot = report.recall_entry(strict=True)
     e_len, _ = report.recall_entry(strict=False)
-    L = [f"- CVE 단위 recall: {c_hit}/{c_tot}",
+    by_o = " · ".join(f"{o} {h}/{t}" for o, (h, t) in sorted(recall_by_origin(report).items()))
+    L = [f"- CVE 단위 recall(GT-B 합산): {c_hit}/{c_tot}",
+         f"- origin 별 CVE recall: {by_o} (team = 보안팀 trivy 결과 재현율 성격, dev-found = 독립 증거 — spec §5 축 2)",
          f"- 항목 단위 recall: strict {e_hit}/{e_tot} · version-mismatch 포함 {e_len}/{e_tot}",
          f"- 종류별: {report.by_kind()}", ""]
     if report.missed():
@@ -81,6 +83,20 @@ def published_dates(trivy_payload: str) -> dict[str, str]:
     return out
 
 
+def recall_by_origin(report: MatchReport) -> dict[str, tuple[int, int]]:
+    """origin(team/dev-found) 별 CVE 단위 recall — team 은 보안팀 trivy 재현율 성격(spec §5 축 2)."""
+    hit_kinds = {"exact", "alias", "version-mismatch"}
+    acc: dict[str, tuple[set, set]] = {}
+    for m in report.matches:
+        if m.entry.expected != "present":
+            continue
+        tot, hit = acc.setdefault(m.entry.origin, (set(), set()))
+        tot.add(m.entry.advisory)
+        if m.kind in hit_kinds:
+            hit.add(m.entry.advisory)
+    return {o: (len(h), len(t)) for o, (t, h) in acc.items()}
+
+
 def collect_facts(report: MatchReport, classes: dict[str, str], findings: list[Finding],
                   trace: dict, meta: dict) -> dict:
     """정본 수치(spec §4.5). 문서는 이 값을 `<!-- fact:id -->` 마커와 함께 인용만 한다."""
@@ -93,13 +109,16 @@ def collect_facts(report: MatchReport, classes: dict[str, str], findings: list[F
         "sca.recall_entry_strict": f"{s_hit}/{e_tot}",
         "sca.recall_entry_loose": f"{l_hit}/{e_tot}",
         "sca.missed": len(report.missed()),
-        "sca.missed_high": sum(1 for m in report.missed() if (m.entry.severity_team or "").upper() == "HIGH"),
+        "sca.missed_high_important": sum(1 for m in report.missed()
+                                          if (m.entry.severity_team or "").upper() in ("HIGH", "IMPORTANT")),
         "sca.false_positive": len(report.false_positives()),
         "sca.extras": len(report.extras),
         "findings.total": len(findings),
     }
     for cls, n in sorted(Counter(classes.get(f.dedup_key, "미분류") for f in report.extras).items()):
         facts[f"sca.extras.{cls}"] = n
+    for origin, (hit, tot) in sorted(recall_by_origin(report).items()):
+        facts[f"sca.recall_cve.{origin}"] = f"{hit}/{tot}"
     for cat, n in sorted(Counter(f.category for f in findings).items()):
         facts[f"findings.{cat}"] = n
     for s in trace.get("stages", []):
