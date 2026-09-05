@@ -58,6 +58,44 @@ REACHABLE = "reachable"
 UNREACHABLE = "unreachable"
 # UNKNOWN 재사용
 
+# 판정(H, spec §7.4) — 억제 다음 결정적 단계가 저장하는 값. 출력은 이 값만 읽는다.
+ACTIONABLE = "actionable"
+REVIEW = "review"
+DEMOTED = "demoted"  # 도달 불가 SCA
+SUPPRESSED = "suppressed"
+DISPOSITIONS = (ACTIONABLE, REVIEW, DEMOTED, SUPPRESSED)
+
+
+@dataclass(frozen=True)
+class Occurrence:
+    """같은 advisory 가 나타난 발생 단위(도구×대상 파일×패키지×버전). 병합은 union(spec §7.1)."""
+
+    tool: str
+    target: str
+    package: str
+    version: str
+
+
+@dataclass(frozen=True)
+class Cvss:
+    """벤더별 CVSS 전부 보존. severity 는 계속 벤더 등급이며 CVSS 로 재계산하지 않는다."""
+
+    source: str  # trivy CVSS 맵 키: nvd | redhat | ghsa | bitnami …
+    version: str  # "2.0" | "3.0" | "3.1" | "3.x" | "4.0"
+    score: float | None = None
+    vector: str | None = None
+
+
+@dataclass(frozen=True)
+class ScannerStatus:
+    """실제 실행 결과(구성값이 아님) — 보고서·xlsx Meta 시트가 이것을 쓴다(원칙 5)."""
+
+    name: str
+    status: str  # ok | failed | timeout | skipped
+    tool_version: str | None = None
+    duration_s: float | None = None
+    message: str = ""
+
 
 @dataclass
 class Component:
@@ -73,6 +111,8 @@ class Advisory:
     id: str  # canonical (가능하면 CVE)
     aliases: tuple[str, ...] = ()
     fixed_versions: tuple[str, ...] = ()
+    cvss: tuple[Cvss, ...] = ()  # 벤더별 전부(출력 시 Max/Source 파생)
+    published: str | None = None  # ISO 문자열(초과분 분류용). 없으면 None — 강제 분류 금지
 
 
 @dataclass
@@ -148,6 +188,9 @@ class Finding:
     verified: bool | None = None  # secret 전용: None=미검증, True=라이브 확인, False=검증했으나 비활성
     suppression: "Suppression | None" = None  # 사람이 확정한 억제 (자동 금지)
     compliance: "Compliance | None" = None  # CWE 에서 파생한 KISA/PCI 매핑 (결정적)
+    occurrences: tuple[Occurrence, ...] = ()  # 발생 단위(Targets·Finding Count 복원)
+    disposition: str | None = None  # 판정 H 결과(DISPOSITIONS 중 하나). None = H 미실행
+    tier: str | None = None  # sast_tier() 결과 저장(H 에서만 계산)
 
     @property
     def dedup_key(self) -> str:
