@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>demo</groupId><artifactId>reach-app</artifactId><version>0.1</version>
+  <properties><maven.compiler.source>17</maven.compiler.source><maven.compiler.target>17</maven.compiler.target></properties>
+  <dependencies>
+    <!-- (a) 취약 API 직접 호출: StringSubstitutor.createInterpolator (CVE-2022-42889) -->
+    <dependency><groupId>org.apache.commons</groupId><artifactId>commons-text</artifactId><version>1.9</version></dependency>
+    <!-- (b) 같은 라이브러리의 안전 API 만: ObjectMapper.readValue 단순 POJO (polymorphic typing 없음) -->
+    <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-databind</artifactId><version>2.13.0</version></dependency>
+    <!-- (c) 프레임워크 활성화: 앱 코드가 tomcat 타입을 참조하지 않지만 런타임에 항상 기동 -->
+    <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-web</artifactId><version>2.5.0</version></dependency>
+  </dependencies>
+</project>

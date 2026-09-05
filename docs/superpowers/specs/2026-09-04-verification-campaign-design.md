@@ -48,7 +48,7 @@ secscan 의 각 탐지 프로세스(SCA·도달성·Secret·SAST·deep·병합·
 
 ### 3.2 GT-B — 보안팀 SCA 점검 (2026-08-31)
 
-- 도구: **trivy fs (jar 분석기)** 를 배포 jar 에 실행 → JSON 후처리 xlsx. 근거: `Targets=Java`, `CVSS Source`(nvd/redhat/ghsa) 열, `Severity` 가 CVSS 순서와 무관(벤더 등급), `Finding Count`/`Deduped_CVEs` 집계.
+- 도구: **trivy 의 jar 분석기(rootfs 또는 image 모드)** 를 배포 jar 에 실행 → JSON 후처리 xlsx. (초안의 "trivy fs" 는 오기 — fs 모드는 jar 를 스캔하지 않음, 2026-09-05 실측. rootfs 실측에서 mssql-jdbc 가 `13.2.1`·`13.2.1.jre11` 두 항목으로 잡히고 CVE-2025-59250 이 `13.2.1` 에 붙어 보안팀 known-FP 가 정확히 재현됨 → 축 5 사실.) 근거: `Targets=Java`, `CVSS Source`(nvd/redhat/ghsa) 열, `Severity` 가 CVSS 순서와 무관(벤더 등급), `Finding Count`/`Deduped_CVEs` 집계.
 - 원본 xlsx·JSON 은 **확보 불가**. 근거는 message-gate `docs/security/05_취약점조치내역_MessageGate.xlsx`(35행 전사) + `03_취약점조치결과_MessageGate.md` + 시트 사진(헤더 12개, 시트 4종).
 - **분모 = 46** = 보안팀 35행(그중 1행은 known-FP) + 개발자 추가 발견 12(tomcat 11 + logback 1). 34/35 재현은 "기존 trivy 결과 재현율"이지 recall 이 아니다.
 - known-FP: `CVE-2025-59250` mssql-jdbc — 스캐너가 설치 버전을 `13.2.1` 로 표기(실제 `13.2.1.jre11`, 수정 목록에 포함). 원인은 jar 버전 파싱으로 추정.
@@ -119,6 +119,16 @@ secscan 의 각 탐지 프로세스(SCA·도달성·Secret·SAST·deep·병합·
 2. §7 모델·출력 변경 후 **같은 증거**로 회귀(정규화 골든처럼 raw JSON 재입력) — baseline 이동 방지.
 3. 실스캔 재실행은 xlsx 완성 후 1회(최종 산출물 생성용).
 
+### 4.5 정본 검증 (reconcile) — 측정 사실성
+측정은 측정한 결과를 사실로 전달한다. AI(컨트롤러·서브에이전트)는 **수치를 쓰지 않고, 분류를 바꾸지 않고, 게이트 판정을 내리지 않는다**.
+
+- **정본** = 스크립트가 증거(`findings.json`·`trace.json`·`raw/*`·매니페스트)에서 파생한 `facts.json`(id → 값). 결과 문서는 정본을 인용만 하며, 인용 수치 옆에 `<!-- fact:<id> -->` 마커를 단다.
+- **생성 문서**(`gt-b-match.md`·`known-fp.md`·`profile-contract.md`·`input-surface.md`·`gt-a-differential.md`)는 생성기 함수의 결정적 출력이다. 손으로 고치지 않는다.
+- **판단 격리**: 초과분 triage 의 override(`our-fp` 등)는 `provenance: "human:<이름>"` 이 있어야 유효. `ai:*`·누락은 위반. 실행자는 판단이 필요한 항목을 `needs_human` 목록으로만 보고한다.
+- **검증기** `tools/verify/reconcile.py`: (a) 생성 문서를 같은 증거로 재생성해 바이트 비교 (b) 문서의 fact 마커 값 ↔ `facts.json` 대조 (c) 게이트 문서·측정 문서 요약 절의 표에서 측정값/값 열의 마커 없는 수치 = 출처 불명(행 라벨·기준 열은 제외) (d) override provenance 검사 (e) raw↔typed 카디널리티(raw trivy 고유 VulnerabilityID vs typed SCA 고유 advisory — 정규화 손실 검출). 산출 `reconcile-report.md` + exit code.
+- **인용 스코프**: 수치를 인용할 때 "대상(message-gate a483b3b1) · 정답지(GT-B = 보안팀 trivy 1회 + 개발자 발견 12) 대비" 스코프를 병기한다. 절대 recall 로 읽히는 문장("secscan recall 80%")을 쓰지 않는다. SCA recall 은 origin 별 수치와 함께만 인용한다(축 2).
+- **게이트**: 재생성 불일치 0 · 마커 불일치 0 · 출처 불명 수치 0 · 비인가 override 0 · raw↔typed 차이는 전건 사실로 기록. 미통과 시 **문서를 고친다**(정본은 고치지 않는다). 플랜 1 끝(V3)과 플랜 2 끝(V7)에서 실행.
+
 ## 5. 측정 축과 게이트
 
 게이트 미통과는 캠페인 실패가 아니라 **백로그 P1 등록 사유**다. 캠페인은 측정을 끝내야 완료다. "원인 규명"만으로 통과되는 게이트는 두지 않는다.
@@ -126,13 +136,14 @@ secscan 의 각 탐지 프로세스(SCA·도달성·Secret·SAST·deep·병합·
 | # | 축 | 정답지 | 측정 | 게이트 |
 |---|---|---|---|---|
 | 1 | 프로파일 계약 | 원 spec §8 | 프로파일별 기대 어댑터 vs 실제 실행·status. 드리프트(spec `accurate-sca=Trivy+OSV` vs 구현 `bom-sca` 단독 → SCA 합의 비활성) | 드리프트 전건 문서화 + spec 갱신 백로그 |
-| 2 | SCA 현재 유효성 | GT-B 46 | recall(CVE·항목 병기), attrition 으로 미탐 단계 특정 | CVE 단위 recall ≥ 44/46, HIGH/Important 미탐 ≤ 1, 미탐 전건 단계 특정 |
+| 2 | SCA 현재 유효성 | GT-B 46 | GT-B recall(CVE·항목 병기) + **origin 별 병기 필수**(`team` 35 = 보안팀 trivy 결과 재현율 성격 — secscan 도 trivy 를 쓰므로 도구 상관 / `dev-found` 12 = 상대적으로 독립인 증거), attrition 으로 미탐 단계 특정 | CVE 단위 GT-B recall ≥ 44/46(합산; origin 별 수치 없이 합산만 보고 금지), HIGH/Important 미탐 ≤ 1, 미탐 전건 단계 특정 |
 | 3 | SCA known-FP | mssql | 3단계: BOM/SBOM 에 컴포넌트 존재 → purl 버전 `13.2.1.jre11` 보존 → trivy 판정 비해당 | 3단계 모두 ✓ (미보고만으로 통과 불가) |
 | 4 | SCA 초과분 | — | 4분류 전건 | 미분류 0, `our-fp` 는 백로그 |
-| 5 | 입력면 교차 | 같은 스냅샷 | (a) `./gradlew bootJar` → `trivy fs build/libs`(중첩 jar) (b) cdxgen BOM → `trivy sbom`. 인벤토리(purl 집합) 차·탐지 차·해석 버전 vs 보안팀 `Installed Versions` | 인벤토리 차 전건 원인 특정, 해석 버전 불일치 0 |
+| 5 | 입력면 교차 | 같은 스냅샷 | (a) `./gradlew bootJar` → `trivy rootfs build/libs`(중첩 jar — **`trivy fs` 는 jar 를 스캔하지 않는다**: Trivy 언어 지원표상 jar/war/ear 는 image·rootfs 전용, 2026-09-05 실측 num=0) (b) cdxgen BOM → `trivy sbom`. 인벤토리(purl 집합) 차·탐지 차·해석 버전 vs 보안팀 `Installed Versions` | 인벤토리 차 전건 원인 특정, 해석 버전 불일치 0 |
 | 6 | 도달성 | 사람 negative 18 + 픽스처 | (a) 18건 **판정 근거 비교표**(우리: 패키지 prefix 존재 / 사람: 활성화 조건) — 일치율은 산출하지 않음 (b) 픽스처 `fixtures/reach-app`: 취약 API 사용(기대 reachable) / 같은 라이브러리 안전 API 만(현 엔진 reachable = 알려진 과대판정, 기록) / **프레임워크 활성화 라이브러리 앱 미참조**(기대: unreachable 금지 → unknown 또는 reachable) (c) unknown 기권 비율 | **false-unreachable = 0** (프레임워크 활성화 케이스 포함). 현 엔진은 (b)-3 에서 unreachable 을 낼 것으로 예상 → 백로그 P1 |
 | 7 | GT-A differential | GT-A | 취약 스냅샷에서 기대 룰 출현 ∧ 수정 커밋에서 소멸. 탐지 recall 과 actionable recall(tier·exit code) 분리 | 범주 내 출현·소멸 100%. `measure-then-classify` 는 결과 기록만 |
 | 8 | 보고서 충실성 | typed findings | `findings.json` 왕복 동일성; md/SARIF/xlsx 는 projection 계약(포함 필드·손실 필드 명시) 대비 검사; 부분 실패·스캐너 status 가 xlsx Meta 시트에 존재; **exit code·md·SARIF·xlsx 의 조치 판정(disposition) 일치** | 손실 0(계약 외 필드), id 집합 동일, 결정성(2회 실행 semantic 동일), **판정 불일치 0**(억제된 finding 이 exit code 를 올리지 않음 — 현행 결함 §7.4) |
+| 9 | 측정 사실성 | 증거·정본 | §4.5 검증기: 생성 문서 재생성 비교, fact 마커 대조, 출처 불명 수치, override provenance, raw↔typed 카디널리티 | 재생성 불일치 0 · 마커 불일치 0 · 출처 불명 0 · 비인가 override 0 |
 
 부수 측정(게이트 없음): 스냅샷별 소요 시간·피크 메모리·캐시 cold/warm, 억제 전이(만료→invalidated / 버전 상향→재노출 / 도달성 변화→invalidated), 컴플라이언스 매핑 누락 CWE 목록.
 
@@ -202,11 +213,11 @@ secscan 의 각 탐지 프로세스(SCA·도달성·Secret·SAST·deep·병합·
 | V0 | 매니페스트 3종 + 스키마 골든 + 매칭 규칙 테스트 | `docs/verification/ground-truth/*`, tests |
 | V1 | 격리 스냅샷 러너 + 단계 추적기(`trace`) + 증거 동결(현행 바이너리) | `tools/verify/`, `docs/verification/evidence/` |
 | V2 | 축 1~5 측정(프로파일 계약·SCA 46·mssql 3단계·초과분·입력면) | 측정 표 |
-| V3 | 축 6·7(도달성 재정의 + `reach-app` / GT-A differential) | 픽스처·측정 표 |
+| V3 | 축 6·7(도달성 재정의 + `reach-app` / GT-A differential) + **정본 검증(reconcile, 축 9)** | 픽스처·측정 표·`reconcile-report.md` |
 | V4 | 모델 확장 + **판정 단계 H**(disposition·tier 저장, compliance 이동, exit code 결함 수정) + `findings.json` + projection 계약 + 정렬 (증거 재입력 회귀) | 코드·tests·`docs/output-contracts.md` |
 | V5 | xlsx 어댑터 + CSV 폴백 + 방어 + 골든 | 코드·tests |
 | V6 | 변이 픽스처 나머지(secret 3종·억제 전이·deep gradlew) + 축 8 | 픽스처·tests |
-| V7 | 최종 실스캔 1회 → 측정 문서 + 백로그(P1: 안전성·재현성·FN 순) | `docs/measurements/…`, PROGRESS/CLAUDE 갱신 |
+| V7 | 최종 실스캔 1회 → 측정 문서 + 백로그(P1: 안전성·재현성·FN 순) + 정본 검증 재실행 | `docs/measurements/…`, `reconcile-report.md`, PROGRESS/CLAUDE 갱신 |
 
 각 단계 TDD, 소커밋, 커밋 메시지 끝 `다음:`. V1 의 증거 동결이 끝나기 전에 V4 를 시작하지 않는다.
 
@@ -220,6 +231,7 @@ secscan 의 각 탐지 프로세스(SCA·도달성·Secret·SAST·deep·병합·
 | 4 자동 억제 금지 | 억제 전이 측정만, 제안·자동 억제 없음 |
 | 5 부분 실패 정상 | 스캐너 status 를 Meta 시트·md 에 명시, 구성값 대신 실제 status |
 | 6 의존성 최소 | 코어 0 유지, openpyxl 은 extra + CSV 폴백 |
+| 측정 사실성(사용자 원칙 2026-09-05) | 수치는 정본(`facts.json`)에서만, AI 는 수치·분류·게이트를 쓰지 않음, §4.5 검증기가 최종 게이트 |
 
 ## 11. 리스크
 
@@ -274,3 +286,21 @@ secscan 의 각 탐지 프로세스(SCA·도달성·Secret·SAST·deep·병합·
 
 ### 13.3 알려진 결함
 - exit code 가 억제를 무시(§7.4) — **V4 에서 해소**. 캠페인 전 실스캔·CI 게이트 해석 시 유의.
+
+## 정오표 (2026-09-05 최종 리뷰)
+
+원문(§1~§13)은 수정하지 않는다 — 이 절은 최종 리뷰(Important 8건)에서 확정된 spec 자체의
+드리프트만 추가 기록한다.
+
+(a) §3.2·§5 축 6(a)는 "사람 도달성 판정 18건(jackson 6·log4j 1·tomcat 11·logback 1 = 전부
+negative)"이라고 적었으나, 내역의 합(6+1+11+1)은 19로 그 문장 자체가 자기모순이다. 실측
+매니페스트는 `human.verdict_rows`/`human.verdict_advisories`(`facts.json`, spec §4.5 정본) 기준
+34행 / 고유 advisory 24건이다 — "18건"·"19건" 어느 쪽과도 다르다. spec 드리프트로 기록만 하고
+해소는 플랜 2 로 미룬다.
+
+(b) §4.5 검사 목록에 두 항목을 추가한다: **(f) 인용 표 대조** — 결과 문서에서 측정 문서로 옮겨
+적은 표가 "전체 인용"이라고 선언되면, 원본과 마커 제거 후 행 단위로 바이트 대조한다(이번
+수정 라운드에서 `tools/verify/reconcile.py` 의 `check_quoted_tables`/`reconcile.quote_mismatch`
+로 구현 완료). **(g) 판정 열은 생성기 출력이어야 한다** — 게이트 문서의 ✓/✗ 열은 현재 실행자가
+손으로 쓰고 어떤 검사도 대조하지 않는다(리뷰 I5). 플랜 2 에서 `tools/verify/gate.py` 가 spec §5
+기준 상수를 코드로 갖고 `facts*.json` 과 비교해 게이트 문서 전체를 생성하게 하면 해소된다.

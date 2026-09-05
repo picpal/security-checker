@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>secscan 점검 프로세스 흐름</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f5f5;
+      --color-paper-2: #ececec;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-soft:    #7a8399;
+      --color-rule:    rgba(45,49,66,0.12);
+      --color-accent:  #0f766e;
+      --color-accent-tint: rgba(15,118,110,0.08);
+      --font-sans:     'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
+      --font-title:    'Pretendard', 'Noto Sans KR', sans-serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      padding: 3rem 2rem 4rem;
+    }
+
+    .frame { max-width: 1200px; width: 100%; margin: 0 auto; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-family: var(--font-title);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 0.75rem;
+    }
+
+    .lede {
+      font-size: 15px;
+      line-height: 1.65;
+      color: var(--color-muted);
+      max-width: 76ch;
+      margin-bottom: 2.75rem;
+    }
+    .lede code { font-family: var(--font-mono); font-size: 12px; color: var(--color-ink); }
+
+    section.figure { margin-bottom: 3.5rem; }
+    h2 {
+      font-family: var(--font-title);
+      font-size: 1.2rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      margin-bottom: 1rem;
+    }
+
+    .diagram { overflow-x: auto; }
+    svg { width: 100%; min-width: 900px; display: block; }
+
+    .caption {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--color-muted);
+      max-width: 82ch;
+      margin-top: 1rem;
+    }
+    .caption strong { color: var(--color-ink); font-weight: 600; }
+    .caption code, td code, li code {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--color-ink);
+      background: var(--color-paper-2);
+      padding: 0 4px;
+      border-radius: 3px;
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 1.5rem; }
+    th {
+      text-align: left;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      padding: 0.5rem 0.6rem;
+      border-bottom: 1px solid rgba(45,49,66,0.25);
+    }
+    td {
+      padding: 0.5rem 0.6rem;
+      border-bottom: 1px solid var(--color-rule);
+      vertical-align: top;
+      line-height: 1.55;
+    }
+    td.num { font-family: var(--font-mono); font-size: 11px; color: var(--color-soft); width: 2.5rem; }
+    td.mono { font-family: var(--font-mono); font-size: 11.5px; color: var(--color-ink); white-space: nowrap; }
+    td.ok { font-family: var(--font-mono); font-size: 11.5px; }
+    tr.focal td { background: var(--color-accent-tint); }
+
+    .grid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 1.25rem; margin-top: 1.5rem; }
+    .card {
+      background: #ffffff;
+      border: 1px solid var(--color-rule);
+      border-radius: 6px;
+      padding: 1.25rem;
+    }
+    .card .eyebrow { margin-bottom: 0.6rem; }
+    .card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem; }
+    .card-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--color-ink); flex: none; }
+    .card-dot.accent { background: var(--color-accent); }
+    .card-dot.muted { background: var(--color-muted); }
+    .card h3 { font-size: 15px; font-weight: 600; }
+    .card ol, .card ul { padding-left: 1.15rem; font-size: 13px; line-height: 1.6; color: var(--color-ink); }
+    .card li { margin-bottom: 0.35rem; }
+    .card li:last-child { margin-bottom: 0; }
+    .card .note { font-size: 12.5px; color: var(--color-muted); margin-top: 0.75rem; line-height: 1.55; }
+
+    /* ---- 목차 / 파트 헤더 ---- */
+    nav.toc {
+      border: 1px solid var(--color-rule);
+      border-radius: 6px;
+      background: #ffffff;
+      padding: 0.9rem 1.1rem;
+      margin: -1.25rem 0 2.75rem;
+      font-size: 13px;
+      display: grid;
+      grid-template-columns: 1fr 1.6fr;
+      gap: 0.5rem 1.5rem;
+    }
+    nav.toc .toc-part {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      display: block;
+      margin-bottom: 0.35rem;
+    }
+    nav.toc a { color: var(--color-ink); text-decoration: none; display: block; line-height: 1.7; }
+    nav.toc a:hover { color: var(--color-accent); }
+    nav.toc a .n { font-family: var(--font-mono); font-size: 10.5px; color: var(--color-soft); margin-right: 0.4rem; }
+    .part-head { margin: 0 0 2.25rem; padding-top: 2rem; border-top: 2px solid var(--color-ink); }
+    .part-head h2 { font-size: 1.45rem; margin-bottom: 0.4rem; }
+    .part-head .basis {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--color-muted);
+      letter-spacing: 0.02em;
+      line-height: 1.7;
+    }
+    .part-head .basis strong { color: var(--color-accent); font-weight: 600; }
+
+    /* ---- 검토 포인트 카드 ---- */
+    .decision-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-top: 1.25rem; }
+    .decision {
+      background: #ffffff;
+      border: 1px solid var(--color-rule);
+      border-left: 3px solid var(--color-accent);
+      border-radius: 6px;
+      padding: 1.1rem 1.25rem;
+    }
+    .decision .eyebrow { color: var(--color-accent); margin-bottom: 0.4rem; }
+    .decision h3 { font-size: 15px; font-weight: 600; margin-bottom: 0.6rem; }
+    .decision dl { font-size: 13px; line-height: 1.6; display: grid; grid-template-columns: 4.5rem 1fr; gap: 0.2rem 0.6rem; }
+    .decision dt { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; color: var(--color-muted); text-transform: uppercase; padding-top: 0.15rem; }
+    .decision dd { margin: 0; }
+    .decision dd.spec { background: var(--color-accent-tint); border-radius: 4px; padding: 0.2rem 0.5rem; }
+    .scope-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-top: 1.25rem; }
+    .kv { font-family: var(--font-mono); font-size: 10.5px; color: var(--color-soft); letter-spacing: 0.06em; }
+    @media (max-width: 900px) { .decision-grid, .scope-grid, nav.toc { grid-template-columns: 1fr; } }
+
+    footer {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--color-rule);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      color: var(--color-soft);
+      line-height: 1.9;
+    }
+
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">secscan · pipeline · 2026-09-04</p>
+    <h1>secscan 점검 프로세스 흐름</h1>
+    <p class="lede">
+      <strong>to-be 기준</strong>으로 구성했다. 본문의 파이프라인은 검증 캠페인(V) spec §7.4 가 정한 재구성 순서(판정 단계 H 포함)이고,
+      결정적 코드와 Claude·사람의 역할(의도 해석·증거 해석)은 경계선으로 나눈다. 현행(as-is) 12단계는 부록 A 로 뒤로 보냈고,
+      본문에는 "as-is 와의 차이" 카드 하나만 두었다. 스캐너 5종의 탐지 원리, 캠페인 흐름, 출력 확장, 8축 게이트, 검토 포인트, §13 백로그가 뒤따른다.
+    </p>
+
+    <nav class="toc" aria-label="목차">
+      <div>
+        <span class="toc-part">to-be · 파이프라인 (spec §7.4 @fab1ee6)</span>
+        <a href="#fig1"><span class="n">01</span>to-be 파이프라인 — 판정 단계 H (+ as-is 와의 차이)</a>
+        <a href="#fig2"><span class="n">02</span>스캐너별 탐지 원리와 한계</a>
+        <span class="toc-part" style="margin-top:0.75rem;">appendix</span>
+        <a href="#appendix-asis"><span class="n">A</span>현행(as-is) 12단계 — 참고용</a>
+      </div>
+      <div>
+        <span class="toc-part">to-be · 검증 캠페인 V (spec @fab1ee6)</span>
+        <a href="#fig3"><span class="n">03</span>검증 캠페인 흐름</a>
+        <a href="#map"><span class="n">04</span>측정 축 ↔ 파이프라인 단계 대응 (§5.1)</a>
+        <a href="#fig4"><span class="n">05</span>출력 확장 — typed Finding → findings.json → md / SARIF / xlsx</a>
+        <a href="#axes"><span class="n">06</span>8축 × 정답지 · 측정 · 게이트</a>
+        <a href="#order"><span class="n">07</span>실행 순서 V0 ~ V7</a>
+        <a href="#review-points"><span class="n">08</span>검토 포인트 — 결정이 필요한 값 4개</a>
+        <a href="#scope"><span class="n">09</span>범위 · 비범위 · Codex 검토로 바뀐 것</a>
+        <a href="#section-backlog"><span class="n">10</span>백로그 §13 — LLM 개입 후보 · 재구성 잔여 · 알려진 결함</a>
+      </div>
+    </nav>
+
+    <div class="part-head" id="tobe-pipeline">
+      <p class="eyebrow">Part 1 · to-be pipeline</p>
+      <h2>재구성된 파이프라인과 탐지 원리</h2>
+      <p class="basis"><strong>spec 2026-09-04-verification-campaign-design.md @fab1ee6 기준</strong> · §7.4 판정 단계(H) — 파이프라인 재구성(V4 범위) · 현행 코드 대응은 secscan/cli.py · scan.py · profiles.py · orchestrator.py · adapters/ · normalize/ · exclude.py · compliance.py · reachability/ · secret/ · suppress/ · models.py · output/ 에서 확인</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <section class="figure" id="fig1">
+      <p class="eyebrow">01 · Swimlane · to-be (§7.4)</p>
+      <h2>to-be 파이프라인 — 판정 단계 H 를 둔 재구성 순서</h2>
+
+      <div class="diagram">
+      <svg viewBox="0 0 1000 1480" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="2026-09-04-scan-pipeline-flow-title 2026-09-04-scan-pipeline-flow-desc">
+        <title id="2026-09-04-scan-pipeline-flow-title">secscan to-be 파이프라인 (판정 단계 H)</title>
+        <desc id="2026-09-04-scan-pipeline-flow-desc">입력 정책, 수집, 정규화, 제외, 병합, 보강, 억제, 판정 H, 출력의 9단계 to-be 파이프라인을 Claude·사람, CLI, 파이프라인, 외부 도구, 출력 다섯 레인에 놓은 스윔레인. 판정 단계 H 가 disposition·tier·compliance 를 한 곳에서 저장하고 출력과 exit code 는 그 필드만 읽는다. Claude 레인과 결정적 코드 사이의 경계를 표시한다.</desc>
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0f766e"/></marker>
+          <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4c1d95"/></marker>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+        <!-- ===== zones ===== -->
+        <rect x="40" y="40" width="184" height="1376" rx="8" fill="rgba(15,118,110,0.05)"/>
+        <rect x="224" y="40" width="736" height="1376" rx="8" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <line x1="408" y1="40" x2="408" y2="1416" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <line x1="592" y1="40" x2="592" y2="1416" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <line x1="776" y1="40" x2="776" y2="1416" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <line x1="40" y1="96" x2="960" y2="96" stroke="rgba(45,49,66,0.12)" stroke-width="0.8"/>
+
+        <!-- 결정적 경계 (원칙 2) -->
+        <line x1="224" y1="40" x2="224" y2="1416" stroke="rgba(15,118,110,0.50)" stroke-width="1.2" stroke-dasharray="4,4"/>
+        <circle cx="224" cy="40" r="2" fill="#0f766e"/>
+        <text x="232" y="26" fill="#0f766e" font-size="12" font-style="italic" font-family="'Pretendard', 'Noto Sans KR', sans-serif">결정적 경계 — 오른쪽은 전부 결정적 코드(판정 H 포함). Claude 는 증거 해석자일 뿐 판정 oracle 이 아니다 (원칙 2)</text>
+
+        <!-- ===== lane headers ===== -->
+        <text x="132" y="64" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">Claude · 사람</text>
+        <text x="132" y="80" fill="#7a8399" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">비결정적 · 해석과 확정만</text>
+        <text x="316" y="64" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">CLI</text>
+        <text x="316" y="80" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">cli.py · profiles.py</text>
+        <text x="500" y="64" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">파이프라인</text>
+        <text x="500" y="80" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">scan.py · run_scan()</text>
+        <text x="684" y="64" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">외부 도구</text>
+        <text x="684" y="80" fill="#7a8399" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">subprocess · 실패는 status로 격리</text>
+        <text x="868" y="64" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">출력</text>
+        <text x="868" y="80" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">output/ · projection</text>
+
+        <!-- ===== arrows ===== -->
+        <path d="M 132,200 V 208 Q 132,216 140,216 H 308 Q 316,216 316,224 V 232" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <path d="M 316,320 V 328 Q 316,336 324,336 H 676 Q 684,336 684,344 V 352" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <path d="M 684,440 V 448 Q 684,456 676,456 H 508 Q 500,456 500,464 V 472" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <path d="M 500,560 V 592" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <path d="M 500,680 V 712" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <path d="M 500,800 V 808 Q 500,816 508,816 H 676 Q 684,816 684,824 V 832" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <path d="M 684,920 V 928 Q 684,936 676,936 H 508 Q 500,936 500,944 V 952" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <path d="M 500,1040 V 1072" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <path d="M 500,1160 V 1168 Q 500,1176 508,1176 H 860 Q 868,1176 868,1184 V 1192" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <path d="M 868,1280 V 1288 Q 868,1296 860,1296 H 140 Q 132,1296 132,1304 V 1312" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+        <!-- ===== arrow labels ===== -->
+        <rect x="156" y="222" width="48" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="180" y="231" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">INTENT</text>
+        <rect x="650" y="1182" width="68" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="684" y="1191" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">DISPOSITION</text>
+        <rect x="460" y="1302" width="80" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="500" y="1311" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">FINDINGS.JSON</text>
+
+        <!-- ===== nodes ===== -->
+        <!-- 의도 해석 (Claude, 경계 밖) -->
+        <rect x="52" y="112" width="160" height="88" rx="6" fill="#f5f5f5"/>
+        <rect x="52" y="112" width="160" height="88" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <rect x="60" y="120" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="74" y="129" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CLD</text>
+        <text x="132" y="150" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">의도 해석</text>
+        <text x="132" y="164" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">자연어 → intent · 프로파일</text>
+        <text x="132" y="178" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Claude</text>
+        <text x="132" y="190" fill="#7a8399" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">경계 밖 · 캠페인 비범위 (§2)</text>
+
+        <!-- 01 입력 정책 (CLI) -->
+        <rect x="236" y="232" width="160" height="88" rx="6" fill="#f5f5f5"/>
+        <rect x="236" y="232" width="160" height="88" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="244" y="240" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="256" y="249" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">01</text>
+        <text x="316" y="270" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">입력 정책</text>
+        <text x="316" y="284" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">프로파일·플래그 → 어댑터·정책</text>
+        <text x="316" y="298" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">profiles.py · cli.py</text>
+        <text x="316" y="310" fill="#7a8399" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">V4 · 동일</text>
+
+        <!-- 02 수집 (외부 도구) -->
+        <rect x="604" y="352" width="160" height="88" rx="6" fill="#f5f5f5"/>
+        <rect x="604" y="352" width="160" height="88" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="612" y="360" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="624" y="369" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">02</text>
+        <text x="684" y="390" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">수집 (병렬 실행)</text>
+        <text x="684" y="404" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">ThreadPool ≤8 · status 격리</text>
+        <text x="684" y="418" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">orchestrator · adapters/</text>
+        <text x="684" y="430" fill="#7a8399" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">V4 · scanner_status 기록 (§7.1)</text>
+
+        <!-- 03 정규화 (파이프라인) -->
+        <rect x="420" y="472" width="160" height="88" rx="6" fill="#f5f5f5"/>
+        <rect x="420" y="472" width="160" height="88" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="428" y="480" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="440" y="489" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">03</text>
+        <text x="500" y="510" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">정규화</text>
+        <text x="500" y="524" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">도구별 파서 → typed Finding</text>
+        <text x="500" y="538" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">normalize/*.py</text>
+        <text x="500" y="550" fill="#7a8399" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">V4 · occurrences · cvss[] 보존</text>
+
+        <!-- 04 제외 (파이프라인) -->
+        <rect x="420" y="592" width="160" height="88" rx="6" fill="#f5f5f5"/>
+        <rect x="420" y="592" width="160" height="88" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="428" y="600" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="440" y="609" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">04</text>
+        <text x="500" y="630" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">제외</text>
+        <text x="500" y="644" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">기본 제외 + .gitignore</text>
+        <text x="500" y="658" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">exclude.py</text>
+        <text x="500" y="670" fill="#7a8399" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">V4 · 동일 · 앞당김은 §13.2</text>
+
+        <!-- 05 병합 · 합의 (파이프라인) -->
+        <rect x="420" y="712" width="160" height="88" rx="6" fill="#f5f5f5"/>
+        <rect x="420" y="712" width="160" height="88" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="428" y="720" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="440" y="729" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">05</text>
+        <text x="500" y="750" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">병합 · 합의</text>
+        <text x="500" y="764" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">dedup_key · severity max</text>
+        <text x="500" y="778" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">normalize/merge.py</text>
+        <text x="500" y="790" fill="#7a8399" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">V4 · occurrences union</text>
+
+        <!-- 06 보강 (외부 도구, 조건부) -->
+        <rect x="604" y="832" width="160" height="88" rx="6" fill="#f5f5f5"/>
+        <rect x="604" y="832" width="160" height="88" rx="6" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.30)" stroke-width="1" stroke-dasharray="4,3"/>
+        <rect x="612" y="840" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="624" y="849" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">06</text>
+        <text x="684" y="870" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">보강</text>
+        <text x="684" y="884" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">도달성 ‖ 시크릿 검증 (독립)</text>
+        <text x="684" y="898" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">reachability/ · secret/</text>
+        <text x="684" y="910" fill="#7a8399" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">V4 · 동일 · compliance 는 H 로</text>
+
+        <!-- 07 억제 (파이프라인, 조건부) -->
+        <rect x="420" y="952" width="160" height="88" rx="6" fill="#f5f5f5"/>
+        <rect x="420" y="952" width="160" height="88" rx="6" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.30)" stroke-width="1" stroke-dasharray="4,3"/>
+        <rect x="428" y="960" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="440" y="969" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">07</text>
+        <text x="500" y="990" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">억제</text>
+        <text x="500" y="1004" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">baseline → 명시 · stale 무효화</text>
+        <text x="500" y="1018" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">suppress/</text>
+        <text x="500" y="1030" fill="#7a8399" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">V4 · 동일 · 버전 변경 사유는 §13.2</text>
+
+        <!-- 08 판정 H (파이프라인) — FOCAL -->
+        <rect x="420" y="1072" width="160" height="88" rx="6" fill="#f5f5f5"/>
+        <rect x="420" y="1072" width="160" height="88" rx="6" fill="rgba(15,118,110,0.08)" stroke="#0f766e" stroke-width="1"/>
+        <rect x="428" y="1080" width="24" height="12" rx="2" fill="transparent" stroke="rgba(15,118,110,0.40)" stroke-width="0.8"/>
+        <text x="440" y="1089" fill="#0f766e" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">08</text>
+        <text x="500" y="1110" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">판정 H</text>
+        <text x="500" y="1124" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">disposition · tier · compliance</text>
+        <text x="500" y="1138" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">cli · markdown · sarif ×3</text>
+        <text x="500" y="1150" fill="#7a8399" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">V4 · 신설 §7.4 · 억제 결함 수정</text>
+
+        <!-- 09 출력 -->
+        <rect x="788" y="1192" width="160" height="88" rx="6" fill="#f5f5f5"/>
+        <rect x="788" y="1192" width="160" height="88" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="796" y="1200" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="808" y="1209" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">09</text>
+        <text x="868" y="1230" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">출력</text>
+        <text x="868" y="1244" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">json · md · SARIF · xlsx</text>
+        <text x="868" y="1258" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">output/*.py</text>
+        <text x="868" y="1270" fill="#7a8399" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">V4 · disposition 만 읽음</text>
+
+        <!-- 증거 해석 (Claude · 사람, 경계 밖) -->
+        <rect x="52" y="1312" width="160" height="88" rx="6" fill="#f5f5f5"/>
+        <rect x="52" y="1312" width="160" height="88" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <rect x="60" y="1320" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="74" y="1329" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CLD</text>
+        <text x="132" y="1350" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">증거 해석</text>
+        <text x="132" y="1364" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">해석만 · 억제는 사람 확정</text>
+        <text x="132" y="1378" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">findings.json · md</text>
+        <text x="132" y="1390" fill="#7a8399" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">LLM 개입 후보는 §13.1</text>
+
+        <!-- ===== legend ===== -->
+        <line x1="40" y1="1440" x2="960" y2="1440" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <text x="40" y="1456" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+        <rect x="104" y="1448" width="16" height="10" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="128" y="1456" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">결정적 단계</text>
+        <rect x="224" y="1448" width="16" height="10" rx="2" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.30)" stroke-width="1" stroke-dasharray="3,2"/>
+        <text x="248" y="1456" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">조건부 (프로파일·플래그·억제 파일)</text>
+        <rect x="440" y="1448" width="16" height="10" rx="2" fill="rgba(15,118,110,0.08)" stroke="#0f766e" stroke-width="1"/>
+        <text x="464" y="1456" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">판정 H (V4 신설)</text>
+        <rect x="592" y="1448" width="16" height="10" rx="2" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="616" y="1456" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">Claude · 사람 (경계 밖)</text>
+        <line x1="760" y1="1453" x2="784" y2="1453" stroke="rgba(15,118,110,0.50)" stroke-width="1.2" stroke-dasharray="4,4"/>
+        <text x="792" y="1456" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">결정적 경계 · 노드 3행 = 현행 파일 · 4행 = V4 변경</text>
+      </svg>
+      </div>
+
+      <p class="caption">
+        <strong>읽는 법.</strong> spec §7.4 의 재구성 순서 <code>입력 정책 → 수집 → 정규화 → 제외 → 병합 → 보강(도달성 ‖ 시크릿 검증) → 억제 → 판정(H) → 출력</code> 을 01~09 로 매겼다.
+        각 노드 3행은 그 단계를 지금 담당하는 파일, 4행은 V4 에서 바뀌는 것이다. 판정 H(08)는 억제 다음에 오는 <strong>결정적</strong> 단계로,
+        <code>Finding.disposition</code>(actionable / review / demoted / suppressed)과 <code>Finding.tier</code>(sast_tier 결과)를 저장하고 compliance 계산도 여기로 옮긴다.
+        규칙은 현행 exit code·markdown 버킷을 그대로 옮기되 <strong>억제를 먼저 본다</strong>: suppression 있음 → suppressed; SAST → sast_tier; SCA → reachability ≠ unreachable 이면 actionable 아니면 demoted; secret → actionable.
+        exit code = <code>any(f.disposition == "actionable")</code>, markdown·SARIF·xlsx 는 disposition/tier 필드만 읽는다(재계산 금지).
+        06 보강의 두 갈래는 서로 독립(‖)이며 각각 프로파일·플래그 조건이라 점선으로, 07 억제도 baseline/억제 파일이 있을 때만 작동하므로 점선으로 그렸다.
+        04 제외의 위치(병합 앞)와 어댑터에 제외 패턴을 전달하는 것은 §13.2 백로그라 V4 코드는 현행 순서(병합 뒤 제외)를 유지한다 — 그림은 §7.4 가 적은 목표 순서다.
+        경계선 왼쪽 두 노드는 Claude·사람의 몫이고 캠페인 비범위(§2)다.
+      </p>
+
+      <div class="card" style="margin-top:1.25rem;">
+        <p class="eyebrow">as-is → to-be · §7.4 · §13.2 · §13.3</p>
+        <div class="card-header"><span class="card-dot accent"></span><h3>as-is 와의 차이 (현행 12단계는 부록 A)</h3></div>
+        <ul>
+          <li><strong>(a) 판정 단계 신설.</strong> "조치 대상인가"가 현재 세 곳에서 따로 계산된다 — exit code(<code>cli._has_actionable</code>), markdown 버킷(priority/review/low), SARIF <code>sastTier</code>. 이미 어긋나 있다: markdown 은 억제된 finding 을 active 에서 빼지만 <code>_has_actionable</code> 은 suppression 을 보지 않아 <strong>사람이 확정한 억제된 secret 이 있어도 exit 1</strong>(테스트 없음, §13.3 알려진 결함 → V4 에서 해소).</li>
+          <li><strong>(b) tier 저장 · compliance 이동.</strong> 현행 tier 는 출력 시 매번 계산·미저장이라 findings.json 에 빠지고, compliance 는 파이프라인 중간(현행 07, 제외 직후)에서 저장된다. V4 는 둘 다 H 에서 계산해 Finding 에 저장하고, <code>enrich_compliance</code> 의 in-place 변경도 새 리스트 반환으로 맞춘다(결과 동일, 위치만 통일).</li>
+          <li><strong>(c) 제외 위치 · 어댑터 전달은 §13.2 백로그.</strong> 제외를 병합 앞으로 옮기고 semgrep <code>--exclude</code> · trivy <code>--skip-dirs</code> · gitleaks 설정으로 패턴을 넘기는 것은 성능·위생 항목(결과 불변)이라 이번 캠페인 밖. 현재는 build/·node_modules 까지 스캔한 뒤 버린다.</li>
+        </ul>
+        <p class="note">V4 테스트(§7.4): 억제된 secret 만 있을 때 exit 0 · 네 출력의 actionable 집합 동일(축 8) · V1 증거 재입력 시 disposition 이 markdown 버킷과 1:1 일치(억제 케이스만 차이 = 결함 수정) · findings.json 에 disposition·tier 포함.</p>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <section class="figure" id="fig2">
+      <p class="eyebrow">02 · Data flow</p>
+      <h2>스캐너별 탐지 원리와 구조적 한계</h2>
+
+      <div class="diagram">
+      <svg viewBox="0 0 1000 528" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="2026-09-04-scan-pipeline-flow-principle-title 2026-09-04-scan-pipeline-flow-principle-desc">
+        <title id="2026-09-04-scan-pipeline-flow-principle-title">secscan 스캐너별 탐지 원리</title>
+        <desc id="2026-09-04-scan-pipeline-flow-principle-desc">SCA, 시크릿, SAST, 바이트코드 탐지기 네 개가 각자의 원리와 한계를 안고 typed Finding 모델로 정규화되고, 도달성 보강이 SCA finding의 컴포넌트를 읽어 reachable 또는 unreachable 판정을 돌려주는 데이터 흐름.</desc>
+        <defs>
+          <marker id="arrow2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="arrow2-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0f766e"/></marker>
+          <marker id="arrow2-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4c1d95"/></marker>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+        <!-- ===== arrows (before nodes) ===== -->
+        <line x1="164" y1="160" x2="164" y2="224" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow2)"/>
+        <line x1="388" y1="160" x2="388" y2="224" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow2)"/>
+        <line x1="612" y1="160" x2="612" y2="224" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow2)"/>
+        <line x1="836" y1="160" x2="836" y2="224" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow2)"/>
+        <!-- Finding → 도달성 (SCA component 읽기) / 도달성 → Finding (판정 쓰기) -->
+        <line x1="148" y1="272" x2="148" y2="336" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow2)"/>
+        <line x1="180" y1="336" x2="180" y2="272" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow2)"/>
+
+        <!-- ===== arrow labels ===== -->
+        <rect x="64" y="298" width="78" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="103" y="307" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SCA COMPONENT</text>
+        <rect x="186" y="298" width="48" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="210" y="307" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">VERDICT</text>
+
+        <!-- ===== detector nodes ===== -->
+        <!-- SCA -->
+        <rect x="64" y="48" width="200" height="112" rx="6" fill="#f5f5f5"/>
+        <rect x="64" y="48" width="200" height="112" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="72" y="56" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="86" y="65" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SCA</text>
+        <text x="164" y="86" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">의존성 취약점 (SCA)</text>
+        <text x="164" y="104" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">cdxgen BOM → trivy sbom</text>
+        <text x="164" y="124" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">패키지 버전 ↔ 취약점 DB 매칭</text>
+        <text x="164" y="144" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">한계 · 버전만 볼 뿐 실제 호출은 모름</text>
+
+        <!-- SECRET -->
+        <rect x="288" y="48" width="200" height="112" rx="6" fill="#f5f5f5"/>
+        <rect x="288" y="48" width="200" height="112" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="296" y="56" width="40" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="316" y="65" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SECRET</text>
+        <text x="388" y="86" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">시크릿</text>
+        <text x="388" y="104" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">gitleaks dir · .gitleaks.toml</text>
+        <text x="388" y="124" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">정규식 룰 + 엔트로피 임계</text>
+        <text x="388" y="144" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">한계 · 패턴 매칭뿐, 라이브 여부 미확인</text>
+
+        <!-- SAST -->
+        <rect x="512" y="48" width="200" height="112" rx="6" fill="#f5f5f5"/>
+        <rect x="512" y="48" width="200" height="112" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="520" y="56" width="32" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="536" y="65" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SAST</text>
+        <text x="612" y="86" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">정적 분석 (SAST)</text>
+        <text x="612" y="104" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">semgrep CE + rules/ x4</text>
+        <text x="612" y="124" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">패턴 매칭 + 파일 내 taint</text>
+        <text x="612" y="144" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">한계 · 함수·파일 경계 넘는 흐름 누락</text>
+
+        <!-- DEEP -->
+        <rect x="736" y="48" width="200" height="112" rx="6" fill="#f5f5f5"/>
+        <rect x="736" y="48" width="200" height="112" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="744" y="56" width="32" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="760" y="65" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DEEP</text>
+        <text x="836" y="86" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">바이트코드 분석</text>
+        <text x="836" y="104" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">spotbugs + findsecbugs</text>
+        <text x="836" y="124" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">컴파일된 .class 패턴 검사</text>
+        <text x="836" y="144" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">한계 · 빌드 필요, 실패 시 skipped</text>
+
+        <!-- ===== typed Finding bar (FOCAL) ===== -->
+        <rect x="64" y="224" width="872" height="48" rx="6" fill="#f5f5f5"/>
+        <rect x="64" y="224" width="872" height="48" rx="6" fill="rgba(15,118,110,0.08)" stroke="#0f766e" stroke-width="1"/>
+        <rect x="76" y="242" width="40" height="12" rx="2" fill="transparent" stroke="rgba(15,118,110,0.40)" stroke-width="0.8"/>
+        <text x="96" y="251" fill="#0f766e" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">MODEL</text>
+        <text x="128" y="253" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif">typed Finding — 내부 canonical 모델</text>
+        <text x="924" y="253" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end">models.py · dedup_key · category sca | sast | secret</text>
+
+        <!-- ===== reachability enrich ===== -->
+        <rect x="64" y="336" width="200" height="112" rx="6" fill="#f5f5f5"/>
+        <rect x="64" y="336" width="200" height="112" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="72" y="344" width="40" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="92" y="353" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">ENRICH</text>
+        <text x="164" y="374" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">도달성 (reachability)</text>
+        <text x="164" y="392" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">depscan → atom usage slice</text>
+        <text x="164" y="412" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">앱 코드가 취약 패키지를 호출하는가</text>
+        <text x="164" y="432" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">한계 · 리플렉션·DI·전이 내부호출 사각지대</text>
+
+        <!-- ===== legend strip ===== -->
+        <line x1="40" y1="480" x2="960" y2="480" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <text x="40" y="496" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+        <rect x="104" y="488" width="16" height="10" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="128" y="496" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">결정적 탐지 · 보강 단계</text>
+
+        <rect x="320" y="488" width="16" height="10" rx="2" fill="rgba(15,118,110,0.08)" stroke="#0f766e" stroke-width="1"/>
+        <text x="344" y="496" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">내부 canonical 모델 (models.py)</text>
+
+        <line x1="560" y1="493" x2="584" y2="493" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow2)"/>
+        <text x="592" y="496" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">정규화 입력 · 판정 반환</text>
+      </svg>
+      </div>
+
+      <p class="caption">
+        <strong>읽는 법.</strong> 네 탐지기는 서로 다른 입력(BOM · 디렉토리 · 소스 · .class)을 보지만 모두 같은 typed Finding으로 정규화된다.
+        도달성은 새 finding을 만들지 않는다. SCA finding의 <code>component</code>(package@version)를 읽어 앱 코드의
+        usage slice에 그 패키지 프리픽스가 있으면 reachable, 없으면 unreachable을 돌려주고, 판정이 없는 컴포넌트는 unknown으로 남는다.
+        SCA는 quick 프로파일에서만 BOM 없이 <code>trivy fs</code>를 쓴다. SAST의 커스텀 룰 4개 파일은
+        MyBatis <code>${}</code> value(HIGH) · identifier(LOW), 하드코딩 자격증명(CWE-798/259), zero-salt(CWE-760)이며
+        semgrep 기본 팩(p/java · p/security-audit · p/owasp-top-ten · p/cwe-top-25)과 함께 항상 로드된다.
+        그림 전체가 결정적 코드다. Claude는 이 결과를 읽기만 한다.
+      </p>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- ======================  TO-BE  ============================= -->
+    <!-- ============================================================ -->
+    <div class="part-head" id="tobe">
+      <p class="eyebrow">Part 2 · verification campaign</p>
+      <h2>검증 캠페인 V — message-gate 정답지 대조 + xlsx 출력</h2>
+      <p class="basis"><strong>spec 2026-09-04-verification-campaign-design.md @fab1ee6 기준</strong> · 상태: 설계 승인(브레인스토밍 + Codex 독립 검토 반영), 구현 계획은 별도 문서 · Codex 검토 원문: 2026-09-04-verification-campaign-codex-review.md · fab1ee6 변경: 판정 단계 H 를 V4 에 편입(§2 범위 5·§7.4·§9), 축 8 게이트에 판정 일치 추가(§5), 축↔단계 대응(§5.1), 추적기에 disposition(§4.2), 백로그 §13<br>
+      목적(§1): 각 탐지 프로세스가 실프로젝트 message-gate에서 무엇을 잡고 놓치는지를 재현 가능한 수치로 남기고, 갭을 우선순위 백로그로 만들며, 보안팀 워크플로(Excel)에 맞춰 xlsx 출력을 추가한다.</p>
+    </div>
+
+    <!-- ---------- 03 캠페인 흐름 ---------- -->
+    <section class="figure" id="fig3">
+      <p class="eyebrow">03 · Flowchart</p>
+      <h2>검증 캠페인 흐름 — 스냅샷 격리에서 백로그까지</h2>
+
+      <div class="diagram">
+      <svg viewBox="0 0 1000 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="2026-09-04-scan-pipeline-flow-campaign-title 2026-09-04-scan-pipeline-flow-campaign-desc">
+        <title id="2026-09-04-scan-pipeline-flow-campaign-title">검증 캠페인 흐름</title>
+        <desc id="2026-09-04-scan-pipeline-flow-campaign-desc">message-gate 스냅샷을 격리 클론해 현행 바이너리와 단계 추적기로 실행하고, 증거를 동결한 뒤 정답지 두 종(GT-A 소스 점검, GT-B 보안팀 SCA 46건)과 대조기로 대조해 8축 게이트를 통과시키며, 전 축 결과는 측정 문서로, 미통과 항목은 백로그 P1으로 가는 흐름.</desc>
+        <defs>
+          <marker id="arrow3" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="arrow3-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0f766e"/></marker>
+          <marker id="arrow3-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4c1d95"/></marker>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+        <!-- ===== arrows (before nodes) ===== -->
+        <!-- GT-A → 대조기 (corridor S-route) -->
+        <path d="M 500,140 V 160 Q 500,168 508,168 H 656 Q 664,168 664,176 V 196" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow3)"/>
+        <!-- GT-B → 대조기 (straight) -->
+        <path d="M 720,140 V 196" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow3)"/>
+        <!-- main chain -->
+        <path d="M 196,246 H 228" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow3)"/>
+        <path d="M 388,246 H 420" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow3)"/>
+        <path d="M 580,246 H 612" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow3)"/>
+        <path d="M 772,246 H 804" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow3)"/>
+        <!-- 게이트 → 측정 문서 (전 축 기록) -->
+        <path d="M 856,296 V 316 Q 856,324 848,324 H 700 Q 692,324 692,332 V 352" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow3)"/>
+        <!-- 게이트 → 백로그 (미통과) -->
+        <path d="M 912,296 V 352" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow3)"/>
+
+        <!-- ===== arrow labels ===== -->
+        <rect x="748" y="330" width="52" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="774" y="339" fill="#7a8399" font-size="8" font-family="'Geist Mono', 'Noto Sans Mono CJK KR', monospace" text-anchor="middle" letter-spacing="0.06em">전 축 기록</text>
+        <rect x="918" y="318" width="36" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="936" y="327" fill="#7a8399" font-size="8" font-family="'Geist Mono', 'Noto Sans Mono CJK KR', monospace" text-anchor="middle" letter-spacing="0.06em">미통과</text>
+
+        <!-- ===== 정답지 입력 (row 0) ===== -->
+        <!-- GT-A -->
+        <rect x="420" y="40" width="160" height="100" rx="6" fill="#f5f5f5"/>
+        <rect x="420" y="40" width="160" height="100" rx="6" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/>
+        <rect x="428" y="48" width="32" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="444" y="57" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">GT-A</text>
+        <text x="500" y="78" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">소스 점검 정답지</text>
+        <text x="500" y="92" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">취약 4 스냅샷 ↔ 수정 커밋</text>
+        <text x="500" y="104" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">259·760·89 회귀 (커스텀 룰)</text>
+        <text x="500" y="116" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">489·497·312·314 측정 후 분류</text>
+        <text x="500" y="130" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">gt-a-source.json · §3.3</text>
+
+        <!-- GT-B -->
+        <rect x="612" y="40" width="160" height="100" rx="6" fill="#f5f5f5"/>
+        <rect x="612" y="40" width="160" height="100" rx="6" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/>
+        <rect x="620" y="48" width="32" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="636" y="57" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">GT-B</text>
+        <text x="692" y="78" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">보안팀 SCA 46건</text>
+        <text x="692" y="92" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">35행(known-FP 1) + 개발자 12</text>
+        <text x="692" y="104" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">스냅샷 a483b3b1 · trivy fs jar</text>
+        <text x="692" y="116" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">사람 도달성 negative 18</text>
+        <text x="692" y="130" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">gt-b-sca.json · §3.2</text>
+
+        <!-- ===== main row ===== -->
+        <!-- 01 스냅샷 격리 -->
+        <rect x="36" y="196" width="160" height="100" rx="6" fill="#f5f5f5"/>
+        <rect x="36" y="196" width="160" height="100" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="44" y="204" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="56" y="213" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">01</text>
+        <text x="116" y="234" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">스냅샷 격리</text>
+        <text x="116" y="248" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">clone --local · 새 디렉토리</text>
+        <text x="116" y="260" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">Gradle 홈 분리 · 크리덴셜 없음</text>
+        <text x="116" y="272" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">--network-off · 격리 실행</text>
+        <text x="116" y="286" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">tools/verify/ · §4.1</text>
+
+        <!-- 02 실행 + 단계 추적기 -->
+        <rect x="228" y="196" width="160" height="100" rx="6" fill="#f5f5f5"/>
+        <rect x="228" y="196" width="160" height="100" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="236" y="204" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="248" y="213" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">02</text>
+        <text x="308" y="234" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">실행 + 단계 추적기</text>
+        <text x="308" y="248" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">현행 바이너리 (모델 변경 전)</text>
+        <text x="308" y="260" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">trace 10단계 (V4~ +disposition)</text>
+        <text x="308" y="272" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">attrition 표: 못 잡음 vs 버림</text>
+        <text x="308" y="286" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">run_scan(trace=) · §4.2</text>
+
+        <!-- 03 증거 동결 (산출물) -->
+        <rect x="420" y="196" width="160" height="100" rx="6" fill="#f5f5f5"/>
+        <rect x="420" y="196" width="160" height="100" rx="6" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/>
+        <rect x="428" y="204" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="440" y="213" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">03</text>
+        <text x="500" y="234" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">증거 동결</text>
+        <text x="500" y="248" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">raw JSON · SBOM · attrition</text>
+        <text x="500" y="260" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">sarif · md · 도구·DB 버전</text>
+        <text x="500" y="272" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">이후 모델 변경은 같은 증거로 회귀</text>
+        <text x="500" y="286" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">evidence/ · §4.4</text>
+
+        <!-- 04 대조기 (FOCAL) -->
+        <rect x="612" y="196" width="160" height="100" rx="6" fill="#f5f5f5"/>
+        <rect x="612" y="196" width="160" height="100" rx="6" fill="rgba(15,118,110,0.08)" stroke="#0f766e" stroke-width="1"/>
+        <rect x="620" y="204" width="24" height="12" rx="2" fill="transparent" stroke="rgba(15,118,110,0.40)" stroke-width="0.8"/>
+        <text x="632" y="213" fill="#0f766e" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">04</text>
+        <text x="692" y="234" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">대조기</text>
+        <text x="692" y="248" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">exact · version-mismatch</text>
+        <text x="692" y="260" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">alias · missed · false-positive</text>
+        <text x="692" y="272" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">초과분 4분류 · CVE/항목 병기</text>
+        <text x="692" y="286" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">measure.py · §4.3</text>
+
+        <!-- GATE 8축 게이트 -->
+        <rect x="804" y="196" width="160" height="100" rx="6" fill="#f5f5f5"/>
+        <rect x="804" y="196" width="160" height="100" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="812" y="204" width="32" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="828" y="213" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">GATE</text>
+        <text x="884" y="234" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">8축 게이트</text>
+        <text x="884" y="248" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">프로파일 · SCA 3축 · 입력면</text>
+        <text x="884" y="260" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">도달성 · GT-A · 충실성</text>
+        <text x="884" y="272" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">미통과 = 백로그 P1 등록</text>
+        <text x="884" y="286" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">§5</text>
+
+        <!-- ===== outputs (row 2) ===== -->
+        <!-- 측정 문서 -->
+        <rect x="612" y="352" width="160" height="100" rx="6" fill="#f5f5f5"/>
+        <rect x="612" y="352" width="160" height="100" rx="6" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/>
+        <rect x="620" y="360" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="634" y="369" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DOC</text>
+        <text x="692" y="390" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">측정 문서</text>
+        <text x="692" y="404" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">8축 수치 + attrition 표</text>
+        <text x="692" y="416" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">부수 측정: 시간·메모리·억제 전이</text>
+        <text x="692" y="442" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">docs/measurements/ · V7</text>
+
+        <!-- 백로그 P1 -->
+        <rect x="804" y="352" width="160" height="100" rx="6" fill="#f5f5f5"/>
+        <rect x="804" y="352" width="160" height="100" rx="6" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/>
+        <rect x="812" y="360" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="824" y="369" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">P1</text>
+        <text x="884" y="390" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">백로그 P1</text>
+        <text x="884" y="404" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">게이트 미통과 항목</text>
+        <text x="884" y="416" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">안전성 → 재현성 → FN 순</text>
+        <text x="884" y="428" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">수정은 별도 사이클 (비범위)</text>
+        <text x="884" y="442" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">V7 · §2</text>
+
+        <!-- ===== legend strip ===== -->
+        <line x1="40" y1="484" x2="960" y2="484" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <text x="40" y="500" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+        <rect x="104" y="492" width="16" height="10" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="128" y="500" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">하네스 단계 (tools/verify/)</text>
+
+        <rect x="304" y="492" width="16" height="10" rx="2" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/>
+        <text x="328" y="500" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">정답지 입력 (매니페스트)</text>
+
+        <rect x="504" y="492" width="16" height="10" rx="2" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/>
+        <text x="528" y="500" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">동결·기록되는 산출물</text>
+
+        <rect x="704" y="492" width="16" height="10" rx="2" fill="rgba(15,118,110,0.08)" stroke="#0f766e" stroke-width="1"/>
+        <text x="728" y="500" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">대조기 (measure.match_ground_truth)</text>
+      </svg>
+      </div>
+
+      <p class="caption">
+        <strong>읽는 법.</strong> 스냅샷은 <code>git clone --local</code>로 스냅샷마다 새 디렉토리에 받는다(BOM 캐시 키가 대상 경로 해시라 같은 경로를 재사용하면 stale BOM을 쓴다, §4.1).
+        빌드는 임의 코드 실행이므로 별도 <code>GRADLE_USER_HOME</code>, 크리덴셜 환경변수 제거, <code>--network-off</code>, 의존성 다운로드 네트워크만 허용한 "격리 실행"이다.
+        실행은 <strong>현행 바이너리</strong>(모델 변경 전)로 하고, 단계 추적기가 각 단계 뒤 (stage, count, dedup_keys)를 기록한다:
+        <code>raw:&lt;tool&gt; → normalize:&lt;tool&gt; → merge → exclude → compliance → reachability → secret_verify → baseline → suppress → final</code> (§4.2, 현행 scan.py 순서).
+        <strong>V4 이후에는 suppress 뒤에 <code>disposition</code> 단계(§7.4)가 추가된다.</strong> V1 증거 동결은 현행 바이너리 기준이라 이 단계 없이 기록하고, V4 회귀 시 두 추적을 나란히 둔다.
+        하네스는 이를 attrition 표로 그려 "스캐너가 못 잡음"과 "정규화·제외가 버림"을 구분한다.
+        증거(raw JSON·SBOM·attrition·sarif·md·도구/DB 버전·소요시간·피크 메모리)는 <code>docs/verification/evidence/&lt;date&gt;/&lt;snapshot&gt;/</code>에 동결되고,
+        §7 모델·출력 변경 뒤에는 <strong>같은 증거를 재입력해 회귀</strong>한다(baseline 이동 방지, §4.4). 실스캔 재실행은 xlsx 완성 후 1회.
+        정답지 2종은 대조기로 들어온다. GT-B(46건)는 SCA 매칭 순서 exact → version-mismatch → alias(OSV aliases에서만 유도) → missed, 기대 absent가 매칭되면 false-positive, 초과 탐지는 team-missed / db-drift / inventory-diff / our-fp 4분류(공개일 없으면 unknown-date, §4.3).
+        GT-A는 취약 스냅샷 4개와 수정 커밋 쌍으로 들어와 축 7 differential(출현 ∧ 소멸)에 쓰인다.
+        게이트 미통과는 캠페인 실패가 아니라 <strong>백로그 P1 등록 사유</strong>이고, 전 축의 수치는 통과 여부와 무관하게 측정 문서에 기록된다(§5). 그림 전체가 결정적 코드다(Claude 층은 비범위, §2·§10).
+      </p>
+    </section>
+
+    <!-- ---------- 04 축 ↔ 단계 매핑 ---------- -->
+    <section class="figure" id="map">
+      <p class="eyebrow">04 · spec §5.1 표</p>
+      <h2>측정 축 ↔ 파이프라인 단계 대응</h2>
+      <table>
+        <thead><tr><th>축</th><th>걸리는 단계 (현행 <code>scan.py</code>)</th><th>V4 이후</th><th>to-be 다이어그램 1 단계 번호 (이 리포트의 대응)</th></tr></thead>
+        <tbody>
+          <tr><td>1 프로파일 계약</td><td>어댑터 구성 · 병렬 실행(status)</td><td>동일</td><td class="mono">01 · 02</td></tr>
+          <tr><td>2~4 SCA</td><td>병렬 실행(bom-sca) · 정규화·병합</td><td>동일</td><td class="mono">02 · 03 · 05</td></tr>
+          <tr><td>5 입력면</td><td>병렬 실행 입력(jar vs BOM)</td><td>동일</td><td class="mono">02</td></tr>
+          <tr><td>6 도달성</td><td>도달성 보강</td><td>동일</td><td class="mono">06</td></tr>
+          <tr><td>7 GT-A differential</td><td>정규화·병합 · 출력(tier·exit code)</td><td><strong>판정 단계(H)</strong></td><td class="mono">03 · 05 → 08</td></tr>
+          <tr><td>8 보고서 충실성</td><td>출력</td><td><strong>판정 단계(H) + 출력 projection</strong></td><td class="mono">08 · 09</td></tr>
+        </tbody>
+      </table>
+      <table style="margin-top:1rem;">
+        <thead><tr><th>trace 단계 (§4.2)</th><th class="mono">raw:&lt;tool&gt;</th><th class="mono">normalize:&lt;tool&gt;</th><th class="mono">merge</th><th class="mono">exclude</th><th class="mono">compliance</th><th class="mono">reachability</th><th class="mono">secret_verify</th><th class="mono">baseline</th><th class="mono">suppress</th><th class="mono">disposition</th><th class="mono">final</th></tr></thead>
+        <tbody>
+          <tr><td>to-be 단계 번호</td><td class="mono">02</td><td class="mono">03</td><td class="mono">05</td><td class="mono">04</td><td class="mono">08 (H)</td><td class="mono">06</td><td class="mono">06</td><td class="mono">07</td><td class="mono">07</td><td class="mono">08 (V4~)</td><td class="mono">09</td></tr>
+        </tbody>
+      </table>
+      <p class="caption">첫 표의 앞 세 열은 §5.1 그대로이고, 네 번째 열과 두 번째 표(trace ↔ to-be 번호)는 이 리포트가 다이어그램 1 에 대응시킨 것이다. trace 순서는 현행 scan.py 순서(merge 가 exclude 앞)라 to-be 번호가 단조 증가하지 않는다 — 제외 앞당김이 §13.2 백로그이기 때문. <code>compliance</code> 추적 단계는 V4 이후 H 로 흡수된다. 추적기는 제품 변경이지만 기본 무동작이다(<code>run_scan(..., trace: TraceSink | None = None)</code>, <code>trace=None</code> 이면 동작·성능 변화 없음을 테스트로 고정).</p>
+    </section>
+
+    <!-- ---------- 05 출력 확장 ---------- -->
+    <section class="figure" id="fig4">
+      <p class="eyebrow">05 · Data flow</p>
+      <h2>출력 확장 — typed Finding → findings.json → projection 계약 → md / SARIF / xlsx</h2>
+
+      <div class="diagram">
+      <svg viewBox="0 0 1000 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="2026-09-04-scan-pipeline-flow-output-title 2026-09-04-scan-pipeline-flow-output-desc">
+        <title id="2026-09-04-scan-pipeline-flow-output-title">출력 확장 데이터 흐름</title>
+        <desc id="2026-09-04-scan-pipeline-flow-output-desc">occurrences와 CVSS 소스 맵, 스캐너 status를 더한 typed Finding이 lossless findings.json으로 직렬화되고, projection 계약을 거쳐 markdown, SARIF, xlsx로 투영되며, xlsx는 시트 7종을 담고 openpyxl이 없으면 CSV 번들로 폴백하는 흐름.</desc>
+        <defs>
+          <marker id="arrow4" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="arrow4-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0f766e"/></marker>
+          <marker id="arrow4-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4c1d95"/></marker>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+        <!-- ===== arrows (before nodes) ===== -->
+        <path d="M 236,186 H 284" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow4)"/>
+        <path d="M 460,186 H 508" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow4)"/>
+        <!-- projection → md (up elbow) -->
+        <path d="M 684,160 H 712 Q 720,160 720,152 V 84 Q 720,76 728,76 H 756" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow4)"/>
+        <!-- projection → sarif (straight) -->
+        <path d="M 684,188 H 756" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow4)"/>
+        <!-- projection → xlsx (down elbow) -->
+        <path d="M 684,212 H 712 Q 720,212 720,220 V 292 Q 720,300 728,300 H 756" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow4)"/>
+        <!-- xlsx → 시트 strip -->
+        <path d="M 824,336 V 348 Q 824,356 816,356 H 700 Q 692,356 692,364 V 376" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow4)"/>
+        <!-- xlsx → CSV 폴백 (optional) -->
+        <path d="M 896,336 V 376" fill="none" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow4)"/>
+
+        <!-- ===== nodes ===== -->
+        <!-- typed Finding (FOCAL) -->
+        <rect x="36" y="136" width="200" height="100" rx="6" fill="#f5f5f5"/>
+        <rect x="36" y="136" width="200" height="100" rx="6" fill="rgba(15,118,110,0.08)" stroke="#0f766e" stroke-width="1"/>
+        <rect x="44" y="144" width="40" height="12" rx="2" fill="transparent" stroke="rgba(15,118,110,0.40)" stroke-width="0.8"/>
+        <text x="64" y="153" fill="#0f766e" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">MODEL</text>
+        <text x="136" y="174" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">typed Finding (확장)</text>
+        <text x="136" y="188" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">occurrences · Advisory.cvss[] · published</text>
+        <text x="136" y="200" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">disposition · tier (H 저장) · scanner_status</text>
+        <text x="136" y="212" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">안정 정렬 · severity는 벤더 등급 유지</text>
+        <text x="136" y="226" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">models.py · §7.1</text>
+
+        <!-- findings.json (산출물) -->
+        <rect x="284" y="136" width="176" height="100" rx="6" fill="#f5f5f5"/>
+        <rect x="284" y="136" width="176" height="100" rx="6" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/>
+        <rect x="292" y="144" width="32" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="308" y="153" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">JSON</text>
+        <text x="372" y="174" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">findings.json</text>
+        <text x="372" y="188" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">lossless 직렬화 (dataclass → dict)</text>
+        <text x="372" y="200" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">from_json 왕복 동일성 테스트</text>
+        <text x="372" y="212" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">하네스 · 억제 워크플로 입력</text>
+        <text x="372" y="226" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">§7.2</text>
+
+        <!-- projection 계약 -->
+        <rect x="508" y="136" width="176" height="100" rx="6" fill="#f5f5f5"/>
+        <rect x="508" y="136" width="176" height="100" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="516" y="144" width="52" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="542" y="153" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CONTRACT</text>
+        <text x="596" y="174" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">projection 계약</text>
+        <text x="596" y="188" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">포맷별 포함 / 손실 필드 표</text>
+        <text x="596" y="200" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">SARIF 손실 필드 명시</text>
+        <text x="596" y="212" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">disposition · tier 재계산 금지</text>
+        <text x="596" y="226" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">output-contracts.md · §7.3</text>
+
+        <!-- report.md -->
+        <rect x="756" y="40" width="208" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="756" y="40" width="208" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="764" y="48" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="776" y="57" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">MD</text>
+        <text x="860" y="78" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">report.md</text>
+        <text x="860" y="92" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">finding 줄에 id(12 hex) 추가</text>
+        <text x="860" y="104" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">output/markdown.py</text>
+
+        <!-- findings.sarif -->
+        <rect x="756" y="152" width="208" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="756" y="152" width="208" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="764" y="160" width="36" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="782" y="169" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SARIF</text>
+        <text x="860" y="190" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">findings.sarif</text>
+        <text x="860" y="204" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">출력 전용 (원칙 3) · 손실 필드 명시</text>
+        <text x="860" y="216" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">output/sarif.py</text>
+
+        <!-- findings.xlsx -->
+        <rect x="756" y="264" width="208" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="756" y="264" width="208" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="764" y="272" width="32" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="780" y="281" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">XLSX</text>
+        <text x="860" y="302" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">findings.xlsx</text>
+        <text x="860" y="316" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">openpyxl extra · 시트 7종 · 방어</text>
+        <text x="860" y="328" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">output/xlsx.py · §8</text>
+
+        <!-- CSV 폴백 (optional) -->
+        <rect x="756" y="376" width="208" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="756" y="376" width="208" height="72" rx="6" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.30)" stroke-width="1" stroke-dasharray="4,3"/>
+        <rect x="764" y="384" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="778" y="393" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CSV</text>
+        <text x="860" y="414" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">CSV 번들 폴백</text>
+        <text x="860" y="428" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">openpyxl 미설치 시 · 경고 1줄 · 같은 sanitizer</text>
+        <text x="860" y="440" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">findings-xlsx/&lt;sheet&gt;.csv</text>
+
+        <!-- xlsx 시트 strip (산출물) -->
+        <rect x="36" y="376" width="672" height="64" rx="6" fill="#f5f5f5"/>
+        <rect x="36" y="376" width="672" height="64" rx="6" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/>
+        <text x="48" y="404" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif">xlsx 시트 7종</text>
+        <rect x="140" y="392" width="48" height="12" rx="2" fill="#ffffff" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="164" y="401" fill="#2d3142" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Summary</text>
+        <rect x="196" y="392" width="52" height="12" rx="2" fill="#ffffff" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="222" y="401" fill="#2d3142" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Findings</text>
+        <rect x="256" y="392" width="76" height="12" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="0.8"/>
+        <text x="294" y="401" fill="#2d3142" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Deduped_CVEs</text>
+        <rect x="340" y="392" width="48" height="12" rx="2" fill="#ffffff" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="364" y="401" fill="#2d3142" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Targets</text>
+        <rect x="396" y="392" width="36" height="12" rx="2" fill="#ffffff" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="414" y="401" fill="#2d3142" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">SAST</text>
+        <rect x="440" y="392" width="44" height="12" rx="2" fill="#ffffff" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="462" y="401" fill="#2d3142" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Secret</text>
+        <rect x="492" y="392" width="36" height="12" rx="2" fill="#ffffff" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="510" y="401" fill="#2d3142" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Meta</text>
+        <text x="48" y="428" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif">Deduped_CVEs 1행 = advisory 1개 · 보안팀 12열 1:1 + secscan 9열 · Secret 시트에 비밀값 없음 · Meta = 스캐너 status·버전·부분 실패·도달성 사유·secret 정책</text>
+
+        <!-- ===== legend strip ===== -->
+        <line x1="40" y1="484" x2="960" y2="484" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <text x="40" y="500" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+        <rect x="104" y="492" width="16" height="10" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="128" y="500" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">결정적 단계 · 출력</text>
+
+        <rect x="264" y="492" width="16" height="10" rx="2" fill="rgba(15,118,110,0.08)" stroke="#0f766e" stroke-width="1"/>
+        <text x="288" y="500" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">내부 canonical 모델</text>
+
+        <rect x="424" y="492" width="16" height="10" rx="2" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/>
+        <text x="448" y="500" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">직렬화·집계 산출물</text>
+
+        <rect x="584" y="492" width="16" height="10" rx="2" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.30)" stroke-width="1" stroke-dasharray="3,2"/>
+        <text x="608" y="500" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">조건부 폴백</text>
+
+        <line x1="728" y1="497" x2="752" y2="497" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow4)"/>
+        <text x="760" y="500" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">openpyxl 미설치 시</text>
+      </svg>
+      </div>
+
+      <p class="caption">
+        <strong>읽는 법.</strong> 모델 확장(§7.1): <code>Occurrence(tool, target, package, version)</code>를 merge가 union해 Targets·Finding Count를 복원하고(현재는 첫 finding의 source만 유지),
+        <code>Cvss(source, version, score, vector)</code>로 trivy의 nvd/redhat/ghsa를 전부 보존해 Max CVSS Score·CVSS Source는 출력 시 파생한다. <strong>severity는 계속 벤더 등급</strong>(CVSS로 재계산 금지).
+        <code>Advisory.published</code>는 초과분 분류용, <code>ScanResult.scanner_status</code>(name·status·tool_version·duration_s·message)는 구성된 어댑터 이름 대신 실제 status를 보고서에 넘기기 위한 것이다.
+        출력 전 안정 정렬은 (category, severity rank desc, reachability rank desc, dedup_key).
+        <strong>findings.json</strong>(§7.2)은 SARIF가 아니라 내부 모델의 완전 직렬화이며 SARIF는 여전히 출력 전용이다(원칙 3).
+        <strong>판정 H</strong>(§7.4)가 저장한 <code>disposition</code>·<code>tier</code> 를 네 출력이 그대로 읽고(재계산 금지), exit code 는 <code>any(f.disposition == "actionable")</code> 하나로 결정된다 — 억제된 finding 이 exit code 를 올리던 현행 결함(§13.3)은 여기서 사라진다.
+        <strong>projection 계약</strong>(§7.3, <code>docs/output-contracts.md</code>)은 포맷별 포함/손실 필드(SARIF: aliases · references 일부 · source · verified · suppression basis)를 표로 못 박고, markdown finding 줄에 id(12 hex)를 추가한다(억제 스코프 지정용).
+        <strong>xlsx</strong>(§8): <code>pip install secscan[xlsx]</code> → openpyxl, 미설치 시 시트별 CSV 번들 + 경고 1줄, 코어 의존성 0 유지.
+        Deduped_CVEs의 보안팀 12열은 No. · Vulnerability ID · Severity · Max CVSS Score · CVSS Source · Affected Packages · Installed Versions · Fixed Versions · Targets · Finding Count · Title · URL, secscan 9열은 도달성 · 도달성 근거 · 합의 도구 · 합의 점수 · 조치 등급 · KISA · PCI · 억제 상태 · Finding ID.
+        방어: 셀 값이 <code>=</code> <code>+</code> <code>-</code> <code>@</code>(선행 공백·제어문자 뒤 포함)로 시작하면 <code>'</code> 접두 + 문자열 타입 강제, 32,767자 초과 절단 + <code>…[truncated]</code>, 불법 XML 문자 제거, 1,048,576행 초과 시 시트 분할. CSV 폴백도 같은 sanitizer.
+        결정성: 정렬 고정, workbook created/modified를 스캔 일시로 고정. 골든: 시트 4종·헤더 12개 스키마(사진 기준 재구성) 대비 검사 + openpyxl 재오픈 왕복.
+      </p>
+    </section>
+
+    <!-- ---------- 06 8축 표 ---------- -->
+    <section class="figure" id="axes">
+      <p class="eyebrow">06 · spec §5 표</p>
+      <h2>측정 8축 × 정답지 · 측정 · 게이트</h2>
+      <p class="caption" style="margin-top:0;">게이트 미통과는 캠페인 실패가 아니라 <strong>백로그 P1 등록 사유</strong>다. 캠페인은 측정을 끝내야 완료다. "원인 규명"만으로 통과되는 게이트는 두지 않는다.</p>
+      <table>
+        <thead><tr><th>#</th><th>축</th><th>정답지</th><th>측정</th><th>게이트</th></tr></thead>
+        <tbody>
+          <tr><td class="num">1</td><td>프로파일 계약</td><td>원 spec §8</td><td>프로파일별 기대 어댑터 vs 실제 실행·status. 드리프트(spec <code>accurate-sca=Trivy+OSV</code> vs 구현 <code>bom-sca</code> 단독 → SCA 합의 비활성)</td><td>드리프트 전건 문서화 + spec 갱신 백로그</td></tr>
+          <tr><td class="num">2</td><td>SCA 현재 유효성</td><td>GT-B 46</td><td>recall(CVE·항목 병기), attrition 으로 미탐 단계 특정</td><td><strong>CVE 단위 recall ≥ 44/46, HIGH/Important 미탐 ≤ 1</strong>, 미탐 전건 단계 특정</td></tr>
+          <tr><td class="num">3</td><td>SCA known-FP</td><td>mssql</td><td>3단계: BOM/SBOM 에 컴포넌트 존재 → purl 버전 <code>13.2.1.jre11</code> 보존 → trivy 판정 비해당</td><td>3단계 모두 ✓ (미보고만으로 통과 불가)</td></tr>
+          <tr><td class="num">4</td><td>SCA 초과분</td><td>—</td><td>4분류 전건</td><td>미분류 0, <code>our-fp</code> 는 백로그</td></tr>
+          <tr><td class="num">5</td><td>입력면 교차</td><td>같은 스냅샷</td><td>(a) <code>./gradlew bootJar</code> → <code>trivy fs build/libs</code>(중첩 jar) (b) cdxgen BOM → <code>trivy sbom</code>. 인벤토리(purl 집합) 차·탐지 차·해석 버전 vs 보안팀 <code>Installed Versions</code></td><td>인벤토리 차 전건 원인 특정, 해석 버전 불일치 0</td></tr>
+          <tr><td class="num">6</td><td>도달성</td><td>사람 negative 18 + 픽스처</td><td>(a) 18건 <strong>판정 근거 비교표</strong>(우리: 패키지 prefix 존재 / 사람: 활성화 조건) — 일치율은 산출하지 않음 (b) 픽스처 <code>fixtures/reach-app</code>: 취약 API 사용(기대 reachable) / 같은 라이브러리 안전 API 만(현 엔진 reachable = 알려진 과대판정, 기록) / <strong>프레임워크 활성화 라이브러리 앱 미참조</strong>(기대: unreachable 금지 → unknown 또는 reachable) (c) unknown 기권 비율</td><td><strong>false-unreachable = 0</strong> (프레임워크 활성화 케이스 포함). 현 엔진은 (b)-3 에서 unreachable 을 낼 것으로 예상 → 백로그 P1</td></tr>
+          <tr><td class="num">7</td><td>GT-A differential</td><td>GT-A</td><td>취약 스냅샷에서 기대 룰 출현 ∧ 수정 커밋에서 소멸. 탐지 recall 과 actionable recall(tier·exit code) 분리</td><td>범주 내 출현·소멸 100%. <code>measure-then-classify</code> 는 결과 기록만</td></tr>
+          <tr><td class="num">8</td><td>보고서 충실성</td><td>typed findings</td><td><code>findings.json</code> 왕복 동일성; md/SARIF/xlsx 는 projection 계약(포함 필드·손실 필드 명시) 대비 검사; 부분 실패·스캐너 status 가 xlsx Meta 시트에 존재; <strong>exit code·md·SARIF·xlsx 의 조치 판정(disposition) 일치</strong></td><td>손실 0(계약 외 필드), id 집합 동일, 결정성(2회 실행 semantic 동일), <strong>판정 불일치 0</strong>(억제된 finding 이 exit code 를 올리지 않음 — 현행 결함 §7.4)</td></tr>
+        </tbody>
+      </table>
+      <p class="caption">부수 측정(게이트 없음): 스냅샷별 소요 시간·피크 메모리·캐시 cold/warm, 억제 전이(만료→invalidated / 버전 상향→재노출 / 도달성 변화→invalidated), 컴플라이언스 매핑 누락 CWE 목록. 변이 픽스처(§6, 외부 repo 비의존): <code>reach-app</code> 4케이스 · <code>secret-app</code> 확장(working-tree / history-only / allowlist / 저엔트로피) · 억제 전이 시나리오(현행 동작 그대로 고정, "invalidated 보고"는 백로그) · <code>deep</code>(gradlew 전용 / 빌드 실패).</p>
+    </section>
+
+    <!-- ---------- 07 실행 순서 ---------- -->
+    <section class="figure" id="order">
+      <p class="eyebrow">07 · spec §9 표</p>
+      <h2>실행 순서 V0 ~ V7</h2>
+      <table>
+        <thead><tr><th>단계</th><th>내용</th><th>산출물</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">V0</td><td>매니페스트 3종 + 스키마 골든 + 매칭 규칙 테스트</td><td><code>docs/verification/ground-truth/*</code>, tests</td></tr>
+          <tr><td class="mono">V1</td><td>격리 스냅샷 러너 + 단계 추적기(<code>trace</code>) + 증거 동결(현행 바이너리)</td><td><code>tools/verify/</code>, <code>docs/verification/evidence/</code></td></tr>
+          <tr><td class="mono">V2</td><td>축 1~5 측정(프로파일 계약·SCA 46·mssql 3단계·초과분·입력면)</td><td>측정 표</td></tr>
+          <tr><td class="mono">V3</td><td>축 6·7(도달성 재정의 + <code>reach-app</code> / GT-A differential)</td><td>픽스처·측정 표</td></tr>
+          <tr><td class="mono">V4</td><td>모델 확장 + <strong>판정 단계 H</strong>(disposition·tier 저장, compliance 이동, exit code 결함 수정) + <code>findings.json</code> + projection 계약 + 정렬 (증거 재입력 회귀)</td><td>코드·tests·<code>docs/output-contracts.md</code></td></tr>
+          <tr><td class="mono">V5</td><td>xlsx 어댑터 + CSV 폴백 + 방어 + 골든</td><td>코드·tests</td></tr>
+          <tr><td class="mono">V6</td><td>변이 픽스처 나머지(secret 3종·억제 전이·deep gradlew) + 축 8</td><td>픽스처·tests</td></tr>
+          <tr><td class="mono">V7</td><td>최종 실스캔 1회 → 측정 문서 + 백로그(P1: 안전성·재현성·FN 순)</td><td><code>docs/measurements/…</code>, PROGRESS/CLAUDE 갱신</td></tr>
+        </tbody>
+      </table>
+      <p class="caption">각 단계 TDD, 소커밋, 커밋 메시지 끝 <code>다음:</code>. <strong>V1의 증거 동결이 끝나기 전에 V4를 시작하지 않는다.</strong> 리스크(§11): 스냅샷 빌드에 의존성 다운로드 네트워크 필요(실패 시 입력면 (a)만 스킵, partial) · trivy DB 시점 차로 보안팀 35행과 완전 일치 불가(게이트는 46 기준) · message-gate는 저장소 밖(하네스는 경로 인자) · 축 6은 현 엔진이 게이트를 통과하지 못할 가능성이 높으며 이는 캠페인의 결과이지 실패가 아니다.</p>
+    </section>
+
+    <!-- ---------- 08 검토 포인트 ---------- -->
+    <section class="figure" id="review-points">
+      <p class="eyebrow">08 · decision needed</p>
+      <h2>검토 포인트 — 사용자가 결정해야 할 값 4개</h2>
+      <p class="caption" style="margin-top:0;">네 항목 모두 fab1ee6 에서도 바뀌지 않았다. 아래 "spec" 값이 현 상태이며, 대안을 고르지 않으면 그대로 간다.</p>
+      <div class="decision-grid">
+        <div class="decision">
+          <p class="eyebrow">(a) · §5 축 2</p>
+          <h3>SCA 게이트 수치</h3>
+          <dl>
+            <dt>spec</dt><dd class="spec">CVE 단위 recall <strong>≥ 44/46</strong>, HIGH/Important 미탐 <strong>≤ 1</strong>, 미탐 전건 단계 특정</dd>
+            <dt>대안</dt><dd>46/46 (무결점 요구) · 또는 게이트 없이 기록만</dd>
+            <dt>맥락</dt><dd>분모 46 = 보안팀 35행(known-FP 1 포함) + 개발자 추가 발견 12. trivy DB를 2026-08-31로 고정할 수 없어 "현재 DB 기준 유효성"을 잰다.</dd>
+          </dl>
+        </div>
+        <div class="decision">
+          <p class="eyebrow">(b) · §5 축 6</p>
+          <h3>false-unreachable = 0 게이트</h3>
+          <dl>
+            <dt>spec</dt><dd class="spec"><strong>false-unreachable = 0</strong> (프레임워크 활성화 케이스 포함). 현 엔진은 <code>reach-app</code> (b)-3(앱 코드 미참조 + 프레임워크 활성화)에서 unreachable을 낼 것으로 <strong>예상</strong> → 백로그 P1 등록이 캠페인의 결과</dd>
+            <dt>대안</dt><dd>게이트 없이 관찰만(비교표·기권 비율 기록)</dd>
+            <dt>맥락</dt><dd>현 엔진은 Maven 좌표 → 패키지 prefix 존재 여부로만 판정한다(depscan.py). 사람 판정은 HTTP/2·Realm·polymorphic typing 같은 활성화 조건이라 일치율은 의미가 없다(Codex P1).</dd>
+          </dl>
+        </div>
+        <div class="decision">
+          <p class="eyebrow">(c) · §7.3</p>
+          <h3>markdown finding 줄에 12자리 id 추가</h3>
+          <dl>
+            <dt>spec</dt><dd class="spec">report.md의 각 finding 줄에 <code>Finding.id</code>(dedup_key sha1 앞 12 hex)를 출력한다 — 억제 스코프 지정에 필요</dd>
+            <dt>대안</dt><dd>findings.json · xlsx(Finding ID 열)에만 두고 markdown은 현행 유지</dd>
+            <dt>맥락</dt><dd>현재 markdown은 id를 출력하지 않아 사람이 억제 파일의 scope(dedup_key)를 손으로 만들어야 한다.</dd>
+          </dl>
+        </div>
+        <div class="decision">
+          <p class="eyebrow">(d) · §8</p>
+          <h3>xlsx 시트 7종 + Deduped_CVEs 21열</h3>
+          <dl>
+            <dt>spec</dt><dd class="spec">Summary · Findings · Deduped_CVEs · Targets · SAST · Secret · Meta 7시트. Deduped_CVEs = 보안팀 12열 1:1 + secscan 9열 = <strong>21열</strong></dd>
+            <dt>대안</dt><dd>축소 — 보안팀 시트 4종(Summary·Findings·Deduped_CVEs·Targets)만, 또는 secscan 열 일부 생략</dd>
+            <dt>맥락</dt><dd>보안팀 시트는 사진 기준 재구성 골든(§3.4)이라 열 12개는 호환성 주장의 근거다. secscan 9열은 도달성·합의·컴플라이언스·억제·ID.</dd>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- 09 범위 · Codex 반영 ---------- -->
+    <section class="figure" id="scope">
+      <p class="eyebrow">09 · spec §2 · §12</p>
+      <h2>범위 · 비범위 · Codex 검토로 바뀐 것</h2>
+      <div class="scope-grid">
+        <div class="card">
+          <div class="card-header"><span class="card-dot"></span><h3>범위 (§2)</h3></div>
+          <ol>
+            <li>정답지 매니페스트 2종(GT-A 소스, GT-B SCA) + 보안팀 시트 스키마 골든</li>
+            <li>측정 하네스(<code>tools/verify/</code>) + <code>run_scan</code> 단계 추적기 + <code>measure.match_ground_truth</code></li>
+            <li>측정 8축(§5)과 게이트, 측정 문서 <code>docs/measurements/2026-09-xx-message-gate-verification.md</code></li>
+            <li>모델·출력 확장: occurrences / CVSS source map / 스캐너 status 메타 / <code>findings.json</code>(lossless) / 포맷별 projection 계약</li>
+            <li>xlsx 출력 어댑터(<code>secscan/output/xlsx.py</code>, openpyxl extra, CSV 폴백)</li>
+            <li>변이 픽스처(도달성 쌍·secret 3종·전이 CVE·억제 전이·gradlew/빌드실패)</li>
+            <li>우선순위 백로그</li>
+          </ol>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-dot muted"></span><h3>비범위 (§2)</h3></div>
+          <ul>
+            <li>측정에서 드러난 갭의 <strong>수정</strong>(별도 사이클, 갭 지도 → D와 같은 방식). 단 §7의 모델·출력 확장은 이 캠페인의 전제이므로 포함.</li>
+            <li>Claude 해석층(비결정적, 원칙 2). 자연어 시연은 검증 대상이 아니다.</li>
+            <li>백로그 항목(IaC/DAST/CI/주기점검/Opengrep/CodeQL/LSP).</li>
+            <li>2026-08-31 보안팀 스캔의 <strong>역사적 재현</strong>(당시 DB·raw JSON 부재로 불가 — §4.3). "현재 유효성" 측정으로 대체.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card" style="margin-top:1.25rem;">
+        <p class="eyebrow">codex review → spec</p>
+        <div class="card-header"><span class="card-dot accent"></span><h3>Codex 검토에서 바뀐 핵심 5가지</h3></div>
+        <ol>
+          <li><strong>분모 34 → 46.</strong> 34/35는 기존 trivy 결과 재현율이지 recall이 아니다. 보안팀 35행 + 개발자 추가 발견 12(tomcat 11 + logback 1)를 정답지로 삼고, "precision" 대신 known-FP 회귀 + 초과분 전건 분류로 이름을 바꿨다. → §3.2, §5 축 2·4</li>
+          <li><strong>도달성 축 재정의 · false-unreachable.</strong> 현 엔진(패키지 prefix 존재)과 사람 판정(CVE별 활성화 조건)은 의미가 달라 일치율은 무의미하고, "human unreachable일 때 reachable 안 하기"는 전부 unreachable로 답하면 만점이 되는 잘못된 지표다. 판정 근거 비교표 + paired 픽스처 + false-unreachable = 0 + unknown 기권 비율로 바꿨다. → §5 축 6, §6</li>
+          <li><strong>historical / current 분리.</strong> trivy DB는 임의 날짜로 고정할 수 없고(<code>--skip-db-update</code>는 현 캐시 재사용일 뿐) 당시 raw JSON·캐시가 없어 역사적 재현은 폐기했다. "현재 DB 기준 유효성"을 재고 35행과의 차이는 team-missed / db-drift / inventory-diff / our-fp로 설명한다. → §4.3, §2 비범위</li>
+          <li><strong>occurrences · CVSS map.</strong> merge가 첫 finding의 source만 남겨 Targets·Finding Count·복수 패키지 집계를 복원할 수 없었고, CVSS를 단일 score/source로 두면 다시 정보가 손실된다. Occurrence union과 source별 Cvss(version·score·vector) 보존, Max CVSS Score는 출력 시 파생, severity는 벤더 등급 유지로 바꿨다. → §7.1</li>
+          <li><strong>openpyxl extra.</strong> stdlib zipfile로 XLSX를 자작하면 OOXML escaping·styles·shared strings·결정적 ZIP 메타·Excel 호환성을 떠안게 된다. openpyxl을 extra(<code>secscan[xlsx]</code>)로 두고 미설치 시 CSV 번들 폴백, 코어 의존성 0 유지 + formula injection·셀 한도 방어를 명시했다. → §8</li>
+        </ol>
+        <p class="note">그 밖의 Codex P1(측정 단위·alias 매칭, 단계별 attrition, 12열 스키마 골든, lossless 왕복 vs projection, GT-A 매니페스트·detection/actionable 분리·differential, 억제 변이 기대값, partial failure 보고·프로파일 드리프트·BOM 캐시·격리 실행·게이트 수치·증거 동결 순서)은 spec §12 반영표에 절 번호로 대응돼 있다.</p>
+      </div>
+    </section>
+
+    <!-- ---------- 10 백로그 §13 ---------- -->
+    <section class="figure" id="section-backlog">
+      <p class="eyebrow">10 · spec §13 · 캠페인 비범위</p>
+      <h2>백로그 — LLM 개입 후보 · 재구성 잔여 · 알려진 결함</h2>
+      <p class="caption" style="margin-top:0;">캠페인 종료 시 측정 결과로 우선순위를 다시 매긴다. 아래 항목은 설계 과정에서 확정된 것만 적었다(§13).</p>
+
+      <div class="card" style="margin-top:1.25rem; border-left:3px solid var(--color-accent);">
+        <p class="eyebrow" style="color:var(--color-accent);">§13.1 · 공통 규칙 — 원칙 2 를 지키는 형태는 하나다</p>
+        <div class="card-header"><span class="card-dot accent"></span><h3>LLM 이 검사를 작성하고, 결정적 파이프라인이 실행한다</h3></div>
+        <ol>
+          <li><strong>(a) 핫패스 밖.</strong> 파이프라인 종료 후 <code>findings.json</code> 을 입력으로, 배치·캐시(키 = advisory 또는 dedup_key × 코드 해시).</li>
+          <li><strong>(b) 결정적 산출물에 미혼입.</strong> json · SARIF · xlsx · exit code 에 LLM 텍스트를 섞지 않는다 — 별도 파일에 출처 표기.</li>
+          <li><strong>(c) 방향 제약.</strong> 위험을 <strong>올리는</strong> 쪽(reachable, 검토 필요)만 단독 작용. 내리는 쪽(unreachable, 억제)은 사람 확정.</li>
+        </ol>
+        <p class="note"><strong>금지 영역:</strong> 정규화 · 병합 · 제외 · 판정(H) · 시크릿 검증에는 넣지 않는다(FN · 비결정성).</p>
+      </div>
+
+      <div class="diagram" style="margin-top:1.5rem;">
+      <svg viewBox="0 0 1000 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="2026-09-04-scan-pipeline-flow-llm-title 2026-09-04-scan-pipeline-flow-llm-desc">
+        <title id="2026-09-04-scan-pipeline-flow-llm-title">LLM 개입 후보 1 — 도달성 전제조건 검사</title>
+        <desc id="2026-09-04-scan-pipeline-flow-llm-desc">핫패스 밖의 LLM 이 advisory 본문에서 전제조건 검사 쿼리를 작성하면 결정적 파이프라인이 실행해 쿼리·결과·file:line 증거를 남기고, 발견이면 reachable 로 단독 작용하되 미발견이면 unknown 과 증거로 남겨 위험을 내리는 판단은 사람이 확정하는 흐름.</desc>
+        <defs>
+          <marker id="arrow5" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="arrow5-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0f766e"/></marker>
+          <marker id="arrow5-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4c1d95"/></marker>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+        <!-- ===== zones ===== -->
+        <rect x="24" y="124" width="184" height="132" rx="8" fill="rgba(15,118,110,0.05)" stroke="rgba(15,118,110,0.50)" stroke-width="1" stroke-dasharray="4,4"/>
+        <rect x="32" y="128" width="92" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="78" y="137" fill="#0f766e" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">LLM · OFF HOT PATH</text>
+
+        <rect x="216" y="100" width="560" height="208" rx="8" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <rect x="224" y="104" width="116" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="282" y="113" fill="rgba(45,49,66,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">DETERMINISTIC PIPELINE</text>
+
+        <rect x="784" y="216" width="184" height="92" rx="8" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <rect x="792" y="220" width="80" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="832" y="229" fill="rgba(45,49,66,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">HUMAN CONFIRMS</text>
+
+        <!-- ===== arrows ===== -->
+        <path d="M 196,204 H 228" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow5)"/>
+        <path d="M 372,204 H 404" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow5)"/>
+        <path d="M 548,192 H 576 Q 584,192 584,184 V 148 Q 584,140 592,140 H 620" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow5)"/>
+        <path d="M 548,216 H 576 Q 584,216 584,224 V 260 Q 584,268 592,268 H 620" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow5)"/>
+        <path d="M 764,268 H 796" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow5)"/>
+
+        <!-- ===== arrow labels ===== -->
+        <rect x="590" y="170" width="40" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="610" y="179" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">FOUND</text>
+        <rect x="590" y="226" width="60" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="620" y="235" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NOT FOUND</text>
+
+        <!-- ===== nodes ===== -->
+        <!-- LLM: 검사 작성 -->
+        <rect x="36" y="168" width="160" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="36" y="168" width="160" height="72" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <rect x="44" y="176" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="58" y="185" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">LLM</text>
+        <text x="116" y="206" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">검사(쿼리) 작성</text>
+        <text x="116" y="220" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">advisory → 전제조건 → 쿼리</text>
+        <text x="116" y="232" fill="#7a8399" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">findings.json 입력 · 배치 · 캐시</text>
+
+        <!-- 쿼리 실행 -->
+        <rect x="228" y="168" width="144" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="228" y="168" width="144" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="236" y="176" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="250" y="185" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">RUN</text>
+        <text x="300" y="206" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">쿼리 실행</text>
+        <text x="300" y="220" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">grep · semgrep · 설정 키</text>
+        <text x="300" y="232" fill="#7a8399" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">결정적 · 재현 가능</text>
+
+        <!-- 증거 -->
+        <rect x="404" y="168" width="144" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="404" y="168" width="144" height="72" rx="6" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/>
+        <rect x="412" y="176" width="52" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="438" y="185" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EVIDENCE</text>
+        <text x="476" y="206" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">증거</text>
+        <text x="476" y="220" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">(쿼리, 결과, file:line)</text>
+        <text x="476" y="232" fill="#7a8399" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">별도 파일 · 출처 표기</text>
+
+        <!-- reachable -->
+        <rect x="620" y="112" width="144" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="620" y="112" width="144" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="692" y="136" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">reachable</text>
+        <text x="692" y="152" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">위험 ↑ · 단독 작용 허용</text>
+
+        <!-- unknown + 증거 -->
+        <rect x="620" y="240" width="144" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="620" y="240" width="144" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="692" y="264" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">unknown + 증거</text>
+        <text x="692" y="280" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">위험 ↓ 는 단독 불가</text>
+
+        <!-- 사람 확정 -->
+        <rect x="796" y="240" width="160" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="796" y="240" width="160" height="56" rx="6" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/>
+        <text x="876" y="264" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">사람 확정</text>
+        <text x="876" y="280" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">unreachable · 억제 (원칙 4)</text>
+
+        <!-- ===== legend ===== -->
+        <line x1="40" y1="340" x2="960" y2="340" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <text x="40" y="356" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+        <rect x="104" y="348" width="16" height="10" rx="2" fill="rgba(15,118,110,0.05)" stroke="rgba(15,118,110,0.50)" stroke-width="1" stroke-dasharray="3,2"/>
+        <text x="128" y="356" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">LLM 구역 (검사 작성만 · 핫패스 밖)</text>
+        <rect x="336" y="348" width="16" height="10" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="360" y="356" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">결정적 실행 · 판정</text>
+        <rect x="496" y="348" width="16" height="10" rx="2" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/>
+        <text x="520" y="356" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">증거 산출물 (별도 파일)</text>
+        <rect x="680" y="348" width="16" height="10" rx="2" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/>
+        <text x="704" y="356" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">사람 확정 (위험을 내리는 쪽)</text>
+      </svg>
+      </div>
+
+      <p class="caption">
+        <strong>읽는 법 (후보 1).</strong> LLM 은 advisory 본문에서 전제조건(polymorphic typing 활성화, HTTP/2, SiftingAppender, log4j-core 존재 등)을 뽑아 grep · semgrep · 설정 키 <strong>쿼리</strong>만 만든다.
+        실행은 결정적 파이프라인이 하고 증거는 (쿼리, 결과, file:line) 로 남는다. 발견이면 reachable — 위험을 올리는 쪽이라 단독 작용을 허용한다.
+        미발견이면 unknown + 증거로 끝나고, unreachable 이나 억제처럼 위험을 내리는 판단은 사람이 확정한다(규칙 (c), 원칙 4).
+        이 자리가 <code>Reachability.source = "claude"</code> 다. message-gate 사람 판정 18건이 전부 이 유형이라, 축 6 이 "config-gated = unknown" 으로 끝나면 다음 사이클 1순위.
+      </p>
+
+      <table>
+        <thead><tr><th>우선</th><th>후보</th><th>형태</th><th>근거</th></tr></thead>
+        <tbody>
+          <tr class="focal"><td class="num">1</td><td><strong>도달성 전제조건 검사</strong></td><td>advisory 본문 → 전제조건 → grep/semgrep/설정 키 <strong>쿼리</strong> 생성 → 파이프라인이 실행. 증거 = (쿼리, 결과, file:line). 발견 → reachable, 미발견 → unknown + 증거. <code>Reachability.source="claude"</code> 자리</td><td>message-gate 사람 판정 18건이 전부 이 유형. 축 6 이 "config-gated = unknown" 으로 끝나면 다음 사이클 1순위</td></tr>
+          <tr><td class="num">2</td><td><strong>review tier 삼각측량</strong></td><td>룰 × 싱크 패턴 단위 클러스터로 1회 평가 + 사이트 샘플링. 산출 = FP 가능 사유·인용·정렬 순서. tier·건수·노출 불변</td><td>deep review 355건(CRLF 163)이 실제 병목</td></tr>
+          <tr><td class="num">3</td><td><strong>조치 회신 문서 초안</strong></td><td><code>findings.json</code> + 증거로 message-gate <code>03_취약점조치결과</code> 형식 초안. 별도 <code>summary.md</code></td><td>개발팀이 손으로 쓴 문서를 대체</td></tr>
+          <tr><td class="num">4</td><td>부분 실패 진단</td><td>deep 빌드 실패·스캐너 stderr → 원인·조치 제안(gradlew, JDK 불일치). 조언만</td><td>deep 스킵 1순위 원인</td></tr>
+          <tr><td class="num">—</td><td>금지</td><td>정규화·병합·제외·판정(H)·시크릿 검증에는 넣지 않는다(FN·비결정성)</td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="scope-grid">
+        <div class="card">
+          <div class="card-header"><span class="card-dot muted"></span><h3>§13.2 파이프라인 재구성 잔여 (성능·위생, 결과 불변)</h3></div>
+          <ul>
+            <li>제외를 병합 앞으로 이동 + 어댑터에 제외 패턴 전달(semgrep <code>--exclude</code>, trivy <code>--skip-dirs</code>, gitleaks 설정). 현재는 build/·node_modules 까지 스캔 후 버림.</li>
+            <li>BOM 캐시 키를 경로 해시에서 content-addressed 로(§4.1).</li>
+            <li>억제 stale 사유에 "버전 변경" 명시 보고(현재는 조용히 미매칭).</li>
+            <li>원 spec §8 프로파일 표를 구현(bom-sca)에 맞게 갱신, osv 어댑터 처리 결정(프로파일 편입 또는 제거).</li>
+            <li><code>secscan/adapters/spotbugs.py</code> 의 시스템 gradle 호출 → <code>gradlew</code> 우선(갭 지도 부수 발견).</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-dot"></span><h3>§13.3 알려진 결함</h3></div>
+          <ul>
+            <li>exit code 가 억제를 무시(§7.4) — <strong>V4 에서 해소</strong>. 캠페인 전 실스캔·CI 게이트 해석 시 유의.</li>
+          </ul>
+          <p class="note">원칙 정합성(§10): 대조기 · 추적기 · 판정(H) · xlsx 전부 결정적. LLM 개입 후보는 §13.1 규칙 아래 별도 사이클.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="part-head" id="appendix">
+      <p class="eyebrow">Appendix</p>
+      <h2>부록 A · 현행(as-is) 참고</h2>
+      <p class="basis">2026-09-04 시점 secscan/scan.py · cli.py 실제 순서. to-be 본문과의 차이는 본문 "as-is 와의 차이" 카드 참조.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <section class="figure" id="appendix-asis">
+      <p class="eyebrow">부록 A · as-is · Swimlane</p>
+      <h2>현행(as-is) 12단계 — 참고용 · <span style="font-family: var(--font-mono); font-weight: 500;">secscan scan</span> @2026-09-04 코드</h2>
+      <p class="caption" style="margin:0 0 1rem;">본문 다이어그램 1(to-be)과 비교용으로 남긴 현행 파이프라인. 단계 번호(01~12)는 이 부록 안에서만 유효하며, 본문의 to-be 단계 번호와 다르다.</p>
+
+      <div class="diagram">
+      <svg viewBox="0 0 1000 1408" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="2026-09-04-scan-pipeline-flow-asis-title 2026-09-04-scan-pipeline-flow-asis-desc">
+        <title id="2026-09-04-scan-pipeline-flow-asis-title">현행(as-is) secscan scan 파이프라인</title>
+        <desc id="2026-09-04-scan-pipeline-flow-asis-desc">Claude의 의도 해석에서 시작해 CLI, scan.py 파이프라인, 외부 스캐너, 출력 모듈을 차례로 거쳐 다시 Claude의 증거 해석으로 돌아오는 12단계 스윔레인. Claude 레인과 결정적 코드 레인 사이에 결정적 경계를 표시한다.</desc>
+        <defs>
+          <marker id="arrow-asis" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="arrow-asis-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0f766e"/></marker>
+          <marker id="arrow-asis-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4c1d95"/></marker>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+        <!-- ===== zones (bg → zones → arrows → nodes) ===== -->
+        <!-- Claude / 사람 레인: 경계 밖 (boundary treatment) -->
+        <rect x="40" y="40" width="184" height="1304" rx="8" fill="rgba(15,118,110,0.05)"/>
+        <!-- 결정적 코드 레인 4개 -->
+        <rect x="224" y="40" width="736" height="1304" rx="8" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <line x1="408" y1="40" x2="408" y2="1344" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <line x1="592" y1="40" x2="592" y2="1344" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <line x1="776" y1="40" x2="776" y2="1344" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <line x1="40" y1="96" x2="960" y2="96" stroke="rgba(45,49,66,0.12)" stroke-width="0.8"/>
+
+        <!-- 결정적 경계 (원칙 2) -->
+        <line x1="224" y1="40" x2="224" y2="1344" stroke="rgba(15,118,110,0.50)" stroke-width="1.2" stroke-dasharray="4,4"/>
+        <circle cx="224" cy="40" r="2" fill="#0f766e"/>
+        <text x="232" y="26" fill="#0f766e" font-size="12" font-style="italic" font-family="'Pretendard', 'Noto Sans KR', sans-serif">결정적 경계 — 이 선의 오른쪽은 전부 결정적 코드. Claude는 증거 해석자일 뿐 판정 oracle이 아니다 (원칙 2)</text>
+
+        <!-- ===== lane headers ===== -->
+        <text x="132" y="64" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">Claude · 사람</text>
+        <text x="132" y="80" fill="#7a8399" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">비결정적 · 해석과 확정만</text>
+
+        <text x="316" y="64" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">CLI</text>
+        <text x="316" y="80" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">cli.py · detect.py · profiles.py</text>
+
+        <text x="500" y="64" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">파이프라인</text>
+        <text x="500" y="80" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">scan.py · run_scan()</text>
+
+        <text x="684" y="64" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">외부 도구</text>
+        <text x="684" y="80" fill="#7a8399" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">subprocess · 실패는 status로 격리</text>
+
+        <text x="868" y="64" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">출력</text>
+        <text x="868" y="80" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">output/markdown.py · sarif.py</text>
+
+        <!-- ===== arrows (before nodes) ===== -->
+        <!-- 01 → 02 : Claude → CLI (경계 통과) -->
+        <path d="M 132,184 V 192 Q 132,200 140,200 H 308 Q 316,200 316,208 V 216" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow-asis)"/>
+        <!-- 02 → 03 : 수동 핸드오프 (--profile) -->
+        <path d="M 316,288 V 320" fill="none" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-asis)"/>
+        <!-- 03 → 04 : CLI → 외부 도구 -->
+        <path d="M 316,392 V 400 Q 316,408 324,408 H 676 Q 684,408 684,416 V 424" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow-asis)"/>
+        <!-- 04 → 05 : 외부 도구 → 파이프라인 -->
+        <path d="M 684,496 V 504 Q 684,512 676,512 H 508 Q 500,512 500,520 V 528" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow-asis)"/>
+        <!-- 05 → 06 -->
+        <path d="M 500,600 V 632" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow-asis)"/>
+        <!-- 06 → 07 -->
+        <path d="M 500,704 V 736" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow-asis)"/>
+        <!-- 07 → 08 : 파이프라인 → 외부 도구 -->
+        <path d="M 500,808 V 816 Q 500,824 508,824 H 676 Q 684,824 684,832 V 840" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow-asis)"/>
+        <!-- 08 → 09 -->
+        <path d="M 684,912 V 944" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow-asis)"/>
+        <!-- 09 → 10 : 외부 도구 → 파이프라인 -->
+        <path d="M 684,1016 V 1024 Q 684,1032 676,1032 H 508 Q 500,1032 500,1040 V 1048" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow-asis)"/>
+        <!-- 10 → 11 : 파이프라인 → 출력 -->
+        <path d="M 500,1120 V 1128 Q 500,1136 508,1136 H 860 Q 868,1136 868,1144 V 1152" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow-asis)"/>
+        <!-- 11 → 12 : 출력 → Claude (경계 통과) -->
+        <path d="M 868,1224 V 1232 Q 868,1240 860,1240 H 140 Q 132,1240 132,1248 V 1256" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow-asis)"/>
+
+        <!-- ===== arrow labels (masked, 6px clear of stroke) ===== -->
+        <rect x="156" y="206" width="48" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="180" y="215" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">INTENT</text>
+
+        <rect x="324" y="298" width="60" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="330" y="307" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">--profile</text>
+
+        <rect x="456" y="1246" width="88" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="500" y="1255" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">REPORT · SARIF</text>
+
+        <!-- ===== nodes ===== -->
+        <!-- 01 의도 해석 (Claude, 경계 밖) -->
+        <rect x="56" y="112" width="152" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="56" y="112" width="152" height="72" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <rect x="64" y="120" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="76" y="129" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">01</text>
+        <text x="132" y="150" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">의도 해석</text>
+        <text x="132" y="164" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">자연어 요청 → intent</text>
+        <text x="132" y="176" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Claude</text>
+
+        <!-- 02 스택 감지 (CLI) -->
+        <rect x="240" y="216" width="152" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="240" y="216" width="152" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="248" y="224" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="260" y="233" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">02</text>
+        <text x="316" y="254" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">스택 감지</text>
+        <text x="316" y="268" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">스택 → 프로파일 추천</text>
+        <text x="316" y="280" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">detect.py · secscan detect</text>
+
+        <!-- 03 프로파일 → 어댑터 (CLI) -->
+        <rect x="240" y="320" width="152" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="240" y="320" width="152" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="248" y="328" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="260" y="337" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">03</text>
+        <text x="316" y="358" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">프로파일 → 어댑터</text>
+        <text x="316" y="372" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">4 프로파일 · 기본 accurate-sca</text>
+        <text x="316" y="384" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">profiles.py · cli.py</text>
+
+        <!-- 04 스캐너 병렬 실행 (외부 도구) -->
+        <rect x="608" y="424" width="152" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="608" y="424" width="152" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="616" y="432" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="628" y="441" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">04</text>
+        <text x="684" y="462" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">스캐너 병렬 실행</text>
+        <text x="684" y="476" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">ThreadPool ≤8 · 실패 격리</text>
+        <text x="684" y="488" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">orchestrator · adapters/</text>
+
+        <!-- 05 정규화 · 합의 병합 (파이프라인) — FOCAL -->
+        <rect x="424" y="528" width="152" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="424" y="528" width="152" height="72" rx="6" fill="rgba(15,118,110,0.08)" stroke="#0f766e" stroke-width="1"/>
+        <rect x="432" y="536" width="24" height="12" rx="2" fill="transparent" stroke="rgba(15,118,110,0.40)" stroke-width="0.8"/>
+        <text x="444" y="545" fill="#0f766e" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">05</text>
+        <text x="500" y="566" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">정규화 · 합의 병합</text>
+        <text x="500" y="580" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">도구별 파서 → dedup 병합</text>
+        <text x="500" y="592" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">normalize/ · merge.py</text>
+
+        <!-- 06 경로 제외 (파이프라인) -->
+        <rect x="424" y="632" width="152" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="424" y="632" width="152" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="432" y="640" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="444" y="649" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">06</text>
+        <text x="500" y="670" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">경로 제외</text>
+        <text x="500" y="684" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">기본 제외 + .gitignore</text>
+        <text x="500" y="696" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">exclude.py</text>
+
+        <!-- 07 컴플라이언스 매핑 (파이프라인) -->
+        <rect x="424" y="736" width="152" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="424" y="736" width="152" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="432" y="744" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="444" y="753" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">07</text>
+        <text x="500" y="774" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">컴플라이언스 매핑</text>
+        <text x="500" y="788" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">CWE → KISA 49 · PCI 6.2.4</text>
+        <text x="500" y="800" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">compliance.py</text>
+
+        <!-- 08 도달성 판정 (외부 도구, 조건부) -->
+        <rect x="608" y="840" width="152" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="608" y="840" width="152" height="72" rx="6" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.30)" stroke-width="1" stroke-dasharray="4,3"/>
+        <rect x="616" y="848" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="628" y="857" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">08</text>
+        <text x="684" y="878" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">도달성 판정</text>
+        <text x="684" y="892" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">4중 안전장치 · usage slice</text>
+        <text x="684" y="904" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">reachability/ · depscan</text>
+
+        <!-- 09 시크릿 라이브 검증 (외부 도구, opt-in) -->
+        <rect x="608" y="944" width="152" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="608" y="944" width="152" height="72" rx="6" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.30)" stroke-width="1" stroke-dasharray="4,3"/>
+        <rect x="616" y="952" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="628" y="961" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">09</text>
+        <text x="684" y="982" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">시크릿 라이브 검증</text>
+        <text x="684" y="996" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">opt-in · --verify-secrets</text>
+        <text x="684" y="1008" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">secret/verify.py</text>
+
+        <!-- 10 baseline → 억제 (파이프라인, 조건부) -->
+        <rect x="424" y="1048" width="152" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="424" y="1048" width="152" height="72" rx="6" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.30)" stroke-width="1" stroke-dasharray="4,3"/>
+        <rect x="432" y="1056" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="444" y="1065" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">10</text>
+        <text x="500" y="1086" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">baseline → 억제</text>
+        <text x="500" y="1100" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">사람 확정만 · stale 무효화</text>
+        <text x="500" y="1112" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">suppress/</text>
+
+        <!-- 11 보고서 출력 (출력) -->
+        <rect x="792" y="1152" width="152" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="792" y="1152" width="152" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="800" y="1160" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+        <text x="812" y="1169" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">11</text>
+        <text x="868" y="1190" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">보고서 출력</text>
+        <text x="868" y="1204" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">md · SARIF · 종료코드</text>
+        <text x="868" y="1216" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">output/ · sast_tier</text>
+
+        <!-- 12 증거 해석 (Claude · 사람, 경계 밖) -->
+        <rect x="56" y="1256" width="152" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="56" y="1256" width="152" height="72" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <rect x="64" y="1264" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="76" y="1273" fill="rgba(45,49,66,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">12</text>
+        <text x="132" y="1294" fill="#2d3142" font-size="12" font-weight="600" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">증거 해석</text>
+        <text x="132" y="1308" fill="#4f5d75" font-size="9" font-family="'Pretendard', 'Noto Sans KR', sans-serif" text-anchor="middle">해석만 · 억제는 사람 확정</text>
+        <text x="132" y="1320" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">report.md · sarif</text>
+
+        <!-- ===== legend strip ===== -->
+        <line x1="40" y1="1368" x2="960" y2="1368" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <text x="40" y="1384" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+        <rect x="104" y="1376" width="16" height="10" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="128" y="1384" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">결정적 단계</text>
+
+        <rect x="224" y="1376" width="16" height="10" rx="2" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.30)" stroke-width="1" stroke-dasharray="3,2"/>
+        <text x="248" y="1384" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">조건부 (프로파일·플래그)</text>
+
+        <rect x="404" y="1376" width="16" height="10" rx="2" fill="rgba(15,118,110,0.08)" stroke="#0f766e" stroke-width="1"/>
+        <text x="428" y="1384" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">내부 canonical 모델</text>
+
+        <rect x="560" y="1376" width="16" height="10" rx="2" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="584" y="1384" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">Claude · 사람 (경계 밖)</text>
+
+        <line x1="728" y1="1381" x2="752" y2="1381" stroke="rgba(15,118,110,0.50)" stroke-width="1.2" stroke-dasharray="4,4"/>
+        <text x="760" y="1384" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">결정적 경계</text>
+
+        <line x1="840" y1="1381" x2="864" y2="1381" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-asis)"/>
+        <text x="872" y="1384" fill="#4f5d75" font-size="8.5" font-family="'Pretendard', 'Noto Sans KR', sans-serif">수동 핸드오프</text>
+      </svg>
+      </div>
+
+      <p class="caption">
+        <strong>읽는 법.</strong> 위에서 아래로 12단계, 각 단계는 그 일을 실제로 수행하는 모듈의 레인에 놓았다.
+        경계선 왼쪽의 두 단계(01·12)만 Claude와 사람의 몫이고, 나머지는 전부 결정적 코드다.
+        점선 박스(08·09·10)는 프로파일이나 플래그에 따라 건너뛰는 단계로, 건너뛰어도 finding은 그대로 다음 단계로 흐른다.
+        02→03 점선 화살표는 코드 호출이 아니라 사람(또는 Claude)이 <code>secscan detect</code>의 추천을 보고
+        <code>--profile</code>로 넘겨주는 수동 핸드오프다.
+        강조한 05는 원시 스캐너 출력이 내부 canonical 모델인 typed Finding으로 바뀌는 지점(<code>normalize/</code>의 docstring이 "이 프로젝트의 심장"이라 부르는 곳)이다.
+      </p>
+
+      <table>
+        <thead>
+          <tr><th>#</th><th>단계</th><th>소스</th><th>실행 조건 · 비고</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="num">01</td><td>의도 해석</td><td class="mono">(Claude)</td><td>자연어 요청을 intent(quick · patch · sca · full · standard · deep)로 해석. 경계 밖, 비결정적.</td></tr>
+          <tr><td class="num">02</td><td>스택 감지 · 프로파일 추천</td><td class="mono">detect.py · cli.py:_cmd_detect</td><td><code>secscan detect --target --intent</code> 별도 서브커맨드. pom/gradle·java/kotlin 감지 후 intent→프로파일 표로 추천만 출력. <strong>scan은 이 함수를 호출하지 않는다.</strong></td></tr>
+          <tr><td class="num">03</td><td>프로파일 → 어댑터 구성</td><td class="mono">profiles.py · cli.py:_cmd_scan</td><td><code>--profile</code>(기본 accurate-sca)로 어댑터 인스턴스 생성. 도달성 provider(캐시 디렉토리 = 소스 해시), 시크릿 정책, 억제·baseline 파일 로드도 여기서 결정.</td></tr>
+          <tr><td class="num">04</td><td>스캐너 병렬 실행</td><td class="mono">orchestrator.py · adapters/base.py · adapters/*.py</td><td>ThreadPoolExecutor(≤8). 어댑터마다 RawResult{status: ok · failed · timeout · skipped}로 격리, 예외는 오케스트레이터 backstop이 failed로 변환. 부분 실패는 정상(원칙 5).</td></tr>
+          <tr class="focal"><td class="num">05</td><td>정규화 · 합의 병합</td><td class="mono">normalize/__init__.py(_PARSERS) · normalize/*.py · merge.py · models.py</td><td>status ok인 결과만 도구별 파서로 typed Finding 생성. dedup_key가 같으면 병합: severity max · confidence min · cwe/owasp/references union · consensus.tools 누적.</td></tr>
+          <tr><td class="num">06</td><td>경로 제외</td><td class="mono">exclude.py</td><td>기본 제외(build · target · .git · node_modules …) + <code>--exclude</code> → 그 뒤 <code>git check-ignore</code>. 둘 다 기본 켜짐(<code>--no-default-excludes</code>, <code>--scan-ignored</code>로 해제).</td></tr>
+          <tr><td class="num">07</td><td>컴플라이언스 매핑</td><td class="mono">compliance.py</td><td><strong>항상 실행, 도달성보다 먼저.</strong> Finding.cwe → KISA 49 약점 · PCI-DSS 6.2.4 공격유형. 판정이 아니라 분류.</td></tr>
+          <tr><td class="num">08</td><td>도달성 판정</td><td class="mono">reachability/engine.py · reachability/depscan.py</td><td>profile.reachability이고 <code>--no-reachability</code>가 아닐 때. 4중 안전장치를 통과하면 depscan usage slice로 SCA 컴포넌트마다 reachable/unreachable, 없으면 unknown 유지.</td></tr>
+          <tr><td class="num">09</td><td>시크릿 라이브 검증</td><td class="mono">secret/verify.py · secret/trufflehog.py</td><td><code>--verify-secrets</code>이고 <code>--network-off</code>가 아닐 때만 runner(trufflehog)를 건넨다. 라이브 확인 → verified=True, severity=critical. 그 외 정책은 네트워크 호출 자체가 없다.</td></tr>
+          <tr><td class="num">10</td><td>baseline → 억제</td><td class="mono">suppress/store.py · suppress/engine.py</td><td><code>--baseline</code> 먼저(기존 키 → state=baseline), 그 다음 <code>--suppressions</code>(scope = dedup_key 정확 매칭). 만료되었거나 unreachable 근거가 reachable로 바뀌면 억제를 풀고 invalidated로 보고. 자동 억제 없음(원칙 4).</td></tr>
+          <tr><td class="num">11</td><td>보고서 출력</td><td class="mono">cli.py:_cmd_scan · output/sarif.py · output/markdown.py · models.sast_tier</td><td>순서: <code>--write-baseline</code> 저장 → findings.sarif → report.md → 터미널 요약 → exit code. sast_tier는 여기서 호출되는 순수 함수(actionable/review). exit 1 조건: SAST actionable · 도달 불가가 아닌 SCA · secret.</td></tr>
+          <tr><td class="num">12</td><td>증거 해석</td><td class="mono">(Claude · 사람)</td><td>report.md · findings.sarif를 읽고 해석. 억제 후보(<code>propose_suppressions</code>)는 제안일 뿐, provenance·expiry를 채워 확정하는 것은 사람.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="grid">
+        <div class="card">
+          <p class="eyebrow">profiles.py</p>
+          <div class="card-header"><span class="card-dot"></span><h3>프로파일 × 어댑터</h3></div>
+          <table style="margin-top:0.25rem;">
+            <thead><tr><th>프로파일</th><th>어댑터 (실행 순서 무관, 병렬)</th><th>도달성</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">quick</td><td><code>trivy</code>(fs) · <code>gitleaks</code></td><td class="ok">✗</td></tr>
+              <tr><td class="mono">accurate-sca</td><td><code>bom-sca</code>(cdxgen → trivy sbom)</td><td class="ok">✓</td></tr>
+              <tr><td class="mono">standard</td><td><code>semgrep</code> · <code>bom-sca</code> · <code>gitleaks</code></td><td class="ok">✓</td></tr>
+              <tr><td class="mono">deep</td><td><code>semgrep</code> · <code>bom-sca</code> · <code>gitleaks</code> · <code>spotbugs</code></td><td class="ok">✓</td></tr>
+            </tbody>
+          </table>
+          <p class="note">기본 프로파일은 accurate-sca. <code>osv-scanner</code> 어댑터는 클래스만 등록돼 있고 어떤 프로파일에도 속하지 않는다. <code>bom-sca</code>는 tool 이름을 "trivy"로 보고해 같은 파서(parse_trivy)를 탄다.</p>
+        </div>
+        <div class="card">
+          <p class="eyebrow">reachability/engine.py</p>
+          <div class="card-header"><span class="card-dot accent"></span><h3>도달성 4중 안전장치 (적용 순서)</h3></div>
+          <ol>
+            <li><strong>환경 점검</strong> — depscan · java · node 없으면 <code>reason=env</code>로 생략.</li>
+            <li><strong>크기 인지</strong> — LOC &gt; 50,000이고 <code>--allow-large</code>가 아니면 <code>size</code>.</li>
+            <li><strong>캐시</strong> — 소스 해시가 같으면 이전 결과 재사용(<code>cache</code>).</li>
+            <li><strong>예산 · 폴백</strong> — provider 600초 초과 → <code>timeout</code>, 예외 → <code>error</code>.</li>
+          </ol>
+          <p class="note">어느 경우든 탐지 결과는 그대로 남고 도달성만 unknown으로 남는다. 코드 주석 번호(④→①→②→③)와 실제 적용 순서가 다르므로 위는 적용 순서로 적었다.</p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:1.25rem;">
+        <p class="eyebrow">verified against code</p>
+        <div class="card-header"><span class="card-dot muted"></span><h3>흔히 말하는 순서와 코드가 다른 곳</h3></div>
+        <ul>
+          <li><strong>detect는 scan 파이프라인 안에 없다.</strong> <code>secscan detect</code>는 추천만 출력하는 별도 명령이고, <code>secscan scan</code>은 <code>--profile</code> 값을 직접 받는다(02→03 점선).</li>
+          <li><strong>컴플라이언스 매핑은 마지막이 아니라 07이다.</strong> 경로 제외 직후, 도달성·시크릿 검증·억제보다 앞서 항상 실행된다.</li>
+          <li><strong>SAST tier는 파이프라인 단계가 아니다.</strong> <code>models.sast_tier()</code>는 finding을 바꾸지 않는 순수 함수로, 11단계(markdown 섹션 분류 · SARIF sastTier · exit code)에서만 호출된다.</li>
+          <li><strong>억제는 baseline → 명시 억제 순.</strong> 이미 baseline으로 억제된 finding에는 명시 억제가 덮어쓰지 않는다.</li>
+          <li><strong>커스텀 룰은 4개 파일.</strong> MyBatis <code>${}</code>가 value(HIGH)와 identifier(LOW)로 나뉘어 3종 = 4파일이다.</li>
+        </ul>
+      </div>
+    </section>
+
+    <footer>
+      secscan 점검 프로세스 흐름 · 2026-09-04 · as-is 근거: secscan/cli.py · scan.py · detect.py · profiles.py · orchestrator.py · adapters/*.py · normalize/*.py · exclude.py · compliance.py · reachability/*.py · secret/verify.py · suppress/*.py · models.py · output/*.py · rules/*.yml<br>
+      to-be 근거: docs/superpowers/specs/2026-09-04-verification-campaign-design.md @fab1ee6 (§2 · §4.2 · §5 · §5.1 · §7.4 · §9 · §13) · 2026-09-04-verification-campaign-codex-review.md (요약 인용)<br>
+      vision skill · default skin (white-smoke · jet-black · deep-teal) · 스윔레인 12단계는 9노드 예산을 넘지만 엔드투엔드 요청에 따라 레인으로 구역화해 유지
+    </footer>
+  </div>
+</body>
+</html>

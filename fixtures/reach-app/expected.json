@@ -1,0 +1,10 @@
+{
+  "description": "도달성 쌍 픽스처(spec §6). must_not_be_unreachable = 안전상 unreachable 로 판정하면 안 되는 케이스(false-unreachable 게이트).",
+  "reachable": [
+    {"package": "commons-text", "version": "1.9", "cve": "CVE-2022-42889", "reason": "App.interpolate → StringSubstitutor.createInterpolator().replace"}
+  ],
+  "must_not_be_unreachable": [
+    {"package": "jackson-databind", "version": "2.13.0", "cve": "CVE-2022-42003", "reason": "App.parse 가 ObjectMapper.readValue 를 직접 호출(실사용). 현 엔진은 Maven 좌표→패키지 prefix 추정(com.fasterxml.jackson.core.jackson.databind)이 실제 패키지(com.fasterxml.jackson.databind)와 어긋나 unreachable = false-unreachable(원인: prefix 휴리스틱)"},
+    {"package": "tomcat-embed-core", "version": "9.0.46", "cve": "CVE-2021-41079", "reason": "spring-boot-starter-web 이 런타임에 항상 기동. 앱 코드 미참조 → 현 엔진 unreachable = false-unreachable(원인: 프레임워크 활성화 미인지)"}
+  ]
+}

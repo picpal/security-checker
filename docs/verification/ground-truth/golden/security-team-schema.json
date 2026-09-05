@@ -1,0 +1,14 @@
+{
+  "@context": "secscan-golden/security-team-xlsx/v1",
+  "source": "보안팀 'MessageGate 라이브러리 취약점 점검 결과보고서_20260831.xlsx' — 원본 미확보, 시트 사진 2장 기준 재구성 (2026-09-04)",
+  "sheets": ["Summary", "Findings", "Deduped_CVEs", "Targets"],
+  "deduped_cves_header": ["No.", "Vulnerability ID", "Severity", "Max CVSS Score", "CVSS Source",
+    "Affected Packages", "Installed Versions", "Fixed Versions", "Targets", "Finding Count", "Title", "URL"],
+  "observations": {
+    "severity": "trivy 벤더 등급(redhat 우선) — CVSS 순서와 불일치(HIGH 5.9 / MEDIUM 7.5 존재)",
+    "targets": "Java (trivy fs jar 분석기가 모든 jar 를 Target=Java 로 묶음 → 배포 jar 스캔)",
+    "affected_packages": "복수 패키지를 한 셀에 ', ' 로 결합 (jackson 2.x/3.x)",
+    "finding_count": "Findings 시트 원본 행(패키지×타깃) 수를 CVE 별 합산",
+    "installed_versions_anomaly": "mssql-jdbc 13.2.1 (실제 13.2.1.jre11) — jar 버전 파싱 추정"
+  }
+}

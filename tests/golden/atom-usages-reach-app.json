@@ -1,0 +1,21 @@
+{
+  "_note": "수기 작성 슬라이스 — fixtures/reach-app/App.java 변경 시 동기화 필요",
+  "objectSlices": [
+    {"code": "interpolate", "fullName": "demo.App.interpolate", "signature": "", "fileName": "App.java", "lineNumber": 13, "columnNumber": 0,
+     "usages": [{"targetObj": {"name": "userInput", "typeFullName": "java.lang.String", "lineNumber": 13, "columnNumber": 0, "label": "PARAM"},
+                 "definedBy": {"name": "<empty>", "typeFullName": "ANY", "lineNumber": null, "columnNumber": null, "label": "UNKNOWN"},
+                 "invokedCalls": [{"callName": "createInterpolator", "resolvedMethod": "org.apache.commons.text.StringSubstitutor.createInterpolator:org.apache.commons.text.StringSubstitutor()", "paramTypes": [], "returnType": "org.apache.commons.text.StringSubstitutor", "isExternal": true, "lineNumber": 14, "columnNumber": 0}],
+                 "argToCalls": []}]},
+    {"code": "parse", "fullName": "demo.App.parse", "signature": "", "fileName": "App.java", "lineNumber": 18, "columnNumber": 0,
+     "usages": [{"targetObj": {"name": "json", "typeFullName": "java.lang.String", "lineNumber": 18, "columnNumber": 0, "label": "PARAM"},
+                 "definedBy": {"name": "<empty>", "typeFullName": "ANY", "lineNumber": null, "columnNumber": null, "label": "UNKNOWN"},
+                 "invokedCalls": [{"callName": "readValue", "resolvedMethod": "com.fasterxml.jackson.databind.ObjectMapper.readValue:java.lang.Object(java.lang.String,java.lang.Class)", "paramTypes": ["java.lang.String", "java.lang.Class"], "returnType": "java.lang.Object", "isExternal": true, "lineNumber": 19, "columnNumber": 0}],
+                 "argToCalls": []}]},
+    {"code": "main", "fullName": "demo.App.main", "signature": "", "fileName": "App.java", "lineNumber": 10, "columnNumber": 0,
+     "usages": [{"targetObj": {"name": "args", "typeFullName": "java.lang.String[]", "lineNumber": 10, "columnNumber": 0, "label": "PARAM"},
+                 "definedBy": {"name": "<empty>", "typeFullName": "ANY", "lineNumber": null, "columnNumber": null, "label": "UNKNOWN"},
+                 "invokedCalls": [{"callName": "run", "resolvedMethod": "org.springframework.boot.SpringApplication.run:org.springframework.context.ConfigurableApplicationContext(java.lang.Class,java.lang.String[])", "paramTypes": [], "returnType": "", "isExternal": true, "lineNumber": 10, "columnNumber": 0}],
+                 "argToCalls": []}]}
+  ],
+  "userDefinedTypes": []
+}

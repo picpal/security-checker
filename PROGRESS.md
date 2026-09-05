@@ -98,3 +98,23 @@ crypto 안티패턴 → **커스텀 룰(D)** (3종: MyBatis `${}`/하드코딩/z
 — spotbugs 가 빌드·실행돼도 CWE-476/754/404 미탐(범주 공백, taint 아님).
 **D 완료(2026-06-29)**: coderay 격차의 커스텀룰 영역 3종 메움(d4a1ded 실증).
 다음 = 백로그(IaC/DAST/CI/주기점검) 또는 IDE 인스펙션 통합(broad-catch 코드스멜 = coderay 잔여격차).
+
+## V — 검증 캠페인 (spec 2026-09-04) — 플랜 1(V0~V3) ✅
+- [x] V0 정답지 매니페스트 3종 + 대조기(match_ground_truth/classify_extras)
+- [x] V1 TraceSink 단계 추적 + findings.json + tools/verify 격리 하네스 + 증거 동결(docs/verification/evidence/<date>)
+- [x] V2 SCA 실측: CVE recall N/46 · known-FP 3단계 · 프로파일 계약 · 초과분 triage · 입력면 교차
+- [x] V3 도달성 쌍 픽스처(reach-app, false-unreachable xfail) + GT-A differential — 정본 검증(reconcile ✓, docs/verification/results/2026-09-05/reconcile-report.md)
+- [x] 최종 전브랜치 리뷰 수정 라운드(Important 8건 전부 해소): I1 attrition 부호 정정(normalize(합계)
+  합성 행) · I2 미탐 전건 단계 귀속(sca.missed_by_stage.*) · I3 facts-profile.json 재생성 비교 연결 ·
+  I4 known-FP 축 3 값 fact id 부여 · I5 는 spec 정오표(g)로 플랜 2 이관 · I6 raw↔typed 카디널리티
+  마커화 · I7 reconcile 자기참조 순서(2단계 계산, 직전 실행 값 신뢰 금지) · I8 인용 표 대조
+  (reconcile.quote_mismatch). Minor 중 M2/M5/M6/M9/M10/M11/M12 도 함께 해소. `_facts.py`(facts_text)
+  로 4곳 직렬화 통일.
+- 플랜 2 이관(의도적 미착수): I5 의 `tools/verify/gate.py`(판정 생성기) · M1(trivy 순회 통합) ·
+  M3(축 5 원시 산출물을 evidence/ 로 이동) · M4(reconcile 증거 부재 시 degrade) · M7(`gta.row{i}` id
+  위치 독립화) · M8(증거 경로 상대화) · 생성기 인터페이스(`render_doc`+`collect_facts`) 6종 통일 ·
+  evidence/README.md 생성기화. 최종 재리뷰 잔여(Low 6, 검사 약화·값 변동 없음): N1 인용 선언 regex 20자 창 ·
+  N2 missed_stage 가 alias 미비교(dedup_key 에 alias 없음) · N3 attrition 행 순서가 trace 순서 아닌 partition ·
+  N4 reconcile-report 인용표 대조 표 헤더 `|` 렌더 · N5 실패 실행 시 marker_mismatch 기록값이 비교값보다 클 수 있음 ·
+  N6 facts-profile regen 이 deep meta 부재 시 무기록 스킵(M4 계열).
+- [ ] V4~V7 → 플랜 2 (판정 단계 H · 모델 확장 · xlsx · 변이 픽스처 · 최종 문서)
