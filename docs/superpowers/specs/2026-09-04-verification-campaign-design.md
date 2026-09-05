@@ -298,6 +298,9 @@ negative)"이라고 적었으나, 내역의 합(6+1+11+1)은 19로 그 문장 �
 34행 / 고유 advisory 24건이다 — "18건"·"19건" 어느 쪽과도 다르다. spec 드리프트로 기록만 하고
 해소는 플랜 2 로 미룬다.
 
+해소(플랜 2, 2026-09-06): §3.2·§5 축 6(a)의 "18건"은 매니페스트 실측 human.verdict_rows /
+human.verdict_advisories(facts.json)로 읽는다 — 원문은 보존, 이 절이 우선.
+
 (b) §4.5 검사 목록에 두 항목을 추가한다: **(f) 인용 표 대조** — 결과 문서에서 측정 문서로 옮겨
 적은 표가 "전체 인용"이라고 선언되면, 원본과 마커 제거 후 행 단위로 바이트 대조한다(이번
 수정 라운드에서 `tools/verify/reconcile.py` 의 `check_quoted_tables`/`reconcile.quote_mismatch`

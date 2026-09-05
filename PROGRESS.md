@@ -117,4 +117,31 @@ crypto 안티패턴 → **커스텀 룰(D)** (3종: MyBatis `${}`/하드코딩/z
   N2 missed_stage 가 alias 미비교(dedup_key 에 alias 없음) · N3 attrition 행 순서가 trace 순서 아닌 partition ·
   N4 reconcile-report 인용표 대조 표 헤더 `|` 렌더 · N5 실패 실행 시 marker_mismatch 기록값이 비교값보다 클 수 있음 ·
   N6 facts-profile regen 이 deep meta 부재 시 무기록 스킵(M4 계열).
-- [ ] V4~V7 → 플랜 2 (판정 단계 H · 모델 확장 · xlsx · 변이 픽스처 · 최종 문서)
+- [x] V4~V7 → 플랜 2 (판정 단계 H · 모델 확장 · xlsx · 변이 픽스처 · 최종 문서) ✅ 2026-09-06
+  - V4 모델·판정 단계 H: `Occurrence`·`Cvss`·`ScannerStatus`, `Advisory.cvss/published`,
+    `Finding.occurrences/disposition/tier` + lossless 직렬화 · trivy 정규화가 CVSS 전 소스·
+    PublishedDate·Occurrence 보존 · `decide`(억제 우선→tier→도달성→actionable), `compliance` 를
+    판정 단계로 이동(replace, 입력 불변) · exit code 가 disposition/tier 만 읽도록 재구성(억제된
+    secret 이 exit 0 을 못 내던 결함 수정) · `findings.json` lossless 출력 + 안정 정렬 + projection
+    계약(포맷별 프로브 문서) · V1 증거 재입력 회귀(reinput: 73키 동일·disposition 1:1 매핑 확인).
+  - V5 xlsx: 시트 빌더(순수 함수, formula injection·절단·불법 문자 sanitizer, 7 시트, 보안팀
+    Deduped_CVEs 12열 1:1 + secscan 열, 결정성) + writer(openpyxl 지연 import, CSV 폴백) + CLI/증거
+    출력 + `secscan[xlsx]` extra.
+  - V6 변이 픽스처 + 축 8: `secret-app` 저엔트로피(커스텀 룰 탐지·gitleaks 미탐 기록)·인라인
+    allowlist·history-only(dir 미탐/git 탐지) · 억제 전이 3종 현행 동작 고정(만료·버전상향 조용한
+    재노출·도달성 변화) · deep gradlew 픽스처(spotbugs 가 시스템 gradle 대신 `gradlew` 우선, 빌드
+    실패 SKIPPED 격리) · 축 8 보고서 충실성 생성기(왕복·projection id 집합·disposition 일치·
+    결정성·Meta status → `fidelity.md`).
+  - V7 최종 실스캔 + gate 생성기 + 최종 문서: `tools/verify/gate.py`(spec §5 상수를 코드로 갖고
+    `facts*.json` 과 비교해 게이트 문서 전체를 생성 — 정오표 (g) 해소) + 생성기 레지스트리
+    (`tools/verify/generators.py`, 예외 격리) + `reach-app` 정본화(축 6(b)) · 위생(trivy 순회
+    `iter_vulns` 단일화, 입력면 raw 산출물을 `evidence/`로 이동·`trivy-rootfs.json` 명명, GT-A
+    fact id 위치 독립화, 증거 경로 상대화, README.md 생성기화) · message-gate `a483b3b1` 최종
+    실스캔(새 바이너리, 1회 성공) + jar 입력면 재생성 + V1 raw 증거 9종(deep·GT-A 8) 재입력 회귀 +
+    생성 문서 일괄 산출(gt-b-match·known-fp·profile-contract·input-surface·reach-app·
+    gt-a-differential·fidelity·gate·README) + reconcile 고정점(2회 실행 바이트 동일) — gate.md
+    결과는 "gate.md 참조"(수치 없음). 최종 측정 문서:
+    `docs/measurements/2026-09-06-message-gate-verification-final.md`(축 1~9, `## 요약` =
+    gate.md 표 전체 인용, 플랜 1 대비 변화, 변이 픽스처 V6 pytest 결과, needs_human, 백로그
+    P1(안전성→재현성→FN 순, spec §9), reconcile `--measurement` 통과) — 백로그 상세는 이 문서
+    참조. spec 정오표 (a)("18건") 해소 문구 추가(원문 보존).
