@@ -1,4 +1,8 @@
-"""입력면 교차(spec §5 축 5): 배포 jar(trivy fs) vs cdxgen BOM 인벤토리·버전 비교.
+"""입력면 교차(spec §5 축 5): 배포 jar(trivy rootfs) vs cdxgen BOM 인벤토리·버전 비교.
+
+주의: Trivy 언어 지원표상 jar/war/ear 는 image·rootfs 모드에서만 분석된다 — `trivy fs` 는 소스 매니페스트(pom/gradle) 전용이라
+빌드 산출물 디렉토리에 돌리면 "language-specific files num=0" 으로 조용히 0건이 된다(2026-09-05 실측). 보안팀 결과(Target=Java, Type=jar)와
+같은 표면은 rootfs 다.
 
 빌드·스캔은 CLI 로 실행하고(격리 env 상속), 비교는 순수 함수다.
 사용: python -m tools.verify.jar_surface --repo-dir <scratch>/<sha>/repo --bom <bom.json> \
@@ -76,13 +80,13 @@ def render(diff: dict, cmp_bom: list[dict], cmp_jar: list[dict]) -> str:
 
 
 def build_and_scan_jar(repo_dir: Path, out_json: Path, *, run=subprocess.run) -> bool:
-    """./gradlew bootJar → trivy fs build/libs (중첩 jar 포함). 실패 시 False (부분 실패 정상)."""
+    """./gradlew bootJar → trivy rootfs build/libs (fat jar 의 BOOT-INF/lib 중첩 jar 포함). 실패 시 False (부분 실패 정상)."""
     r = run(["./gradlew", "bootJar", "-x", "test", "--no-daemon", "-q"], cwd=str(repo_dir),
             capture_output=True, text=True, timeout=1800)
     if r.returncode != 0:
         out_json.with_suffix(".build-error.txt").write_text((r.stderr or "")[-4000:], encoding="utf-8")
         return False
-    r = run(["trivy", "fs", "--scanners", "vuln", "--list-all-pkgs", "--format", "json", "--quiet",
+    r = run(["trivy", "rootfs", "--scanners", "vuln", "--list-all-pkgs", "--format", "json", "--quiet",
              str(repo_dir / "build" / "libs")], capture_output=True, text=True, timeout=900)
     out_json.write_text(r.stdout or "{}", encoding="utf-8")
     return r.returncode == 0

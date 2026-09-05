@@ -287,3 +287,49 @@ def test_compare_installed_against_manifest():
     rows = compare_installed({"g:a": "1.0"}, m)
     assert rows == [{"package": "g:a", "manifest": "1.0", "inventory": "1.0", "match": True},
                     {"package": "g:x", "manifest": "9", "inventory": None, "match": False}]
+
+
+def test_build_and_scan_jar_runs_gradle_then_trivy_rootfs(tmp_path):
+    from tools.verify.jar_surface import build_and_scan_jar
+
+    calls = []
+
+    def fake_run(argv, **kw):
+        calls.append((argv, kw))
+        class R:
+            returncode = 0
+            stdout = '{"Results": []}'
+            stderr = ""
+        return R()
+
+    repo_dir = tmp_path / "repo"
+    out_json = tmp_path / "input-surface.trivy-fs.json"
+    ok = build_and_scan_jar(repo_dir, out_json, run=fake_run)
+    assert ok is True
+    assert calls[0][0] == ["./gradlew", "bootJar", "-x", "test", "--no-daemon", "-q"]
+    assert calls[0][1]["cwd"] == str(repo_dir)
+    trivy_argv = calls[1][0]
+    assert trivy_argv[:7] == ["trivy", "rootfs", "--scanners", "vuln", "--list-all-pkgs", "--format", "json"]
+    assert trivy_argv[-1] == str(repo_dir / "build" / "libs")
+    assert out_json.read_text(encoding="utf-8") == '{"Results": []}'
+
+
+def test_build_and_scan_jar_gradle_failure_skips_trivy(tmp_path):
+    from tools.verify.jar_surface import build_and_scan_jar
+
+    calls = []
+
+    def fake_run(argv, **kw):
+        calls.append(argv)
+        class R:
+            returncode = 1
+            stdout = ""
+            stderr = "boom"
+        return R()
+
+    repo_dir = tmp_path / "repo"
+    out_json = tmp_path / "input-surface.trivy-fs.json"
+    ok = build_and_scan_jar(repo_dir, out_json, run=fake_run)
+    assert ok is False
+    assert len(calls) == 1
+    assert out_json.with_suffix(".build-error.txt").read_text(encoding="utf-8") == "boom"
