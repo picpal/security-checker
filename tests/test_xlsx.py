@@ -132,6 +132,9 @@ def test_write_workbook_xlsx_roundtrip_when_openpyxl_available(tmp_path):
     ids = {ws.cell(row=r, column=2).value for r in range(2, ws.max_row + 1)}
     assert ids == {"CVE-1", "CVE-2"}
     assert wb.properties.created.isoformat().startswith("2026-09-05")
+    # M11(최종 리뷰) — openpyxl 은 save() 시점에 core.xml 의 modified 를 저장 시각(now)으로
+    # 덮어쓴다. spec §8 "스캔 일시로 고정" 대로 modified == created 여야 한다.
+    assert wb.properties.modified == wb.properties.created
     # 문자열 강제: 수식으로 해석되지 않는다
     fs2 = decide([_sca(cve="=EVIL()")])
     p2, _ = write_workbook(fs2, _meta(), tmp_path / "b", prefer_xlsx=True)

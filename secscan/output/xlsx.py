@@ -191,8 +191,11 @@ def build_sheets(findings: list[Finding], meta: dict) -> dict[str, Sheet]:
 # --- 라이터부: 시트 분할·CSV 폴백·xlsx(openpyxl 지연 import) ---
 
 import csv
+import zipfile
 from datetime import datetime
 from pathlib import Path
+
+_MODIFIED_RE = re.compile(rb'(<dcterms:modified\b[^>]*>)[^<]*(</dcterms:modified>)')
 
 
 def split_sheet(name: str, sheet: Sheet, max_rows: int = MAX_ROWS) -> list[tuple[str, Sheet]]:
@@ -226,6 +229,26 @@ def write_csv_bundle(sheets: dict[str, Sheet], out_dir, *, max_rows: int = MAX_R
     return written
 
 
+def _pin_xlsx_modified(path: Path, ts: datetime) -> None:
+    """M11(최종 리뷰) — openpyxl 은 `wb.save()` 시점에 `docProps/core.xml` 의 `dcterms:modified`
+    를 저장 시각(now)으로 덮어쓴다 — `wb.properties.modified` 를 미리 고정해도 무시된다. 실행마다
+    값이 달라지면 spec §8 "workbook.properties.created/modified 를 스캔 일시로 고정"을 어긴다.
+    save() 가 끝난 뒤 zip 을 열어 그 한 요소만 다시 쓴다 — 다른 멤버는 그대로 보존한다."""
+    iso = ts.strftime("%Y-%m-%dT%H:%M:%SZ").encode("ascii")
+    with zipfile.ZipFile(path, "r") as zin:
+        infos = zin.infolist()
+        payloads = {info.filename: zin.read(info.filename) for info in infos}
+    core = payloads.get("docProps/core.xml")
+    if core is None:
+        return
+    payloads["docProps/core.xml"] = _MODIFIED_RE.sub(lambda m: m.group(1) + iso + m.group(2), core)
+    tmp = path.with_name(path.name + ".tmp")
+    with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as zout:
+        for info in infos:
+            zout.writestr(info, payloads[info.filename])
+    tmp.replace(path)
+
+
 def write_xlsx(sheets: dict[str, Sheet], path, *, created: str, max_rows: int = MAX_ROWS) -> Path:
     """openpyxl 필요(`pip install secscan[xlsx]`). 문자열 셀은 data_type 's' 로 강제 — '=' 시작 문자열이 수식이 되지 않게."""
     from openpyxl import Workbook  # 지연 import: 코어 의존성 0 유지
@@ -248,6 +271,7 @@ def write_xlsx(sheets: dict[str, Sheet], path, *, created: str, max_rows: int = 
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
     wb.save(p)
+    _pin_xlsx_modified(p, ts)
     return p
 
 
