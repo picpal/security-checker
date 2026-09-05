@@ -10,6 +10,7 @@ import argparse
 import hashlib
 import json
 import shutil
+from dataclasses import asdict
 from datetime import date
 from pathlib import Path
 
@@ -223,7 +224,7 @@ def _cmd_scan(args) -> int:
     )
     (out / "report.md").write_text(
         to_markdown(result.findings, target=str(args.target),
-                    meta={"scanners": [a.name for a in adapters]})
+                    meta={"scanner_status": [asdict(s) for s in result.scanner_status]})
     )
 
     print(render_scan_summary(result))

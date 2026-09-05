@@ -809,3 +809,15 @@ def test_regenerate_suppresses_generator_stdout(tmp_path, capsys):
     regenerate(res, ev, gt_b, gt_a)
     captured = capsys.readouterr()
     assert captured.out == ""
+
+
+def test_write_evidence_meta_carries_scanner_status_fields(tmp_path):
+    from secscan.adapters.base import OK, RawResult
+    from secscan.models import ScannerStatus
+    from secscan.scan import ScanResult
+    from tools.verify.evidence import write_evidence
+    r = RawResult("trivy", OK, payload="{}", version="0.71.2", duration_s=1.25)
+    res = ScanResult(findings=[], raw_results=[r], scanner_status=[ScannerStatus("trivy", OK, "0.71.2", 1.25, "")])
+    write_evidence(tmp_path, result=res, trace=None, meta={"snapshot": "x"})
+    meta = json.loads((tmp_path / "meta.json").read_text())
+    assert meta["scanner_status"] == [{"tool": "trivy", "status": "ok", "tool_version": "0.71.2", "duration_s": 1.25}]

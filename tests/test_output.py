@@ -306,3 +306,12 @@ def test_sarif_no_confidence_or_tier_for_non_sast():
 def test_markdown_sast_note_mentions_ce_and_kotlin_limits():
     md = to_markdown([_sast()])
     assert "Pro" in md or "Kotlin" in md
+
+
+def test_markdown_renders_actual_scanner_status_not_configured_names():
+    md = to_markdown([], meta={"scanner_status": [
+        {"name": "trivy", "status": "ok", "tool_version": "0.71.2", "duration_s": 8.5},
+        {"name": "spotbugs", "status": "skipped", "message": "빌드 실패"},
+    ]})
+    line = next(l for l in md.splitlines() if l.startswith("- 스캐너:"))
+    assert "trivy ok (0.71.2, 8.5s)" in line and "spotbugs skipped (빌드 실패)" in line

@@ -201,3 +201,15 @@ def test_run_scan_without_trace_is_unchanged():
     b = run_scan("/proj", get_profile("accurate-sca"),
                  adapters=[FakeAdapter("trivy", TRIVY)], reachability_provider=None, trace=TraceSink())
     assert [f.dedup_key for f in a.findings] == [f.dedup_key for f in b.findings]
+
+
+from secscan.models import ScannerStatus
+
+def test_run_scan_reports_actual_scanner_status_sorted_by_name():
+    res = run_scan("/proj", get_profile("quick"),
+                   adapters=[FakeAdapter("trivy", TRIVY), FakeAdapter("gitleaks", "", status=FAILED)],
+                   reachability_provider=None)
+    names = [s.name for s in res.scanner_status]
+    assert names == ["gitleaks", "trivy"]
+    assert {s.name: s.status for s in res.scanner_status} == {"gitleaks": "failed", "trivy": "ok"}
+    assert all(isinstance(s, ScannerStatus) for s in res.scanner_status)

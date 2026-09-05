@@ -26,6 +26,7 @@ class RawResult:
     exit_code: int | None = None
     stderr: str = ""
     error: str = ""  # 사람이 읽을 실패/스킵 사유
+    duration_s: float | None = None  # 오케스트레이터가 채움
 
 
 def _subprocess_runner(argv: list[str], timeout: float):

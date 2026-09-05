@@ -87,7 +87,16 @@ def to_markdown(findings: list[Finding], *, target: str | None = None, meta: dic
     L: list[str] = ["# 보안 점검 보고서 — secscan", ""]
     if target:
         L.append(f"- 대상: `{target}`")
-    if meta and meta.get("scanners"):
+    if meta and meta.get("scanner_status"):
+        parts = []
+        for s in meta["scanner_status"]:
+            name = s.get("name") or s.get("tool", "")
+            extra = [x for x in (s.get("tool_version"), f"{s['duration_s']}s" if s.get("duration_s") is not None else None) if x]
+            if s.get("message"):
+                extra.append(s["message"])
+            parts.append(f"{name} {s['status']}" + (f" ({', '.join(extra)})" if extra else ""))
+        L.append(f"- 스캐너: {' · '.join(parts)}")
+    elif meta and meta.get("scanners"):
         L.append(f"- 스캐너: {', '.join(meta['scanners'])}")
     L.append("")
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+from dataclasses import asdict
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -68,16 +69,17 @@ def write_evidence(out_dir, *, result: ScanResult, trace: TraceSink | None, meta
     written.append(p)
     p = out / "report.md"
     p.write_text(to_markdown(result.findings, target=meta.get("snapshot"),
-                             meta={"scanners": [r.tool for r in result.raw_results]}), encoding="utf-8")
+                             meta={"scanner_status": [asdict(s) for s in result.scanner_status]}), encoding="utf-8")
     written.append(p)
     p = out / "trace.json"
     p.write_text(json.dumps(trace.to_dict() if trace else {}, indent=2, ensure_ascii=False), encoding="utf-8")
     written.append(p)
     full_meta = dict(meta)
     full_meta["scanner_status"] = [
-        {"tool": r.tool, "status": r.status, **({"error": r.error} if r.error else {})}
-        for r in result.raw_results
-    ]
+        {"tool": s.name, "status": s.status, "tool_version": s.tool_version, "duration_s": s.duration_s,
+         **({"error": s.message} if s.message else {})}
+        for s in result.scanner_status
+    ] or [{"tool": r.tool, "status": r.status, **({"error": r.error} if r.error else {})} for r in result.raw_results]
     full_meta["reachability"] = {"ran": result.reachability_ran, "reason": result.reachability_reason}
     full_meta["secret_policy"] = result.secret_policy
     full_meta["excluded_count"] = result.excluded_count

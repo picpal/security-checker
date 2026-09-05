@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from .adapters.base import OK, RawResult
 from .compliance import enrich_compliance
 from .exclude import DEFAULT_EXCLUDES, exclude_findings, filter_gitignored
-from .models import Finding
+from .models import Finding, ScannerStatus
 from .normalize import normalize_each, to_findings
 from .normalize.merge import merge_consensus
 from .orchestrator import scan as orchestrate
@@ -49,6 +49,7 @@ class ScanResult:
     suppressed_count: int = 0
     invalidated: list[str] = field(default_factory=list)
     excluded_count: int = 0  # 기본제외+gitignore 로 걸러진 finding 수
+    scanner_status: list[ScannerStatus] = field(default_factory=list)
 
 
 def run_scan(
@@ -139,5 +140,7 @@ def run_scan(
     partial = [r for r in raws if r.status != OK]
     if trace is not None:
         trace.record("final", findings)
+    status = sorted((ScannerStatus(r.tool, r.status, r.version, r.duration_s, r.error) for r in raws),
+                    key=lambda s: s.name)
     return ScanResult(findings, raws, ran, reason, partial, secret_policy,
-                      verified_count, suppressed_count, invalidated, excluded_count)
+                      verified_count, suppressed_count, invalidated, excluded_count, status)

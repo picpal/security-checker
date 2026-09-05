@@ -80,3 +80,12 @@ def test_scan_respects_max_workers():
 
     scan([Slow(str(i)) for i in range(4)], "/proj", max_workers=1)
     assert peak == 1  # 동시성 상한 1 → 순차
+
+
+def test_orchestrator_records_duration_per_adapter():
+    class Slow:
+        name = "slow"
+        def run(self, target, **kw):
+            return RawResult("slow", OK, payload="{}")
+    res = scan([Slow()], "/p")
+    assert res[0].duration_s is not None and res[0].duration_s >= 0.0
