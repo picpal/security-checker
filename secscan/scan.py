@@ -14,6 +14,7 @@ from .models import Finding, ScannerStatus
 from .normalize import normalize_each, to_findings
 from .normalize.merge import merge_consensus
 from .orchestrator import scan as orchestrate
+from .output.order import sort_findings
 from .reachability.engine import Budget, enrich_reachability
 from .secret.verify import verify_secrets_in_findings
 from .suppress.engine import apply_suppressions
@@ -134,6 +135,7 @@ def run_scan(
     findings = decide(findings)
     if trace is not None:
         trace.record("disposition", findings)
+    findings = sort_findings(findings)
     suppressed_count = sum(1 for f in findings if f.suppression is not None)
 
     partial = [r for r in raws if r.status != OK]

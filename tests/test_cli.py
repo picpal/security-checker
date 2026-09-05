@@ -4,6 +4,8 @@
 주입/대체해 exit code 계약만 검증한다.
 """
 
+import json
+
 from secscan import cli
 from secscan.adapters.base import FAILED, RawResult
 from secscan.doctor import (
@@ -328,3 +330,17 @@ def test_exit_code_true_for_actionable_and_error_when_undecided():
     assert cli._has_actionable(decide([sec])) is True
     with pytest.raises(ValueError):
         cli._has_actionable([sec])  # H 미실행 입력은 CI 게이트에서 조용히 0 이 되면 안 된다
+
+
+# --- Task 6: findings.json 출력 ---
+
+def test_scan_writes_findings_json_with_context(tmp_path, monkeypatch):
+    from secscan.scan import ScanResult
+    from secscan.disposition import decide
+    sec = decide([Finding(category="secret", severity="high", rule_id="aws", location=Location("a.properties", 4))])
+    monkeypatch.setattr(cli, "run_scan", lambda *a, **k: ScanResult(findings=sec, raw_results=[]))
+    monkeypatch.setattr(cli, "build_adapters", lambda p: [])
+    rc = cli.main(["scan", "--target", str(tmp_path), "--out", str(tmp_path / "out"), "--profile", "quick", "--no-reachability"])
+    doc = json.loads((tmp_path / "out" / "findings.json").read_text())
+    assert doc["@context"] == "secscan-findings/v1" and doc["findings"][0]["disposition"] == "actionable"
+    assert rc == 1

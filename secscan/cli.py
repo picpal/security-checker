@@ -19,6 +19,7 @@ from .fetch import DEFAULT_BASE, FetchError, clean, fetch, list_clones
 from .doctor import MISSING, OK, DoctorReport, run_doctor
 from .measure import reachability_stats
 from .models import ACTIONABLE
+from .output.json_io import to_json
 from .output.markdown import to_markdown
 from .output.sarif import to_sarif
 from .profiles import build_adapters, get_profile
@@ -218,9 +219,16 @@ def _cmd_scan(args) -> int:
         to_markdown(result.findings, target=str(args.target),
                     meta={"scanner_status": [asdict(s) for s in result.scanner_status]})
     )
+    (out / "findings.json").write_text(
+        to_json(result.findings, meta={
+            "target": str(args.target), "profile": args.profile,
+            "scanner_status": [asdict(s) for s in result.scanner_status],
+            "reachability": {"ran": result.reachability_ran, "reason": result.reachability_reason},
+            "secret_policy": result.secret_policy, "excluded_count": result.excluded_count,
+        }), encoding="utf-8")
 
     print(render_scan_summary(result))
-    print(f"\n출력: {out / 'report.md'} · {out / 'findings.sarif'}")
+    print(f"\n출력: {out / 'report.md'} · {out / 'findings.sarif'} · {out / 'findings.json'}")
     return 1 if _has_actionable(result.findings) else 0
 
 
@@ -295,7 +303,7 @@ def main(argv: list[str] | None = None) -> int:
     sp = sub.add_parser("scan", help="보안 점검 실행 (SCA + 도달성)")
     sp.add_argument("--target", required=True, help="점검 대상 프로젝트 경로")
     sp.add_argument("--profile", default="accurate-sca",
-                    help="quick | accurate-sca | standard (기본: accurate-sca)")
+                    help="quick | accurate-sca | standard | deep (기본: accurate-sca)")
     sp.add_argument("--out", default="out", help="보고서 출력 디렉토리")
     sp.add_argument("--cache-dir", default=".secscan/reach",
                     help="도달성(atom 슬라이스) 캐시 디렉토리")
