@@ -1377,7 +1377,7 @@ git commit -m "docs(V1): 증거 동결 — a483b3b1 standard/deep + GT-A 스냅�
 - `report.render_human_verdicts(manifest: GtManifest, findings: list[Finding]) -> str`
 - `report.published_dates(trivy_payload: str) -> dict[str, str]` (raw trivy JSON 의 `PublishedDate`)
 - `report.main(argv)` CLI: `--evidence <dir> --gt <gt-b-sca.json> --out <md> [--facts <json>]` — `--facts` 는 `collect_facts(...)` 결과를 JSON 으로 저장.
-- `report.collect_facts(report: MatchReport, classes: dict, findings, trace: dict, meta: dict) -> dict[str, str|int]` — 정본 수치(id → 값): `sca.recall_cve`("m/t"), `sca.recall_entry_strict`, `sca.recall_entry_loose`, `sca.missed`, `sca.missed_high`(severity_team 이 HIGH 인 미탐 수), `sca.false_positive`, `sca.extras`, `sca.extras.<class>`(4분류별), `findings.total`, `findings.<category>`, `attrition.<stage>`, `scanner.<tool>`(status), `reach.<status>`(SCA 도달성 status 별 건수; 없음=`none`).
+- `report.collect_facts(report: MatchReport, classes: dict, findings, trace: dict, meta: dict) -> dict[str, str|int]` — 정본 수치(id → 값): `sca.recall_cve`("m/t"), `sca.recall_entry_strict`, `sca.recall_entry_loose`, `sca.missed`, `sca.missed_high_important`(severity_team 이 HIGH 또는 Important 인 미탐 수 — spec §5 축 2 게이트 "HIGH/Important 미탐 ≤ 1"; 보안팀 trivy 벤더 심각도와 개발자 추가분의 Tomcat 척도 Important/Moderate/Low 가 섞여 있음), `sca.false_positive`, `sca.extras`, `sca.extras.<class>`(4분류별), `findings.total`, `findings.<category>`, `attrition.<stage>`, `scanner.<tool>`(status), `reach.<status>`(SCA 도달성 status 별 건수; 없음=`none`).
 - `known_fp.render(result: dict) -> str` — `# known-FP CVE-2025-59250 (mssql-jdbc) 3단계` 제목 + `| 단계 | 결과 |` 표 전체 문서.
 - `profile_contract.render_doc(statuses: dict[str, str]) -> str` — `# 프로파일 계약 (spec §8 vs 구현 vs 실제)` 제목 + `render(compare_profiles(), statuses)` 전체 문서.
 - `profile_contract.SPEC_PROFILES: dict[str, frozenset[str]]`, `compare_profiles() -> list[dict]`, `render(rows, statuses: dict[str, str]) -> str`
@@ -1652,7 +1652,8 @@ def collect_facts(report: MatchReport, classes: dict[str, str], findings: list[F
         "sca.recall_entry_strict": f"{s_hit}/{e_tot}",
         "sca.recall_entry_loose": f"{l_hit}/{e_tot}",
         "sca.missed": len(report.missed()),
-        "sca.missed_high": sum(1 for m in report.missed() if (m.entry.severity_team or "").upper() == "HIGH"),
+        "sca.missed_high_important": sum(1 for m in report.missed()
+                                          if (m.entry.severity_team or "").upper() in ("HIGH", "IMPORTANT")),
         "sca.false_positive": len(report.false_positives()),
         "sca.extras": len(report.extras),
         "findings.total": len(findings),
@@ -1705,7 +1706,7 @@ def test_collect_facts_ids_and_values():
     facts = collect_facts(rep, {fs[1].dedup_key: "inventory-diff"}, fs,
                           {"stages": [{"stage": "merge", "count": 2}, {"stage": "final", "count": 2}]},
                           {"scanner_status": [{"tool": "trivy", "status": "ok"}]})
-    assert facts["sca.recall_cve"] == "1/2" and facts["sca.missed"] == 1 and facts["sca.missed_high"] == 0
+    assert facts["sca.recall_cve"] == "1/2" and facts["sca.missed"] == 1 and facts["sca.missed_high_important"] == 0
     assert facts["sca.extras"] == 1 and facts["sca.extras.inventory-diff"] == 1
     assert facts["attrition.final"] == 2 and facts["scanner.trivy"] == "ok" and facts["findings.sca"] == 2
 
@@ -1816,7 +1817,7 @@ EOF
 | 축 | 기준 | 측정값 | 판정 |
 |---|---|---|---|
 | 1 프로파일 계약 | 드리프트 전건 문서화 | profile-contract.md 행 수 N <!-- fact:profile.rows --> · 드리프트 M <!-- fact:profile.drift --> | ✓ (문서화됨) |
-| 2 SCA recall | CVE 단위 ≥ 44/46, HIGH 미탐 ≤ 1 | 38/46 <!-- fact:sca.recall_cve --> · HIGH 미탐 3 <!-- fact:sca.missed_high --> | ✗ → 백로그 P1 후보 |
+| 2 SCA recall | CVE 단위 ≥ 44/46, HIGH 미탐 ≤ 1 | 38/46 <!-- fact:sca.recall_cve --> · HIGH/Important 미탐 3 <!-- fact:sca.missed_high_important --> | ✗ → 백로그 P1 후보 |
 | 3 known-FP | 3단계 모두 True | known-fp.md 참조 (component_present/version_preserved/not_reported) | ✓/✗ |
 | 4 초과분 | 미분류 0 | 초과 7 <!-- fact:sca.extras --> · 미분류 0 <!-- fact:sca.extras.미분류 --> | ✓ |
 ```
