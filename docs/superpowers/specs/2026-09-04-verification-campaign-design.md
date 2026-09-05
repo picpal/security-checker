@@ -48,7 +48,7 @@ secscan 의 각 탐지 프로세스(SCA·도달성·Secret·SAST·deep·병합·
 
 ### 3.2 GT-B — 보안팀 SCA 점검 (2026-08-31)
 
-- 도구: **trivy fs (jar 분석기)** 를 배포 jar 에 실행 → JSON 후처리 xlsx. 근거: `Targets=Java`, `CVSS Source`(nvd/redhat/ghsa) 열, `Severity` 가 CVSS 순서와 무관(벤더 등급), `Finding Count`/`Deduped_CVEs` 집계.
+- 도구: **trivy 의 jar 분석기(rootfs 또는 image 모드)** 를 배포 jar 에 실행 → JSON 후처리 xlsx. (초안의 "trivy fs" 는 오기 — fs 모드는 jar 를 스캔하지 않음, 2026-09-05 실측. rootfs 실측에서 mssql-jdbc 가 `13.2.1`·`13.2.1.jre11` 두 항목으로 잡히고 CVE-2025-59250 이 `13.2.1` 에 붙어 보안팀 known-FP 가 정확히 재현됨 → 축 5 사실.) 근거: `Targets=Java`, `CVSS Source`(nvd/redhat/ghsa) 열, `Severity` 가 CVSS 순서와 무관(벤더 등급), `Finding Count`/`Deduped_CVEs` 집계.
 - 원본 xlsx·JSON 은 **확보 불가**. 근거는 message-gate `docs/security/05_취약점조치내역_MessageGate.xlsx`(35행 전사) + `03_취약점조치결과_MessageGate.md` + 시트 사진(헤더 12개, 시트 4종).
 - **분모 = 46** = 보안팀 35행(그중 1행은 known-FP) + 개발자 추가 발견 12(tomcat 11 + logback 1). 34/35 재현은 "기존 trivy 결과 재현율"이지 recall 이 아니다.
 - known-FP: `CVE-2025-59250` mssql-jdbc — 스캐너가 설치 버전을 `13.2.1` 로 표기(실제 `13.2.1.jre11`, 수정 목록에 포함). 원인은 jar 버전 파싱으로 추정.
@@ -139,7 +139,7 @@ secscan 의 각 탐지 프로세스(SCA·도달성·Secret·SAST·deep·병합·
 | 2 | SCA 현재 유효성 | GT-B 46 | GT-B recall(CVE·항목 병기) + **origin 별 병기 필수**(`team` 35 = 보안팀 trivy 결과 재현율 성격 — secscan 도 trivy 를 쓰므로 도구 상관 / `dev-found` 12 = 상대적으로 독립인 증거), attrition 으로 미탐 단계 특정 | CVE 단위 GT-B recall ≥ 44/46(합산; origin 별 수치 없이 합산만 보고 금지), HIGH/Important 미탐 ≤ 1, 미탐 전건 단계 특정 |
 | 3 | SCA known-FP | mssql | 3단계: BOM/SBOM 에 컴포넌트 존재 → purl 버전 `13.2.1.jre11` 보존 → trivy 판정 비해당 | 3단계 모두 ✓ (미보고만으로 통과 불가) |
 | 4 | SCA 초과분 | — | 4분류 전건 | 미분류 0, `our-fp` 는 백로그 |
-| 5 | 입력면 교차 | 같은 스냅샷 | (a) `./gradlew bootJar` → `trivy fs build/libs`(중첩 jar) (b) cdxgen BOM → `trivy sbom`. 인벤토리(purl 집합) 차·탐지 차·해석 버전 vs 보안팀 `Installed Versions` | 인벤토리 차 전건 원인 특정, 해석 버전 불일치 0 |
+| 5 | 입력면 교차 | 같은 스냅샷 | (a) `./gradlew bootJar` → `trivy rootfs build/libs`(중첩 jar — **`trivy fs` 는 jar 를 스캔하지 않는다**: Trivy 언어 지원표상 jar/war/ear 는 image·rootfs 전용, 2026-09-05 실측 num=0) (b) cdxgen BOM → `trivy sbom`. 인벤토리(purl 집합) 차·탐지 차·해석 버전 vs 보안팀 `Installed Versions` | 인벤토리 차 전건 원인 특정, 해석 버전 불일치 0 |
 | 6 | 도달성 | 사람 negative 18 + 픽스처 | (a) 18건 **판정 근거 비교표**(우리: 패키지 prefix 존재 / 사람: 활성화 조건) — 일치율은 산출하지 않음 (b) 픽스처 `fixtures/reach-app`: 취약 API 사용(기대 reachable) / 같은 라이브러리 안전 API 만(현 엔진 reachable = 알려진 과대판정, 기록) / **프레임워크 활성화 라이브러리 앱 미참조**(기대: unreachable 금지 → unknown 또는 reachable) (c) unknown 기권 비율 | **false-unreachable = 0** (프레임워크 활성화 케이스 포함). 현 엔진은 (b)-3 에서 unreachable 을 낼 것으로 예상 → 백로그 P1 |
 | 7 | GT-A differential | GT-A | 취약 스냅샷에서 기대 룰 출현 ∧ 수정 커밋에서 소멸. 탐지 recall 과 actionable recall(tier·exit code) 분리 | 범주 내 출현·소멸 100%. `measure-then-classify` 는 결과 기록만 |
 | 8 | 보고서 충실성 | typed findings | `findings.json` 왕복 동일성; md/SARIF/xlsx 는 projection 계약(포함 필드·손실 필드 명시) 대비 검사; 부분 실패·스캐너 status 가 xlsx Meta 시트에 존재; **exit code·md·SARIF·xlsx 의 조치 판정(disposition) 일치** | 손실 0(계약 외 필드), id 집합 동일, 결정성(2회 실행 semantic 동일), **판정 불일치 0**(억제된 finding 이 exit code 를 올리지 않음 — 현행 결함 §7.4) |
