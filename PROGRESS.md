@@ -113,5 +113,8 @@ crypto 안티패턴 → **커스텀 룰(D)** (3종: MyBatis `${}`/하드코딩/z
 - 플랜 2 이관(의도적 미착수): I5 의 `tools/verify/gate.py`(판정 생성기) · M1(trivy 순회 통합) ·
   M3(축 5 원시 산출물을 evidence/ 로 이동) · M4(reconcile 증거 부재 시 degrade) · M7(`gta.row{i}` id
   위치 독립화) · M8(증거 경로 상대화) · 생성기 인터페이스(`render_doc`+`collect_facts`) 6종 통일 ·
-  evidence/README.md 생성기화.
+  evidence/README.md 생성기화. 최종 재리뷰 잔여(Low 6, 검사 약화·값 변동 없음): N1 인용 선언 regex 20자 창 ·
+  N2 missed_stage 가 alias 미비교(dedup_key 에 alias 없음) · N3 attrition 행 순서가 trace 순서 아닌 partition ·
+  N4 reconcile-report 인용표 대조 표 헤더 `|` 렌더 · N5 실패 실행 시 marker_mismatch 기록값이 비교값보다 클 수 있음 ·
+  N6 facts-profile regen 이 deep meta 부재 시 무기록 스킵(M4 계열).
 - [ ] V4~V7 → 플랜 2 (판정 단계 H · 모델 확장 · xlsx · 변이 픽스처 · 최종 문서)
