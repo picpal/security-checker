@@ -13,6 +13,7 @@ from pathlib import Path
 from secscan.output.json_io import from_json
 
 from ._facts import facts_text
+from ._trivy import iter_vulns
 
 _MARK = re.compile(r"(\S+)\s*<!--\s*fact:([A-Za-z0-9_.\-/가-힣]+)\s*-->")
 # 수치 토큰: 앞뒤가 영숫자·'.'·'/'·'-'·'§' 가 아닌 정수 또는 N/M ("9건"·"0(" 은 잡고, 날짜·버전·SHA·CVE id·§5 는 제외)
@@ -173,14 +174,6 @@ def _table_near_lines(lines: list[str], line_no: int) -> list[str] | None:
     return None
 
 
-def _table_near(md_text: str, pos: int) -> list[str] | None:
-    """`pos`(문자 오프셋)를 줄 번호로 바꿔 `_table_near_lines` 에 위임. 펜스 코드블록 내부는
-    표로 보지 않는다(M5)."""
-    lines = _blank_fences(md_text).splitlines()
-    line_no = md_text.count("\n", 0, pos)
-    return _table_near_lines(lines, line_no)
-
-
 def _tables(md_text: str) -> list[list[str]]:
     """문서 전체의 표 블록들(구분선 제외, 펜스 코드블록 제외)."""
     lines = _blank_fences(md_text).splitlines()
@@ -250,19 +243,24 @@ def check_provenance(triage: dict) -> list[dict]:
 
 def raw_vs_typed(trivy_json: str, findings) -> dict:
     """raw trivy 고유 VulnerabilityID vs typed SCA 고유 advisory — 정규화 손실 검출(차이는 사실로 기록)."""
-    raw: set[str] = set()
-    for res in json.loads(trivy_json or "{}").get("Results", []) or []:
-        for v in res.get("Vulnerabilities") or []:
-            if v.get("VulnerabilityID"):
-                raw.add(v["VulnerabilityID"])
+    raw: set[str] = {v["VulnerabilityID"] for _, v in iter_vulns(trivy_json) if v.get("VulnerabilityID")}
     typed = {f.advisory.id for f in findings if f.category == "sca" and f.advisory}
     return {"raw_count": len(raw), "typed_count": len(typed),
             "only_raw": sorted(raw - typed), "only_typed": sorted(typed - raw)}
 
 
-# 옛 결과 디렉토리(플랜 1, 2026-09-05)에는 이 태스크에서 새로 생긴 생성 문서가 없다 — 있으면
-# 비교하고 없으면 건너뛴다(플랜 1 결과 디렉토리 호환).
-_OPTIONAL = {"fidelity.md", "reach-app.md", "gate.md", "facts-fidelity.json", "facts-reachapp.json"}
+# 옛 결과 디렉토리(플랜 1, 2026-09-05)에는 이 태스크에서 새로 생긴 생성 문서가 없다 — legacy
+# 디렉토리에서만 있으면 비교하고 없으면 건너뛴다(플랜 1 결과 디렉토리 호환). README.md 는 옛
+# 증거 디렉토리의 손기입 운영 로그를 덮어써서 비교하지 않는다(Rec 5, 생성기는 새 증거에만 쓴다).
+_OPTIONAL = {"fidelity.md", "reach-app.md", "gate.md", "facts-fidelity.json", "facts-reachapp.json", "README.md"}
+
+
+def _is_legacy_results_dir(results_dir) -> bool:
+    """M5(최종 리뷰) — `_OPTIONAL` 스킵은 플랜 1 옛 결과 디렉토리에만 적용한다: `gate-v2.md` 가
+    있고 `gate.md` 가 없으면(Task 13 이전, 새 생성 문서가 아직 없던 시절) legacy 로 본다. 그 외
+    디렉토리는 생성 문서·facts 가 없으면 검사를 약화하지 않고 ✗ 행("결과 파일 없음")으로 잡는다."""
+    res = Path(results_dir)
+    return (res / "gate-v2.md").exists() and not (res / "gate.md").exists()
 
 
 def regenerate(results_dir, evidence_root, gt_b, gt_a, *, std_name: str = "a483b3b1-standard") -> list[dict]:
@@ -272,26 +270,32 @@ def regenerate(results_dir, evidence_root, gt_b, gt_a, *, std_name: str = "a483b
     from .generators import GENERATORS, Ctx
     res = Path(results_dir)
     ctx = Ctx(res, Path(evidence_root), Path(gt_b), Path(gt_a), std_name)
+    legacy = _is_legacy_results_dir(res)
     rows: list[dict] = []
 
-    def cmp(name: str, text: str, optional: bool) -> None:
-        p = res / name
-        if not p.exists():
+    def cmp(name: str, text: str, path: Path, optional: bool) -> None:
+        if not path.exists():
             if not optional:
                 rows.append({"doc": name, "ok": False, "note": "결과 파일 없음"})
             return
-        same = p.read_text(encoding="utf-8") == text
+        same = path.read_text(encoding="utf-8") == text
         rows.append({"doc": name, "ok": same, "note": "" if same else "재생성 결과와 다름"})
 
     for g in GENERATORS:
+        if legacy and g.doc == "README.md":
+            # Rec 5 — 옛 증거 디렉토리의 README.md 는 손기입 운영 로그다(생성 문서가 아니다).
+            # 존재는 하지만(빠진 게 아니라) 다른 문서이므로 비교 자체를 하지 않는다 — 존재 여부로
+            # 판정하는 나머지 _OPTIONAL 항목과 달리, 여기선 "있어도 비교 안 함"이 필요하다.
+            continue
         try:
             doc, facts = g.produce(ctx)
         except Exception as e:  # 증거 부재 등 — 죽지 않고 ✗ 행(M4/N6)
             rows.append({"doc": g.doc, "ok": False, "note": f"생성 실패: {type(e).__name__}: {e}"})
             continue
-        cmp(g.doc, doc, g.doc in _OPTIONAL)
+        doc_path = g.path(ctx) if g.path else res / g.doc
+        cmp(g.doc, doc, doc_path, legacy and g.doc in _OPTIONAL)
         if g.facts:
-            cmp(g.facts, facts_text(facts), g.facts in _OPTIONAL)
+            cmp(g.facts, facts_text(facts), res / g.facts, legacy and g.facts in _OPTIONAL)
     return rows
 
 
@@ -424,7 +428,10 @@ def main(argv: list[str] | None = None) -> int:
 
     text = render_report(regen, markers, unmarked, prov, rvt, quotes, stats)
     Path(a.out or res / "reconcile-report.md").write_text(text, encoding="utf-8")
-    final_facts = collect_facts(regen, seed_markers, unmarked, prov, rvt, quotes)
+    # M2(최종 리뷰) — this_run_reconcile 은 이미 (regen, seed_markers, unmarked, prov, rvt, quotes)
+    # 로 계산했다. 같은 인자로 collect_facts 를 다시 부르지 않고 그 값을 그대로 재사용한다 —
+    # "문서를 대조한 값"과 "facts-reconcile.json 에 남기는 값"이 정의상 같은 계산임을 코드로 보장한다.
+    final_facts = dict(this_run_reconcile)
     final_facts["reconcile.self_marker_mismatch"] = self_mm
     if self_mm:
         final_facts["reconcile.verdict"] = "위반"

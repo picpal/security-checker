@@ -155,14 +155,14 @@ reach.unknown / findings.sca = 0 <!-- fact:reach.unknown --> / 48 <!-- fact:find
 
 | # | CWE | 파일 | passed | fixed_residual |
 |---|---|---|---|---|
-| row0 | CWE-259 | LoadtestSeederConfig.java | True <!-- fact:gta.row0.CWE-259.passed --> | 0 <!-- fact:gta.row0.CWE-259.fixed_residual --> |
-| row1 | CWE-760 | LoadtestSeederConfig.java | True <!-- fact:gta.row1.CWE-760.passed --> | 0 <!-- fact:gta.row1.CWE-760.fixed_residual --> |
-| row2 | CWE-89 | LgCarrierMapper.xml | False <!-- fact:gta.row2.CWE-89.passed --> | 8 <!-- fact:gta.row2.CWE-89.fixed_residual --> |
-| row3 | CWE-89 | OldLgCarrierMapper.xml | False <!-- fact:gta.row3.CWE-89.passed --> | 5 <!-- fact:gta.row3.CWE-89.fixed_residual --> |
+| row0 | CWE-259 | LoadtestSeederConfig.java | True <!-- fact:gta.CWE-259.LoadtestSeederConfig.passed --> | 0 <!-- fact:gta.CWE-259.LoadtestSeederConfig.fixed_residual --> |
+| row1 | CWE-760 | LoadtestSeederConfig.java | True <!-- fact:gta.CWE-760.LoadtestSeederConfig.passed --> | 0 <!-- fact:gta.CWE-760.LoadtestSeederConfig.fixed_residual --> |
+| row2 | CWE-89 | LgCarrierMapper.xml | False <!-- fact:gta.CWE-89.LgCarrierMapper.passed --> | 8 <!-- fact:gta.CWE-89.LgCarrierMapper.fixed_residual --> |
+| row3 | CWE-89 | OldLgCarrierMapper.xml | False <!-- fact:gta.CWE-89.OldLgCarrierMapper.passed --> | 5 <!-- fact:gta.CWE-89.OldLgCarrierMapper.fixed_residual --> |
 
 범주 내 통과: 2/4 <!-- fact:gta.in_category_pass -->.
 
-측정 후 분류(measure-then-classify, 게이트 없음 — 결과 기록만): CWE-489 관측 없음 <!-- fact:gta.row4.CWE-489.observed -->, CWE-497 관측 없음 <!-- fact:gta.row5.CWE-497.observed -->.
+측정 후 분류(measure-then-classify, 게이트 없음 — 결과 기록만): CWE-489 관측 없음 <!-- fact:gta.CWE-489.application.observed -->, CWE-497 관측 없음 <!-- fact:gta.CWE-497.TestDbReset.observed -->.
 
 전체 행(범주 외 포함, `gt-a-differential.md` 전체 인용):
 
@@ -206,7 +206,7 @@ reach.unknown / findings.sca = 0 <!-- fact:reach.unknown --> / 48 <!-- fact:find
 - 축 2 SCA recall — fact: `sca.recall_cve` 합산 37/46 <!-- fact:sca.recall_cve -->, `sca.missed_high_important` 3 <!-- fact:sca.missed_high_important -->건.
 - 축 5 입력면 교차 — fact: `surface.version_differs` 1 <!-- fact:surface.version_differs -->건(인벤토리 차 개별 항목 원인 미분류).
 - 축 6(b) 도달성 false-unreachable: `tests/test_reach_app.py` xfail(strict) 항목(위 축 6(b) 코드블록). spec §11: "도달성 축 6 은 현 엔진이 게이트를 통과하지 못할 가능성이 높다. 이는 캠페인의 결과이지 실패가 아니다."
-- 축 7 GT-A differential(범주 내) — fact: `gta.in_category_pass` 2/4 <!-- fact:gta.in_category_pass -->, `gta.row2.CWE-89.fixed_residual` 8 <!-- fact:gta.row2.CWE-89.fixed_residual -->건, `gta.row3.CWE-89.fixed_residual` 5 <!-- fact:gta.row3.CWE-89.fixed_residual -->건.
+- 축 7 GT-A differential(범주 내) — fact: `gta.in_category_pass` 2/4 <!-- fact:gta.in_category_pass -->, `gta.row2.CWE-89.fixed_residual` 8 <!-- fact:gta.CWE-89.LgCarrierMapper.fixed_residual -->건, `gta.row3.CWE-89.fixed_residual` 5 <!-- fact:gta.CWE-89.OldLgCarrierMapper.fixed_residual -->건.
 
 **P2 — 관측된 갭(게이트 없음, 기록 대상)**
 
@@ -216,6 +216,6 @@ reach.unknown / findings.sca = 0 <!-- fact:reach.unknown --> / 48 <!-- fact:find
 
 `gate-v3.md` 인용:
 
-- `8428e646`에서 `mybatis-sqli-identifier`가 `LgCarrierMapper.xml`에 8건 <!-- fact:gta.row2.CWE-89.fixed_residual -->, `OldLgCarrierMapper.xml`에 5건 <!-- fact:gta.row3.CWE-89.fixed_residual --> 잔존 — 룰 범위인가, 수정 범위인가, GT-A 기대 정의인가?
+- `8428e646`에서 `mybatis-sqli-identifier`가 `LgCarrierMapper.xml`에 8건 <!-- fact:gta.CWE-89.LgCarrierMapper.fixed_residual -->, `OldLgCarrierMapper.xml`에 5건 <!-- fact:gta.CWE-89.OldLgCarrierMapper.fixed_residual --> 잔존 — 룰 범위인가, 수정 범위인가, GT-A 기대 정의인가?
 
 `extras-triage.json` 인용: overrides — 없음 · needs_human — 없음.

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import subprocess
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -14,6 +14,7 @@ from secscan.output.sarif import to_sarif
 from secscan.output.xlsx import write_workbook
 
 if TYPE_CHECKING:
+    from secscan.models import Finding
     from secscan.scan import ScanResult, TraceSink
 
 _VERSION_CMDS = {
@@ -52,10 +53,33 @@ def tool_versions(*, run=subprocess.run) -> dict[str, str]:
     return out
 
 
-def write_evidence(out_dir, *, result: ScanResult, trace: TraceSink | None, meta: dict, xlsx: bool = False) -> list[Path]:
+def _rel(p: str, repo_root: Path) -> str:
+    """`p` 가 `repo_root` 아래 절대경로면 그 루트 기준 상대경로로, 아니면 그대로(M8)."""
+    if not p:
+        return p
+    pp = Path(p)
+    if pp.is_absolute():
+        try:
+            return pp.relative_to(repo_root).as_posix()
+        except ValueError:
+            return p
+    return p
+
+
+def _relativize(findings: list[Finding], repo_root: Path) -> list[Finding]:
+    out = []
+    for f in findings:
+        loc = replace(f.location, file=_rel(f.location.file, repo_root)) if f.location else f.location
+        out.append(replace(f, location=loc, source=_rel(f.source, repo_root)))
+    return out
+
+
+def write_evidence(out_dir, *, result: ScanResult, trace: TraceSink | None, meta: dict, xlsx: bool = False,
+                   repo_root: Path | None = None) -> list[Path]:
     out = Path(out_dir)
     (out / "raw").mkdir(parents=True, exist_ok=True)
     written: list[Path] = []
+    findings = _relativize(result.findings, Path(repo_root)) if repo_root is not None else result.findings
     for r in result.raw_results:
         if not r.payload:
             continue
@@ -64,12 +88,12 @@ def write_evidence(out_dir, *, result: ScanResult, trace: TraceSink | None, meta
         text = redact_gitleaks(r.payload) if r.tool == "gitleaks" else r.payload
         p.write_text(text, encoding="utf-8"); written.append(p)
     p = out / "findings.json"
-    p.write_text(to_json(result.findings, meta=meta), encoding="utf-8"); written.append(p)
+    p.write_text(to_json(findings, meta=meta), encoding="utf-8"); written.append(p)
     p = out / "findings.sarif"
-    p.write_text(json.dumps(to_sarif(result.findings), indent=2, ensure_ascii=False), encoding="utf-8")
+    p.write_text(json.dumps(to_sarif(findings), indent=2, ensure_ascii=False), encoding="utf-8")
     written.append(p)
     p = out / "report.md"
-    p.write_text(to_markdown(result.findings, target=meta.get("snapshot"),
+    p.write_text(to_markdown(findings, target=meta.get("snapshot"),
                              meta={"scanner_status": [asdict(s) for s in result.scanner_status]}), encoding="utf-8")
     written.append(p)
     p = out / "trace.json"
@@ -85,7 +109,7 @@ def write_evidence(out_dir, *, result: ScanResult, trace: TraceSink | None, meta
     full_meta["secret_policy"] = result.secret_policy
     full_meta["excluded_count"] = result.excluded_count
     if xlsx:
-        wb_paths, wb_warn = write_workbook(result.findings, {
+        wb_paths, wb_warn = write_workbook(findings, {
             **meta, "scanner_status": full_meta["scanner_status"], "reachability": full_meta["reachability"],
             "secret_policy": full_meta["secret_policy"], "run_date": meta.get("run_date", ""),
         }, out)

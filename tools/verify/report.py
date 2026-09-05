@@ -11,6 +11,7 @@ from secscan.models import Finding
 from secscan.output.json_io import from_json
 
 from ._facts import facts_text
+from ._trivy import iter_vulns
 
 OUR_METHOD = "패키지 prefix 존재(atom usage 슬라이스에 해당 타입 호출 유무)"
 
@@ -139,19 +140,15 @@ def render_human_verdicts(manifest: GtManifest, findings: list[Finding]) -> str:
 def published_dates(trivy_payload: str) -> dict[str, str]:
     """Trivy JSON 에서 CVE별 공개 일자 추출."""
     out: dict[str, str] = {}
-    for res in json.loads(trivy_payload or "{}").get("Results", []) or []:
-        for v in res.get("Vulnerabilities") or []:
-            if v.get("VulnerabilityID") and v.get("PublishedDate"):
-                out[v["VulnerabilityID"]] = v["PublishedDate"][:10]
+    for _, v in iter_vulns(trivy_payload):
+        if v.get("VulnerabilityID") and v.get("PublishedDate"):
+            out[v["VulnerabilityID"]] = v["PublishedDate"][:10]
     return out
 
 
 def raw_vulns(trivy_payload: str) -> list[dict]:
     """Trivy JSON 의 `Vulnerabilities` 배열 전체(원본 필드 그대로) — 미탐 단계 귀속(리뷰 I2)에 쓴다."""
-    out: list[dict] = []
-    for res in json.loads(trivy_payload or "{}").get("Results", []) or []:
-        out.extend(res.get("Vulnerabilities") or [])
-    return out
+    return [v for _, v in iter_vulns(trivy_payload)]
 
 
 def recall_by_origin(report: MatchReport) -> dict[str, tuple[int, int]]:

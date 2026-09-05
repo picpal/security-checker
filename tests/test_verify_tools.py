@@ -694,6 +694,11 @@ def _fake_results(tmp_path):
     from tools.verify.profile_contract import collect_facts as profile_facts, render_doc as render_profiles
     from secscan.output.json_io import to_json
     ev = tmp_path / "evidence"; std = ev / "a483b3b1-standard"; (std / "raw").mkdir(parents=True)
+    res = tmp_path / "results"; res.mkdir()
+    # M5(리뷰 최종) — `regenerate` 의 선택 문서 스킵은 이제 "gate-v2.md 있음 · gate.md 없음"(legacy)
+    # 로 판정한다. 이 픽스처는 플랜 1 옛 결과 디렉토리를 흉내내므로(fidelity.md/reach-app.md/gate.md/
+    # README.md 를 만들지 않음) legacy 표지를 남겨 그 문서들이 없어도 ✗ 행이 되지 않게 한다.
+    (res / "gate-v2.md").write_text("# 게이트 v2 (구 결과 호환 표지자)\n", encoding="utf-8")
     fs = [_sca("org.apache.tomcat.embed:tomcat-embed-core", "11.0.22", "CVE-2026-1"),
           _sca("com.microsoft.sqlserver:mssql-jdbc", "13.2.1.jre11", "CVE-2020-9")]
     (std / "findings.json").write_text(to_json(fs), encoding="utf-8")
@@ -706,7 +711,6 @@ def _fake_results(tmp_path):
         {"group": "com.microsoft.sqlserver", "name": "mssql-jdbc", "version": "13.2.1.jre11", "purl": "pkg:maven/com.microsoft.sqlserver/mssql-jdbc@13.2.1.jre11?type=jar"}]}), encoding="utf-8")
     deep = ev / "a483b3b1-deep"; deep.mkdir()
     (deep / "meta.json").write_text(json.dumps({"scanner_status": [{"tool": "trivy", "status": "ok"}, {"tool": "spotbugs", "status": "ok"}]}), encoding="utf-8")
-    res = tmp_path / "results"; res.mkdir()
     gt_b = "docs/verification/ground-truth/gt-b-sca.json"; gt_a = "docs/verification/ground-truth/gt-a-source.json"
     report.main(["--evidence", str(std), "--gt", gt_b, "--out", str(res / "gt-b-match.md"), "--facts", str(res / "facts.json")])
     differential.main(["--evidence-root", str(ev), "--gt", gt_a, "--out", str(res / "gt-a-differential.md"), "--facts", str(res / "facts-gta.json")])
@@ -717,8 +721,11 @@ def _fake_results(tmp_path):
     statuses = {"trivy": "ok", "spotbugs": "ok"}
     (res / "profile-contract.md").write_text(render_profiles(statuses), encoding="utf-8")
     (res / "facts-profile.json").write_text(facts_text(profile_facts(statuses)), encoding="utf-8")
-    (res / "input-surface.trivy-fs.json").write_text("{}", encoding="utf-8")
-    (res / "input-surface.status.json").write_text(json.dumps({"jar_build_scan_ok": False}), encoding="utf-8")
+    # M3 — jar 입력면 raw/status 는 이제 evidence 디렉토리(`<jar-name>/raw/trivy-rootfs.json`,
+    # `<jar-name>/status.json`)에 있다(results 에는 더 이상 두지 않는다).
+    jar_dir = ev / "a483b3b1-jar"; (jar_dir / "raw").mkdir(parents=True)
+    (jar_dir / "raw" / "trivy-rootfs.json").write_text("{}", encoding="utf-8")
+    (jar_dir / "status.json").write_text(json.dumps({"jar_build_scan_ok": False}), encoding="utf-8")
     from secscan.measure import load_gt_manifest
     (res / "input-surface.md").write_text(render_surface(False, (std / "raw" / "bom.cdx.json").read_text(), "{}", load_gt_manifest(gt_b)), encoding="utf-8")
     from tools.verify.jar_surface import collect_facts as surface_facts
@@ -971,3 +978,158 @@ def test_attrition_rows_follow_trace_order():
     lines = [l for l in render_attrition(trace).splitlines() if l.startswith("| ")][2:]
     assert [l.split("|")[1].strip() for l in lines] == ["normalize:semgrep", "normalize:trivy", "normalize(합계)", "merge", "exclude"]
     assert lines[3].split("|")[3].strip() == "0" and lines[4].split("|")[3].strip() == "-1"
+
+
+# --- Task 13: 위생 — M1(iter_vulns 단일화) · M3(입력면 raw → evidence) · M7(gta id 위치 독립) ·
+# M8(증거 경로 상대화) · README 생성기 · 컨트롤러 룰링 K(Task 12 리뷰 잔여) · 플랜 1 파킹(Task 8) ---
+
+def test_iter_vulns_yields_target_and_vuln():
+    from tools.verify._trivy import iter_vulns
+    payload = json.dumps({"Results": [{"Target": "Java", "Vulnerabilities": [{"VulnerabilityID": "CVE-1"}]}, {"Target": "x", "Vulnerabilities": None}]})
+    assert list(iter_vulns(payload)) == [("Java", {"VulnerabilityID": "CVE-1"})]
+
+
+def test_gta_fact_ids_are_position_independent():
+    from tools.verify.differential import collect_facts
+    rows = [{"class": "in-category", "cwe": "CWE-89", "file_suffix": "LgCarrierMapper.xml", "passed": False, "fixed_residual": 8},
+            {"class": "in-category", "cwe": "CWE-89", "file_suffix": "OldLgCarrierMapper.xml", "passed": False, "fixed_residual": 5},
+            {"class": "measure-then-classify", "cwe": "CWE-489", "file_suffix": "App.java", "observed": []}]
+    f = collect_facts(rows)
+    assert f["gta.CWE-89.LgCarrierMapper.fixed_residual"] == 8 and f["gta.CWE-89.OldLgCarrierMapper.fixed_residual"] == 5
+    assert f["gta.CWE-489.App.observed"] == "없음"
+    assert collect_facts(list(reversed(rows))) == f  # 순서 무관
+
+
+def test_gta_fact_ids_dedupe_same_cwe_and_stem_with_numeric_suffix():
+    """M7 — 같은 (cwe, stem) 이 두 번 나오면(같은 파일에서 같은 CWE 로 두 케이스가 잡힌 경우)
+    두 번째부터 `-2`, `-3` 접미를 붙인다(Interfaces 절)."""
+    from tools.verify.differential import collect_facts
+    rows = [{"class": "in-category", "cwe": "CWE-89", "file_suffix": "Mapper.xml", "passed": True, "fixed_residual": 0},
+            {"class": "in-category", "cwe": "CWE-89", "file_suffix": "Mapper.xml", "passed": False, "fixed_residual": 3}]
+    f = collect_facts(rows)
+    assert set(f) - {"gta.in_category_pass"} == {
+        "gta.CWE-89.Mapper.passed", "gta.CWE-89.Mapper.fixed_residual",
+        "gta.CWE-89.Mapper-2.passed", "gta.CWE-89.Mapper-2.fixed_residual",
+    }
+
+
+def test_write_evidence_relativizes_paths_when_repo_root_given(tmp_path):
+    from secscan.disposition import decide
+    from secscan.models import Finding, Location
+    from secscan.output.json_io import from_json
+    from secscan.scan import ScanResult
+    from tools.verify.evidence import write_evidence
+    root = tmp_path / "repo"; (root / "src").mkdir(parents=True)
+    f = decide([Finding(category="sast", severity="high", rule_id="r", location=Location(str(root / "src" / "A.java"), 1), source=str(root / "pom.xml"))])
+    write_evidence(tmp_path / "ev", result=ScanResult(findings=f, raw_results=[]), trace=None, meta={}, repo_root=root)
+    back = from_json((tmp_path / "ev" / "findings.json").read_text())
+    assert back[0].location.file == "src/A.java" and back[0].source == "pom.xml"
+
+
+def test_write_evidence_leaves_paths_alone_when_repo_root_omitted(tmp_path):
+    """M8 — `repo_root` 를 안 주면(기본 None) 옛 증거와 동일하게 절대경로가 그대로 저장된다."""
+    from secscan.disposition import decide
+    from secscan.models import Finding, Location
+    from secscan.output.json_io import from_json
+    from secscan.scan import ScanResult
+    from tools.verify.evidence import write_evidence
+    abs_file = "/abs/src/A.java"
+    f = decide([Finding(category="sast", severity="high", rule_id="r", location=Location(abs_file, 1), source="/abs/pom.xml")])
+    write_evidence(tmp_path / "ev", result=ScanResult(findings=f, raw_results=[]), trace=None, meta={})
+    back = from_json((tmp_path / "ev" / "findings.json").read_text())
+    assert back[0].location.file == abs_file and back[0].source == "/abs/pom.xml"
+
+
+def test_evidence_readme_is_rendered_from_meta(tmp_path):
+    from tools.verify.evidence_readme import render
+    d = tmp_path / "abc-standard"; d.mkdir()
+    (d / "meta.json").write_text(json.dumps({"snapshot": "abc", "profile": "standard", "elapsed_s": 8.5,
+                                             "scanner_status": [{"tool": "trivy", "status": "ok"}], "reachability": {"ran": True, "reason": "ok"}}))
+    (d / "findings.json").write_text(json.dumps({"@context": "secscan-findings/v1", "meta": {}, "findings": []}))
+    md = render(tmp_path)
+    assert "| abc-standard | abc | standard | trivy(ok) | 0 | 8.5 | ok |" in md
+
+
+def test_jar_surface_main_evidence_out_writes_raw_and_status_under_evidence_dir(tmp_path, monkeypatch):
+    """M3 — `--evidence-out <dir>` 가 주어지면 raw(`raw/trivy-rootfs.json`)·status(`status.json`)
+    를 그 디렉토리에 쓴다(`--out` 은 여전히 md 경로만)."""
+    from tools.verify import jar_surface
+
+    def fake_build(repo_dir, out_json, *, run=None):
+        out_json.write_text(json.dumps({"Results": []}), encoding="utf-8")
+        return True
+
+    monkeypatch.setattr(jar_surface, "build_and_scan_jar", fake_build)
+    bom = tmp_path / "bom.json"; bom.write_text(json.dumps({"components": []}), encoding="utf-8")
+    gt = "docs/verification/ground-truth/gt-b-sca.json"
+    out_md = tmp_path / "results" / "input-surface.md"; out_md.parent.mkdir()
+    ev_dir = tmp_path / "evidence" / "a483b3b1-jar"
+    rc = jar_surface.main(["--repo-dir", str(tmp_path / "repo"), "--bom", str(bom), "--gt", gt,
+                          "--out", str(out_md), "--evidence-out", str(ev_dir)])
+    assert rc == 0
+    assert (ev_dir / "raw" / "trivy-rootfs.json").read_text(encoding="utf-8") == json.dumps({"Results": []})
+    assert json.loads((ev_dir / "status.json").read_text(encoding="utf-8")) == {"jar_build_scan_ok": True}
+    assert out_md.exists()
+    assert not (tmp_path / "results" / "input-surface.trivy-fs.json").exists()
+
+
+# --- 컨트롤러 룰링 K(Task 12 리뷰 잔여) ---
+
+def test_gate_axis7_no_vacuous_pass_on_zero_over_zero():
+    """M6 — `gta.in_category_pass` 가 `0/0` 이면(범주 내 항목이 아예 없음) 축 7 은 통과가 아니다
+    (분모 0 은 측정 불능이지 100% 달성이 아니다)."""
+    from tools.verify.gate import render_gate
+    facts = {"gta.in_category_pass": "0/0"}
+    md = render_gate(facts)
+    row7 = next(l for l in md.splitlines() if l.startswith("| 7 GT-A"))
+    assert "✓" not in row7 and "✗" in row7
+
+
+def test_regenerate_skips_optional_doc_only_for_legacy_results_dir(tmp_path, monkeypatch):
+    """M5 — `_OPTIONAL` 스킵은 `gate-v2.md` 가 있고 `gate.md` 가 없는(플랜 1 옛 결과) 디렉토리에만
+    적용된다. 이 디렉토리는 legacy 표지(gate-v2.md)가 있으므로 없는 선택 문서는 조용히 건너뛴다."""
+    from tools.verify import generators
+    from tools.verify.reconcile import regenerate
+    (tmp_path / "gate-v2.md").write_text("# 옛 게이트\n", encoding="utf-8")
+    monkeypatch.setattr(generators, "GENERATORS", [generators.Generator("gate.md", None, lambda c: ("내용", None))])
+    rows = regenerate(tmp_path, tmp_path, "gt-b.json", "gt-a.json")
+    assert rows == []
+
+
+def test_regenerate_fails_missing_optional_doc_when_not_legacy(tmp_path, monkeypatch):
+    """M5 — legacy 표지(`gate-v2.md`)가 없는 디렉토리는 `_OPTIONAL` 이 적용되지 않는다: 없는
+    문서는 검사를 약화하지 않고 ✗ 행("결과 파일 없음")으로 잡힌다."""
+    from tools.verify import generators
+    from tools.verify.reconcile import regenerate
+    monkeypatch.setattr(generators, "GENERATORS", [generators.Generator("gate.md", None, lambda c: ("내용", None))])
+    rows = regenerate(tmp_path, tmp_path, "gt-b.json", "gt-a.json")
+    assert rows == [{"doc": "gate.md", "ok": False, "note": "결과 파일 없음"}]
+
+
+def test_reconcile_final_facts_match_this_run_reconcile_computation(tmp_path):
+    """M2 — `main` 은 `collect_facts` 를 같은 인자로 두 번 부르지 않는다: 문서 대조(2단계, 전체
+    마커 포함)에 쓴 `this_run_reconcile` 값을 `facts-reconcile.json` 에 그대로 재사용한다. 관측 가능한
+    계약은 "값이 이번 실행의 seed 기반 계산과 같다"는 것 — 회귀 시 두 계산이 갈라지면 이 값이 흔들린다."""
+    from tools.verify.reconcile import main
+    res, ev, gt_b, gt_a = _fake_results(tmp_path)
+    rc = main(["--results", str(res), "--evidence-root", str(ev), "--gt-b", gt_b, "--gt-a", gt_a])
+    assert rc == 0
+    fr = json.loads((res / "facts-reconcile.json").read_text(encoding="utf-8"))
+    assert fr["reconcile.verdict"] == "통과"
+    assert all(fr[k] == 0 for k in ("reconcile.regen_mismatch", "reconcile.marker_mismatch", "reconcile.unmarked",
+                                    "reconcile.provenance_violations", "reconcile.quote_mismatch"))
+
+
+def test_sca_extras_unclassified_counts_nonzero_case():
+    """플랜 1 파킹 Task 8 잔여 — Task 8 은 `sca.extras.unclassified == 0` 케이스만 검증했다.
+    미분류 초과탐지가 실제로 1건 이상일 때도 올바르게 세는지 확인한다."""
+    from tools.verify.report import collect_facts
+    m = GtManifest("gt-b-sca", "a483b3b1", "2026-08-31", entries=(
+        GtEntry("CVE-1", "g:a", "1.0", "present", "team", 1, severity_team="HIGH"),), raw_entries=())
+    fs = [_sca("g:a", "1.0", "CVE-1"), _sca("g:z", "9.9", "CVE-9"), _sca("g:y", "1.1", "CVE-8")]
+    rep = match_ground_truth(fs, m)
+    facts = collect_facts(rep, {fs[1].dedup_key: "inventory-diff"}, fs,
+                          {"stages": [{"stage": "final", "count": 3}]},
+                          {"scanner_status": [{"tool": "trivy", "status": "ok"}]}, [])
+    assert facts["sca.extras"] == 2 and facts["sca.extras.unclassified"] == 1
+    assert facts["sca.extras.inventory-diff"] == 1

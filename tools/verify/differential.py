@@ -26,7 +26,7 @@ def find_expected(findings: list[Finding], entry: dict) -> list[Finding]:
 def evaluate_pair(entry: dict, vuln_findings: list[Finding], fixed_findings: list[Finding]) -> dict:
     cls = entry.get("class")
     row = {"cwe": entry.get("cwe"), "class": cls, "file": entry.get("file_suffix"),
-           "rule": entry.get("expected_rule_suffix")}
+           "file_suffix": entry.get("file_suffix"), "rule": entry.get("expected_rule_suffix")}
     if cls == "measure-then-classify":
         hits = find_expected(vuln_findings, entry)
         row.update({"observed": sorted({f.rule_id for f in hits}), "passed": None})
@@ -83,16 +83,31 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
+def _slot(cwe: str, entry: dict, used: dict) -> str:
+    """`gta.<cwe>.<stem>` — 행 인덱스가 아니라 (cwe, 파일 stem) 로 정한 위치 독립적 id(M7).
+    같은 (cwe, stem) 이 중복되면 두 번째부터 `-2`, `-3` 접미를 붙인다."""
+    stem = Path(entry.get("file_suffix", "") or "row").stem or "row"
+    base = f"gta.{cwe}.{stem}"
+    n = used.get(base, 0) + 1
+    used[base] = n
+    return base if n == 1 else f"{base}-{n}"
+
+
 def collect_facts(rows: list[dict]) -> dict:
-    """정본 수치(spec §4.5). 판정은 evaluate_pair 의 기계적 결과를 그대로 옮긴다."""
+    """정본 수치(spec §4.5). 판정은 evaluate_pair 의 기계적 결과를 그대로 옮긴다.
+
+    id 는 위치 독립적이다(M7) — 행 순서를 바꿔도 같은 값이 같은 id 에 붙는다(정렬 후 부여).
+    """
     in_cat = [r for r in rows if r["class"] == "in-category"]
     facts: dict = {"gta.in_category_pass": f"{sum(1 for r in in_cat if r['passed'])}/{len(in_cat)}"}
-    for i, r in enumerate(rows):
+    used: dict = {}
+    for r in sorted(rows, key=lambda r: (r["cwe"], Path(r.get("file_suffix", "") or "").stem, r["class"])):
+        slot = _slot(r["cwe"], r, used)
         if r["class"] == "in-category":
-            facts[f"gta.row{i}.{r['cwe']}.passed"] = str(r["passed"])
-            facts[f"gta.row{i}.{r['cwe']}.fixed_residual"] = r.get("fixed_residual", 0)
+            facts[f"{slot}.passed"] = str(r["passed"])
+            facts[f"{slot}.fixed_residual"] = r.get("fixed_residual", 0)
         elif r["class"] == "measure-then-classify":
-            facts[f"gta.row{i}.{r['cwe']}.observed"] = ", ".join(r.get("observed", [])) or "없음"
+            facts[f"{slot}.observed"] = ", ".join(r.get("observed", [])) or "없음"
     return facts
 
 

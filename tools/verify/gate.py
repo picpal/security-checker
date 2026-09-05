@@ -10,6 +10,13 @@ def _ratio(v) -> tuple[int, int]:
     return int(a), int(b)
 
 
+def _axis7_ok(f: dict) -> bool:
+    """M6(리뷰 최종) — `a == b` 만으로는 `0/0`(범주 내 항목이 아예 없음)도 통과로 보인다.
+    분모가 0 이면 측정 불능이지 100% 달성이 아니므로 통과시키지 않는다(vacuous pass 금지)."""
+    a, b = _ratio(f["gta.in_category_pass"])
+    return b > 0 and a == b
+
+
 @dataclass(frozen=True)
 class Gate:
     axis: str
@@ -35,8 +42,7 @@ GATES: tuple[Gate, ...] = (
     Gate("6 도달성", "false-unreachable = 0 (프레임워크 활성화 케이스 포함)",
          ("reachapp.cases", "reachapp.false_unreachable", "reach.reachable", "reach.unreachable", "reach.unknown"),
          lambda f: int(f["reachapp.false_unreachable"]) == 0),
-    Gate("7 GT-A differential(범주 내)", "범주 내 출현·소멸 100%", ("gta.in_category_pass",),
-         lambda f: _ratio(f["gta.in_category_pass"])[0] == _ratio(f["gta.in_category_pass"])[1]),
+    Gate("7 GT-A differential(범주 내)", "범주 내 출현·소멸 100%", ("gta.in_category_pass",), _axis7_ok),
     Gate("8 보고서 충실성", "왕복 동일 · id 집합 동일 · 판정 불일치 0 · 결정성",
          ("fidelity.roundtrip_identical", "fidelity.id_set_mismatch", "fidelity.disposition_mismatch", "fidelity.deterministic",
           "fidelity.meta_scanner_status_rows", "fidelity.undecided"),

@@ -1,13 +1,13 @@
 {
-  "gta.in_category_pass": "2/4",
-  "gta.row0.CWE-259.fixed_residual": 0,
-  "gta.row0.CWE-259.passed": "True",
-  "gta.row1.CWE-760.fixed_residual": 0,
-  "gta.row1.CWE-760.passed": "True",
-  "gta.row2.CWE-89.fixed_residual": 8,
-  "gta.row2.CWE-89.passed": "False",
-  "gta.row3.CWE-89.fixed_residual": 5,
-  "gta.row3.CWE-89.passed": "False",
-  "gta.row4.CWE-489.observed": "없음",
-  "gta.row5.CWE-497.observed": "없음"
+  "gta.CWE-259.LoadtestSeederConfig.fixed_residual": 0,
+  "gta.CWE-259.LoadtestSeederConfig.passed": "True",
+  "gta.CWE-489.application.observed": "없음",
+  "gta.CWE-497.TestDbReset.observed": "없음",
+  "gta.CWE-760.LoadtestSeederConfig.fixed_residual": 0,
+  "gta.CWE-760.LoadtestSeederConfig.passed": "True",
+  "gta.CWE-89.LgCarrierMapper.fixed_residual": 8,
+  "gta.CWE-89.LgCarrierMapper.passed": "False",
+  "gta.CWE-89.OldLgCarrierMapper.fixed_residual": 5,
+  "gta.CWE-89.OldLgCarrierMapper.passed": "False",
+  "gta.in_category_pass": "2/4"
 }

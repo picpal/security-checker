@@ -15,7 +15,7 @@ from typing import Callable
 
 from secscan.measure import load_gt_manifest
 
-from . import differential, fidelity, gate, jar_surface, known_fp, profile_contract, reach_app, report
+from . import differential, evidence_readme, fidelity, gate, jar_surface, known_fp, profile_contract, reach_app, report
 from ._facts import facts_text
 
 
@@ -41,9 +41,10 @@ class Ctx:
 
 @dataclass(frozen=True)
 class Generator:
-    doc: str  # 결과 디렉토리 안 문서 파일명
-    facts: str | None  # facts 파일명(없으면 None)
+    doc: str  # 결과 디렉토리 안 문서 파일명(비교·보고 표시용 이름이기도 함)
+    facts: str | None  # facts 파일명(없으면 None) — 항상 결과 디렉토리 안
     produce: Callable[["Ctx"], tuple[str, dict | None]]  # (문서 텍스트, facts dict)
+    path: Callable[["Ctx"], Path] | None = None  # None = 결과 디렉토리 안(ctx.results/doc). 있으면 이 경로 사용(README 등, Task 13)
 
 
 def _via_cli(main, args: list[str], doc_name: str, facts_name: str | None):
@@ -77,12 +78,8 @@ def _profile(c: Ctx):
 
 
 def _surface(c: Ctx):
-    # Task 13 이 입력면 raw 를 evidence 로 옮기기 전까지, jar 스캔 raw 는 results 디렉토리에 직접
-    # 놓인다(플랜 1 결과 호환) — Ctx 경로가 없으면 그쪽으로 폴백한다(이 줄은 Task 13 에서 제거).
-    status_path = c.jar_status if c.jar_status.exists() else c.results / "input-surface.status.json"
-    jar_path = c.jar_raw if c.jar_raw.exists() else c.results / "input-surface.trivy-fs.json"
-    ok = bool(json.loads(status_path.read_text(encoding="utf-8")).get("jar_build_scan_ok", False))
-    bom, jar = (c.std / "raw" / "bom.cdx.json").read_text(encoding="utf-8"), jar_path.read_text(encoding="utf-8")
+    ok = bool(json.loads(c.jar_status.read_text(encoding="utf-8")).get("jar_build_scan_ok", False))
+    bom, jar = (c.std / "raw" / "bom.cdx.json").read_text(encoding="utf-8"), c.jar_raw.read_text(encoding="utf-8")
     m = load_gt_manifest(str(c.gt_b))
     return jar_surface.render_doc(ok, bom, jar, m), jar_surface.collect_facts(ok, bom, jar, m)
 
@@ -102,6 +99,10 @@ def _gate(c: Ctx):
     return gate.render_gate(load_facts(c.results)), None
 
 
+def _readme(c: Ctx):
+    return evidence_readme.render(c.evidence_root), None
+
+
 GENERATORS: list[Generator] = [
     Generator("gt-b-match.md", "facts.json", _gt_b_match),
     Generator("gt-a-differential.md", "facts-gta.json", _gt_a_diff),
@@ -111,6 +112,7 @@ GENERATORS: list[Generator] = [
     Generator("fidelity.md", "facts-fidelity.json", _fidelity),
     Generator("reach-app.md", "facts-reachapp.json", _reach_app),
     Generator("gate.md", None, _gate),  # 마지막: 위 facts 를 읽는다
+    Generator("README.md", None, _readme, path=lambda c: c.evidence_root / "README.md"),  # 문서 위치가 evidence 루트(Rec 5)
 ]
 
 
@@ -119,7 +121,9 @@ def write_all(ctx: Ctx) -> list[Path]:
     written = []
     for g in GENERATORS:
         doc, facts = g.produce(ctx)
-        p = ctx.results / g.doc; p.write_text(doc, encoding="utf-8"); written.append(p)
+        p = g.path(ctx) if g.path else ctx.results / g.doc
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(doc, encoding="utf-8"); written.append(p)
         if g.facts:
             q = ctx.results / g.facts; q.write_text(facts_text(facts), encoding="utf-8"); written.append(q)
     return written

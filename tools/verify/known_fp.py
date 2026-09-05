@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 
+from ._trivy import iter_vulns
+
 
 def check_known_fp(bom_json: str, trivy_json: str, *, package: str, advisory: str,
                    expected_version: str) -> dict:
@@ -15,11 +17,8 @@ def check_known_fp(bom_json: str, trivy_json: str, *, package: str, advisory: st
         if (c.get("group") == group and c.get("name") == name) or purl.startswith(f"pkg:maven/{group}/{name}@"):
             found = c.get("version") or purl.split("@", 1)[-1]
             break
-    reported = False
-    for res in json.loads(trivy_json or "{}").get("Results", []) or []:
-        for v in res.get("Vulnerabilities") or []:
-            if v.get("VulnerabilityID") == advisory and (v.get("PkgName") in (package, name)):
-                reported = True
+    reported = any(v.get("VulnerabilityID") == advisory and v.get("PkgName") in (package, name)
+                   for _, v in iter_vulns(trivy_json))
     return {
         "component_present": found is not None,
         "version_preserved": found == expected_version,
