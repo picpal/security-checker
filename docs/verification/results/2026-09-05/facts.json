@@ -11,6 +11,8 @@
   "findings.sca": 48,
   "findings.secret": 13,
   "findings.total": 73,
+  "reach.reachable": 0,
+  "reach.unknown": 0,
   "reach.unreachable": 48,
   "sca.extras": 1,
   "sca.extras.inventory-diff": 1,

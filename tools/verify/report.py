@@ -126,8 +126,11 @@ def collect_facts(report: MatchReport, classes: dict[str, str], findings: list[F
         facts[f"attrition.{s['stage']}"] = s["count"]
     for s in meta.get("scanner_status", []):
         facts[f"scanner.{s['tool']}"] = s["status"]
-    for st, n in sorted(Counter((f.reachability.status if f.reachability else "none")
-                                for f in findings if f.category == "sca").items()):
+    reach = Counter((f.reachability.status if f.reachability else "none")
+                    for f in findings if f.category == "sca")
+    for st in ("reachable", "unreachable", "unknown"):
+        facts[f"reach.{st}"] = reach.pop(st, 0)
+    for st, n in sorted(reach.items()):
         facts[f"reach.{st}"] = n
     return facts
 
