@@ -1868,6 +1868,7 @@ git commit -m "docs(V2): GT-B 대조 실측 — CVE recall N/46, known-FP 3단�
 - `diff_inventories(a, b) -> dict` with `only_a`, `only_b`, `version_differs: dict[pkg, (va, vb)]`
 - `compare_installed(inv: dict, manifest: GtManifest) -> list[dict]` — 정답지 설치버전 vs 인벤토리
 - `render(diff, cmp_bom, cmp_jar) -> str`
+- `collect_facts(ok: bool, bom_json: str, jar_json: str, manifest: GtManifest) -> dict` — 정본 수치(2026-09-05 사후 개정, Task 12 Step 0 에서 구현): `surface.jar_ok`("True"/"False"), `surface.bom_only`, `surface.jar_only`, `surface.version_differs`, `surface.gt_match_bom`(정답지 패키지 중 BOM 버전 일치 수 "m/t"), `surface.gt_match_jar`, `surface.vuln_rows_gt`(정답지 패키지 취약점 부착 행 수), `surface.jar_packages`(jar 인벤토리 패키지 수), `surface.bom_packages`. `main` 은 `--out` 옆에 `facts-surface.json` 을 저장한다.
 - `render_doc(ok: bool, bom_json: str, jar_json: str, manifest: GtManifest) -> str` — 문서 전체(제목 포함). `main` 은 이 함수로만 md 를 만들고, `input-surface.status.json`(`{"jar_build_scan_ok": bool}`)을 함께 저장한다 — reconcile(Task 13)이 저장된 `input-surface.trivy-fs.json`·증거 `raw/bom.cdx.json`·status 로 같은 문서를 재생성해 비교한다.
 
 - [ ] **Step 1: 실패하는 테스트 작성**
@@ -2443,9 +2444,13 @@ git commit -m "docs(V3): GT-A differential 실측 + 도달성 축 게이트 기�
 - Create: `docs/measurements/<YYYY-MM-DD>-message-gate-verification.md`
 - Modify: `PROGRESS.md`, `CLAUDE.md`(상태 절 1~2줄)
 
+- [ ] **Step 0: 입력면 정본 수치 추가 (사후 개정 — Task 9 에 facts 가 없어 축 5 수치를 인용할 수 없음)**
+
+`tools/verify/jar_surface.py` 에 `collect_facts(ok, bom_json, jar_json, manifest) -> dict` 를 추가한다(Interfaces 참조; 모든 값은 `inventory_from_bom/inventory_from_trivy/diff_inventories/compare_installed/vuln_installed_versions` 의 결정적 결과에서 셈). `main` 은 `out.with_name("facts-surface.json")` 에 `json.dumps(facts, ensure_ascii=False, indent=2, sort_keys=True) + "\n"` 을 저장한다. 테스트(`tests/test_verify_tools.py` 추가): 가짜 BOM(2 컴포넌트)·가짜 trivy JSON(1 패키지 2버전 + GT 패키지 취약점 1행)·GT 매니페스트로 `collect_facts` 의 모든 키와 값을 단언한다. 그 다음 재빌드·재스캔 없이 기존 `input-surface.trivy-fs.json`·`input-surface.status.json`·증거 `raw/bom.cdx.json` 으로 `collect_facts(...)` 를 호출해 `docs/verification/results/<date>/facts-surface.json` 을 생성한다(`main` 재실행 금지 — jar 재빌드가 일어남). `.venv/bin/pytest -q` green 후 커밋: `feat(V2): 입력면 정본 수치 facts-surface.json (jar_surface.collect_facts)` + `다음: 측정 문서 중간본`.
+
 - [ ] **Step 1: 측정 문서 작성**
 
-`docs/verification/results/<date>/` 의 md 들을 절로 묶는다. 구성(spec §5 순서): 요약(축별 게이트 ✓/✗ 표) → 환경·격리·도구 버전(meta.json) → 축 1 프로파일 계약 → 축 2~4 SCA(recall 표·미탐·known-FP 3단계·초과분 분류) → 축 5 입력면 → 축 6 도달성(사람 판정 비교표 + reach-app 결과) → 축 7 GT-A differential → 부수 측정(시간·메모리) → **백로그 후보(우선순위)**: 게이트 미통과 항목을 P1 로, 관측된 갭을 P2 로. 마지막에 "플랜 2(V4~V7)에서 확정" 표기. 수치는 `facts*.json` 의 값을 그대로 옮기고 **요약 표는 `| 축 | 기준 | 측정값 | 판정 |` 형식으로 쓰고 측정값 열의 모든 수치에 `<!-- fact:<id> -->` 마커**를 단다(Task 13 정본 검증기가 측정값/값 열을 대조; 기준 열은 spec 상수). 추정치·해석 수치 금지. 생성 문서(`gt-b-match.md` 등)는 내용을 바꾸지 말고 인용(파일 경로 + 핵심 표 복사)한다.
+`docs/verification/results/<date>/` 의 md 들을 절로 묶는다. 구성(spec §5 순서): 요약(축별 게이트 ✓/✗ 표) → 환경·격리·도구 버전(meta.json) → 축 1 프로파일 계약 → 축 2~4 SCA(recall 표·미탐·known-FP 3단계·초과분 분류) → 축 5 입력면 → 축 6 도달성(사람 판정 비교표 + reach-app 결과) → 축 7 GT-A differential → 부수 측정(시간·메모리) → **백로그 후보(우선순위)**: 게이트 미통과 항목을 P1 로, 관측된 갭을 P2 로. 마지막에 "플랜 2(V4~V7)에서 확정" 표기. 수치는 `facts*.json` 의 값을 그대로 옮기고 **요약 표는 `| 축 | 기준 | 측정값 | 판정 |` 형식으로 쓰고 측정값 열의 모든 수치에 `<!-- fact:<id> -->` 마커**를 단다(Task 13 정본 검증기가 측정값/값 열을 대조; 기준 열은 spec 상수). 추정치·해석 수치 금지. 생성 문서(`gt-b-match.md` 등)는 내용을 바꾸지 말고 인용(파일 경로 + 핵심 표 복사)한다. 요약 절 밖에서도 손으로 옮기는 수치는 마커를 단다(facts 가 없는 값 — 예: meta.json 의 elapsed_s — 은 숫자를 옮기지 말고 `docs/verification/evidence/<date>/README.md` 표를 참조로만 가리킨다). 원인·해석은 쓰지 않고, 게이트 문서의 `needs_human` 질문을 그대로 옮긴다.
 
 - [ ] **Step 2: PROGRESS.md 에 V 절 추가**
 
@@ -2561,6 +2566,9 @@ def _fake_results(tmp_path):
     (res / "input-surface.status.json").write_text(json.dumps({"jar_build_scan_ok": False}), encoding="utf-8")
     from secscan.measure import load_gt_manifest
     (res / "input-surface.md").write_text(render_surface(False, (std / "raw" / "bom.cdx.json").read_text(), "{}", load_gt_manifest(gt_b)), encoding="utf-8")
+    from tools.verify.jar_surface import collect_facts as surface_facts
+    (res / "facts-surface.json").write_text(json.dumps(surface_facts(False, (std / "raw" / "bom.cdx.json").read_text(), "{}", load_gt_manifest(gt_b)),
+                                                       ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return res, ev, gt_b, gt_a
 
 
@@ -2609,7 +2617,7 @@ from secscan.measure import load_gt_manifest
 from secscan.output.json_io import from_json
 
 from . import differential, report
-from .jar_surface import render_doc as render_surface
+from .jar_surface import collect_facts as surface_facts, render_doc as render_surface
 from .known_fp import check_known_fp, render as render_fp
 from .profile_contract import render_doc as render_profiles
 
@@ -2722,7 +2730,10 @@ def regenerate(results_dir, evidence_root, gt_b, gt_a) -> list[dict]:
     jar, status = res / "input-surface.trivy-fs.json", res / "input-surface.status.json"
     if jar.exists() and status.exists() and bom.exists():
         ok = bool(json.loads(status.read_text(encoding="utf-8")).get("jar_build_scan_ok", False))
-        cmp("input-surface.md", render_surface(ok, bom.read_text(encoding="utf-8"), jar.read_text(encoding="utf-8"), load_gt_manifest(gt_b)))
+        m_b = load_gt_manifest(gt_b)
+        cmp("input-surface.md", render_surface(ok, bom.read_text(encoding="utf-8"), jar.read_text(encoding="utf-8"), m_b))
+        cmp("facts-surface.json", json.dumps(surface_facts(ok, bom.read_text(encoding="utf-8"), jar.read_text(encoding="utf-8"), m_b),
+                                             ensure_ascii=False, indent=2, sort_keys=True) + "\n")
     else:
         rows.append({"doc": "input-surface.md", "ok": False, "note": "trivy-fs.json / status.json / bom 없음"})
     return rows
