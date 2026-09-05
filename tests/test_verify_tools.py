@@ -261,3 +261,29 @@ def test_known_fp_render_and_profile_render_doc_are_full_docs():
     assert fp.startswith("# known-FP CVE-2025-59250") and "| not_reported | True |" in fp
     doc = render_doc({"trivy": "ok"})
     assert doc.startswith("# 프로파일 계약") and "standard" in doc
+
+
+# --- V2: 입력면 교차 ---
+from tools.verify.jar_surface import compare_installed, diff_inventories, inventory_from_bom, inventory_from_trivy
+
+
+def test_inventories_and_diff():
+    bom = json.dumps({"components": [
+        {"group": "g", "name": "a", "version": "1.0", "purl": "pkg:maven/g/a@1.0"},
+        {"group": "g", "name": "b", "version": "2.0", "purl": "pkg:maven/g/b@2.0"}]})
+    trivy = json.dumps({"Results": [{"Target": "Java", "Packages": [
+        {"Name": "g:a", "Version": "1.0"}, {"Name": "g:c", "Version": "3.0"}],
+        "Vulnerabilities": [{"PkgName": "g:b", "InstalledVersion": "2.0.jre11", "VulnerabilityID": "CVE-1"}]}]})
+    ia, ib = inventory_from_bom(bom), inventory_from_trivy(trivy)
+    assert ia == {"g:a": "1.0", "g:b": "2.0"}
+    assert ib == {"g:a": "1.0", "g:c": "3.0", "g:b": "2.0.jre11"}
+    d = diff_inventories(ia, ib)
+    assert d["only_a"] == [] and d["only_b"] == ["g:c"]
+    assert d["version_differs"] == {"g:b": ("2.0", "2.0.jre11")}
+
+
+def test_compare_installed_against_manifest():
+    m = GtManifest("sca", "s", "2026-08-31", (GtEntry("CVE-1", "g:a", "1.0"), GtEntry("CVE-2", "g:x", "9")), [])
+    rows = compare_installed({"g:a": "1.0"}, m)
+    assert rows == [{"package": "g:a", "manifest": "1.0", "inventory": "1.0", "match": True},
+                    {"package": "g:x", "manifest": "9", "inventory": None, "match": False}]
