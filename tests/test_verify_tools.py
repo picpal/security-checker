@@ -333,3 +333,40 @@ def test_build_and_scan_jar_gradle_failure_skips_trivy(tmp_path):
     assert ok is False
     assert len(calls) == 1
     assert out_json.with_suffix(".build-error.txt").read_text(encoding="utf-8") == "boom"
+
+
+def test_build_and_scan_jar_trivy_nonzero_still_records_partial_output(tmp_path):
+    from tools.verify.jar_surface import build_and_scan_jar
+
+    calls = []
+
+    def fake_run(argv, **kw):
+        calls.append(argv)
+        if argv[0] == "./gradlew":
+            class R:
+                returncode = 0
+                stdout = ""
+                stderr = ""
+        else:
+            class R:
+                returncode = 1
+                stdout = '{"Results": []}'
+                stderr = "trivy failed"
+        return R()
+
+    repo_dir = tmp_path / "repo"
+    out_json = tmp_path / "input-surface.trivy-fs.json"
+    ok = build_and_scan_jar(repo_dir, out_json, run=fake_run)
+    assert ok is False
+    assert out_json.read_text(encoding="utf-8") == '{"Results": []}'
+
+
+def test_render_doc_empty_jar_payload_shapes_are_equivalent():
+    from tools.verify.jar_surface import render_doc
+
+    bom = json.dumps({"components": [{"group": "g", "name": "a", "version": "1.0"}]})
+    m = GtManifest("sca", "s", "2026-08-31", (GtEntry("CVE-1", "g:a", "1.0"),), [])
+    a = render_doc(False, bom, '{"SchemaVersion": 2}', m)
+    b = render_doc(False, bom, "{}", m)
+    assert a == b
+    assert a.startswith("# 입력면 교차 — jar 빌드/스캔 실패(부분)")

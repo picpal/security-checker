@@ -114,7 +114,7 @@ def main(argv: list[str] | None = None) -> int:
 def render_doc(ok: bool, bom_json: str, jar_json: str, manifest: GtManifest) -> str:
     """입력면 교차 문서 전체(생성기 — reconcile 이 같은 입력으로 재생성해 비교한다)."""
     inv_bom = inventory_from_bom(bom_json)
-    inv_jar = inventory_from_trivy(jar_json) if jar_json.strip() not in ("", "{}") else {}
+    inv_jar = inventory_from_trivy(jar_json or "{}")
     return f"# 입력면 교차 — jar 빌드/스캔 {'성공' if ok else '실패(부분)'}\n\n" + render(
         diff_inventories(inv_bom, inv_jar), compare_installed(inv_bom, manifest), compare_installed(inv_jar, manifest))
 
