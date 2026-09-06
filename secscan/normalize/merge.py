@@ -31,6 +31,8 @@ def _combine(a: Finding, b: Finding) -> Finding:
             id=adv.id,
             aliases=_uniq(adv.aliases, b_adv.aliases if b_adv else ()),
             fixed_versions=_uniq(adv.fixed_versions, b_adv.fixed_versions if b_adv else ()),
+            cvss=_uniq(adv.cvss, b_adv.cvss if b_adv else ()),
+            published=adv.published or (b_adv.published if b_adv else None),
         )
     return replace(
         a,
@@ -40,6 +42,7 @@ def _combine(a: Finding, b: Finding) -> Finding:
         owasp=_uniq(a.owasp, b.owasp),
         references=_uniq(a.references, b.references),
         advisory=adv,
+        occurrences=_uniq(a.occurrences, b.occurrences),
         consensus=Consensus(tools=tools, score=len(tools)),
         tool="+".join(tools),
     )

@@ -4,6 +4,8 @@
 주입/대체해 exit code 계약만 검증한다.
 """
 
+import json
+
 from secscan import cli
 from secscan.adapters.base import FAILED, RawResult
 from secscan.doctor import (
@@ -98,12 +100,16 @@ def test_main_doctor_returns_1_when_problems(monkeypatch):
 # --- scan 커맨드 ---
 
 def _reach(pkg, cve, sev, reach):
-    return Finding(
+    # 판정 H 를 거친 finding 을 반환한다 — run_scan 이 항상 decide() 를 적용하므로
+    # (출력은 disposition/tier 만 읽고 재계산하지 않는다, spec §7.4).
+    from secscan.disposition import decide_one
+
+    return decide_one(Finding(
         category="sca", severity=sev, rule_id=cve,
         component=Component("maven", pkg, "1.0"),
         advisory=Advisory(cve, aliases=(cve,)),
         reachability=Reachability(reach),
-    )
+    ))
 
 
 def test_render_scan_summary_shows_counts_and_reachability():
@@ -130,6 +136,8 @@ def test_render_scan_summary_shows_compliance_count():
 
 
 def test_has_actionable_gates_by_sast_tier_and_reachability():
+    # _has_actionable 은 disposition 만 읽는다(재계산 금지) — 입력은 판정 H(decide)를 거친다.
+    from secscan.disposition import decide
     from secscan.models import UNREACHABLE, Finding, Location, Reachability
 
     review = Finding(category="sast", severity="high", confidence="low",
@@ -139,11 +147,11 @@ def test_has_actionable_gates_by_sast_tier_and_reachability():
     secret = Finding(category="secret", severity="high", location=Location("c", start_line=1))
     unreach_sca = Finding(category="sca", severity="high",
                           reachability=Reachability(UNREACHABLE))
-    assert cli._has_actionable([review]) is False       # review SAST 비게이트(P1③)
-    assert cli._has_actionable([actionable]) is True    # actionable SAST 게이트
-    assert cli._has_actionable([secret]) is True        # secret 게이트
-    assert cli._has_actionable([unreach_sca]) is False  # 도달 불가 SCA 비게이트
-    assert cli._has_actionable([review, actionable]) is True
+    assert cli._has_actionable(decide([review])) is False       # review SAST 비게이트(P1③)
+    assert cli._has_actionable(decide([actionable])) is True    # actionable SAST 게이트
+    assert cli._has_actionable(decide([secret])) is True        # secret 게이트
+    assert cli._has_actionable(decide([unreach_sca])) is False  # 도달 불가 SCA 비게이트
+    assert cli._has_actionable(decide([review, actionable])) is True
 
 
 def test_render_scan_summary_shows_sast_tiers():
@@ -301,3 +309,51 @@ def test_main_clean_unknown_slug_returns_1(tmp_path, capsys):
     rc = cli.main(["clean", "--slug", "nope", "--base", str(tmp_path)])
     assert rc == 1
     assert "nope" in (capsys.readouterr().out + capsys.readouterr().err)
+
+
+# --- Task 5: 출력이 disposition/tier 만 읽는다 ---
+
+import pytest
+from secscan.disposition import decide
+from secscan.models import Location, Suppression
+
+
+def test_exit_code_ignores_human_suppressed_secret():
+    """spec §7.4 알려진 결함: 억제된 secret 만 있어도 exit 1 이었다. H 이후에는 exit 0."""
+    sec = Finding(category="secret", severity="high", rule_id="aws", location=Location("a.properties", 4))
+    sec.suppression = Suppression("suppressed", "회수 완료", "alice 2026-09-05", "revoke 로그", "2027-01-01", sec.dedup_key)
+    assert cli._has_actionable(decide([sec])) is False
+
+
+def test_exit_code_true_for_actionable_and_error_when_undecided():
+    sec = Finding(category="secret", severity="high", rule_id="aws", location=Location("a.properties", 4))
+    assert cli._has_actionable(decide([sec])) is True
+    with pytest.raises(ValueError):
+        cli._has_actionable([sec])  # H 미실행 입력은 CI 게이트에서 조용히 0 이 되면 안 된다
+
+
+# --- Task 6: findings.json 출력 ---
+
+def test_scan_writes_findings_json_with_context(tmp_path, monkeypatch):
+    from secscan.scan import ScanResult
+    from secscan.disposition import decide
+    sec = decide([Finding(category="secret", severity="high", rule_id="aws", location=Location("a.properties", 4))])
+    monkeypatch.setattr(cli, "run_scan", lambda *a, **k: ScanResult(findings=sec, raw_results=[]))
+    monkeypatch.setattr(cli, "build_adapters", lambda p: [])
+    rc = cli.main(["scan", "--target", str(tmp_path), "--out", str(tmp_path / "out"), "--profile", "quick", "--no-reachability"])
+    doc = json.loads((tmp_path / "out" / "findings.json").read_text())
+    assert doc["@context"] == "secscan-findings/v1" and doc["findings"][0]["disposition"] == "actionable"
+    assert rc == 1
+
+
+# --- Task 8: xlsx/CSV 워크북 출력 ---
+
+def test_scan_writes_workbook_or_csv_bundle(tmp_path, monkeypatch):
+    from secscan.scan import ScanResult
+    from secscan.disposition import decide
+    fs = decide([Finding(category="secret", severity="high", rule_id="aws", location=Location("a.properties", 4))])
+    monkeypatch.setattr(cli, "run_scan", lambda *a, **k: ScanResult(findings=fs, raw_results=[]))
+    monkeypatch.setattr(cli, "build_adapters", lambda p: [])
+    cli.main(["scan", "--target", str(tmp_path), "--out", str(tmp_path / "out"), "--profile", "quick", "--no-reachability"])
+    out = tmp_path / "out"
+    assert (out / "findings.xlsx").exists() or (out / "findings-xlsx" / "Secret.csv").exists()

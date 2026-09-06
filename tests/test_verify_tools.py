@@ -160,9 +160,13 @@ def test_write_evidence_layout_and_redaction(tmp_path):
         assert not any(s in text for s in secret_values), p
     meta = json.loads((tmp_path / "meta.json").read_text())
     assert meta["snapshot"] == "abc"
-    assert meta["scanner_status"] == [{"tool": "trivy", "status": "ok"},
-                                      {"tool": "gitleaks", "status": "ok"},
-                                      {"tool": "semgrep", "status": "failed", "error": "exit 2"}]
+    # I2(최종 리뷰) — scanner_status 없이 만든 ScanResult 는 raw_results 에서 같은 5키(tool/status/
+    # tool_version/duration_s/message)로 폴백한다("error" 전용 키는 없다).
+    assert meta["scanner_status"] == [
+        {"tool": "trivy", "status": "ok", "tool_version": None, "duration_s": None, "message": ""},
+        {"tool": "gitleaks", "status": "ok", "tool_version": None, "duration_s": None, "message": ""},
+        {"tool": "semgrep", "status": "failed", "tool_version": None, "duration_s": None, "message": "exit 2"},
+    ]
 
 
 def test_run_snapshot_parser_defaults():
@@ -197,7 +201,9 @@ def test_render_attrition_table_shows_stage_deltas():
 def test_render_attrition_normalize_rows_are_independent_not_cumulative():
     """I1 — normalize:<tool> 행은 도구별 독립 건수다(파이프라인 누적이 아니다). 증감 칸은 비우고,
     normalize(합계) 합성 행을 넣어 그 이후(merge~)부터만 증감을 계산한다. merge 는 76→73 로
-    실제로 3건이 줄었으므로 -3 이어야 한다(예전엔 도구 행 사이 알파벳순 차를 찍어 +25 로 뒤집혔다)."""
+    실제로 3건이 줄었으므로 -3 이어야 한다(예전엔 도구 행 사이 알파벳순 차를 찍어 +25 로 뒤집혔다).
+    증감 0 은 "+0" 이 아니라 "0" 으로 찍는다(N3 — Task 12 에서 통일; 부호 없는 0 과 유의미한 증감을
+    한눈에 구분하기 위함)."""
     trace = {"raw": [], "stages": [
         {"stage": "normalize:gitleaks", "count": 13, "keys": []},
         {"stage": "normalize:semgrep", "count": 15, "keys": []},
@@ -212,8 +218,8 @@ def test_render_attrition_normalize_rows_are_independent_not_cumulative():
     assert "| normalize:trivy | 48 |  |" in md
     assert "| normalize(합계) | 76 |  |" in md
     assert "| merge | 73 | -3 |" in md  # 76 → 73
-    assert "| exclude | 73 | +0 |" in md
-    assert "| final | 73 | +0 |" in md
+    assert "| exclude | 73 | 0 |" in md
+    assert "| final | 73 | 0 |" in md
 
 
 def test_render_match_lists_recall_and_extra_classes():
@@ -692,6 +698,11 @@ def _fake_results(tmp_path):
     from tools.verify.profile_contract import collect_facts as profile_facts, render_doc as render_profiles
     from secscan.output.json_io import to_json
     ev = tmp_path / "evidence"; std = ev / "a483b3b1-standard"; (std / "raw").mkdir(parents=True)
+    res = tmp_path / "results"; res.mkdir()
+    # M5(리뷰 최종) — `regenerate` 의 선택 문서 스킵은 이제 "gate-v2.md 있음 · gate.md 없음"(legacy)
+    # 로 판정한다. 이 픽스처는 플랜 1 옛 결과 디렉토리를 흉내내므로(fidelity.md/reach-app.md/gate.md/
+    # README.md 를 만들지 않음) legacy 표지를 남겨 그 문서들이 없어도 ✗ 행이 되지 않게 한다.
+    (res / "gate-v2.md").write_text("# 게이트 v2 (구 결과 호환 표지자)\n", encoding="utf-8")
     fs = [_sca("org.apache.tomcat.embed:tomcat-embed-core", "11.0.22", "CVE-2026-1"),
           _sca("com.microsoft.sqlserver:mssql-jdbc", "13.2.1.jre11", "CVE-2020-9")]
     (std / "findings.json").write_text(to_json(fs), encoding="utf-8")
@@ -704,7 +715,6 @@ def _fake_results(tmp_path):
         {"group": "com.microsoft.sqlserver", "name": "mssql-jdbc", "version": "13.2.1.jre11", "purl": "pkg:maven/com.microsoft.sqlserver/mssql-jdbc@13.2.1.jre11?type=jar"}]}), encoding="utf-8")
     deep = ev / "a483b3b1-deep"; deep.mkdir()
     (deep / "meta.json").write_text(json.dumps({"scanner_status": [{"tool": "trivy", "status": "ok"}, {"tool": "spotbugs", "status": "ok"}]}), encoding="utf-8")
-    res = tmp_path / "results"; res.mkdir()
     gt_b = "docs/verification/ground-truth/gt-b-sca.json"; gt_a = "docs/verification/ground-truth/gt-a-source.json"
     report.main(["--evidence", str(std), "--gt", gt_b, "--out", str(res / "gt-b-match.md"), "--facts", str(res / "facts.json")])
     differential.main(["--evidence-root", str(ev), "--gt", gt_a, "--out", str(res / "gt-a-differential.md"), "--facts", str(res / "facts-gta.json")])
@@ -715,8 +725,11 @@ def _fake_results(tmp_path):
     statuses = {"trivy": "ok", "spotbugs": "ok"}
     (res / "profile-contract.md").write_text(render_profiles(statuses), encoding="utf-8")
     (res / "facts-profile.json").write_text(facts_text(profile_facts(statuses)), encoding="utf-8")
-    (res / "input-surface.trivy-fs.json").write_text("{}", encoding="utf-8")
-    (res / "input-surface.status.json").write_text(json.dumps({"jar_build_scan_ok": False}), encoding="utf-8")
+    # M3 — jar 입력면 raw/status 는 이제 evidence 디렉토리(`<jar-name>/raw/trivy-rootfs.json`,
+    # `<jar-name>/status.json`)에 있다(results 에는 더 이상 두지 않는다).
+    jar_dir = ev / "a483b3b1-jar"; (jar_dir / "raw").mkdir(parents=True)
+    (jar_dir / "raw" / "trivy-rootfs.json").write_text("{}", encoding="utf-8")
+    (jar_dir / "status.json").write_text(json.dumps({"jar_build_scan_ok": False}), encoding="utf-8")
     from secscan.measure import load_gt_manifest
     (res / "input-surface.md").write_text(render_surface(False, (std / "raw" / "bom.cdx.json").read_text(), "{}", load_gt_manifest(gt_b)), encoding="utf-8")
     from tools.verify.jar_surface import collect_facts as surface_facts
@@ -752,11 +765,13 @@ def test_reconcile_main_writes_facts_reconcile_json(tmp_path):
     (res / "gate-v2.md").write_text(f"# 게이트\n| 축 | 값 |\n|---|---|\n| recall | {facts['sca.recall_cve']} <!-- fact:sca.recall_cve --> |\n", encoding="utf-8")
     assert main(["--results", str(res), "--evidence-root", str(ev), "--gt-b", gt_b, "--gt-a", gt_a]) == 0
     fr = json.loads((res / "facts-reconcile.json").read_text(encoding="utf-8"))
+    # N5 — reconcile.self_marker_mismatch(reconcile.* 자기인용 불일치 수)가 새로 추가된다: 이 픽스처는
+    # gate-v2.md 에 reconcile.* 마커를 두지 않으므로 0.
     assert set(fr) == {"reconcile.regen_mismatch", "reconcile.marker_mismatch", "reconcile.unmarked",
                        "reconcile.provenance_violations", "reconcile.raw_typed_mismatch",
                        "reconcile.raw_count", "reconcile.typed_count", "reconcile.only_raw", "reconcile.only_typed",
-                       "reconcile.quote_mismatch", "reconcile.verdict"}
-    assert fr["reconcile.verdict"] == "통과"
+                       "reconcile.quote_mismatch", "reconcile.self_marker_mismatch", "reconcile.verdict"}
+    assert fr["reconcile.verdict"] == "통과" and fr["reconcile.self_marker_mismatch"] == 0
     # 판정(spec §4.5)을 좌우하는 5종(재생성·마커·출처불명·provenance·인용표)은 이 픽스처에서 전부 0 — 통과.
     assert all(fr[k] == 0 for k in ("reconcile.regen_mismatch", "reconcile.marker_mismatch",
                                     "reconcile.unmarked", "reconcile.provenance_violations",
@@ -797,9 +812,13 @@ def test_reconcile_does_not_trust_stale_self_citation(tmp_path):
     assert rc == 1
     assert report_text.rstrip().endswith("✓ 통과") is False
     # 이번 실행이 실제로 계산한 값(직전의 낡은 값이 아니라)이 기록돼야 한다: 자기인용 행 자체가
-    # 이제 doc="1" vs fact="0" 불일치로 잡히므로 marker_mismatch >= 1.
+    # 이제 doc="1" vs fact="0" 불일치로 잡힌다. N5 — 이 자기인용 불일치는 reconcile.marker_mismatch
+    # 가 아니라 별도의 reconcile.self_marker_mismatch 로 집계된다(marker_mismatch 는 seed 값 —
+    # reconcile.* 자기인용을 제외한 값 — 으로 고정해 순환 정의를 피한다); verdict 합에는 포함된다.
     fr = json.loads((res / "facts-reconcile.json").read_text(encoding="utf-8"))
-    assert fr["reconcile.marker_mismatch"] >= 1
+    assert fr["reconcile.self_marker_mismatch"] >= 1
+    assert fr["reconcile.marker_mismatch"] == 0
+    assert fr["reconcile.verdict"] == "위반"
 
 
 def test_regenerate_suppresses_generator_stdout(tmp_path, capsys):
@@ -809,3 +828,381 @@ def test_regenerate_suppresses_generator_stdout(tmp_path, capsys):
     regenerate(res, ev, gt_b, gt_a)
     captured = capsys.readouterr()
     assert captured.out == ""
+
+
+def test_write_evidence_meta_carries_scanner_status_fields(tmp_path):
+    from secscan.adapters.base import OK, RawResult
+    from secscan.models import ScannerStatus
+    from secscan.scan import ScanResult
+    from tools.verify.evidence import write_evidence
+    r = RawResult("trivy", OK, payload="{}", version="0.71.2", duration_s=1.25)
+    res = ScanResult(findings=[], raw_results=[r], scanner_status=[ScannerStatus("trivy", OK, "0.71.2", 1.25, "")])
+    write_evidence(tmp_path, result=res, trace=None, meta={"snapshot": "x"})
+    meta = json.loads((tmp_path / "meta.json").read_text())
+    # I2(최종 리뷰) — 정본 직렬화는 `asdict(ScannerStatus)` 그대로: 5키 항상 전부(message="" 도 포함).
+    assert meta["scanner_status"] == [
+        {"tool": "trivy", "status": "ok", "tool_version": "0.71.2", "duration_s": 1.25, "message": ""}]
+
+
+def test_write_evidence_copies_bom_cache_to_raw_when_target_given(tmp_path, monkeypatch):
+    """I3(최종 리뷰) — `write_evidence` 는 `target` 이 주어지고 `secscan.sbom.bom_cache_path(target)`
+    가 존재하면 그 BOM 을 `raw/bom.cdx.json` 으로 복사한다(그동안 사람이 손으로 하던 단계). `known_fp`
+    와 `jar_surface`(축 3·축 5 정본)는 그 파일을 읽으므로 정본의 입력이 사람 손을 거치지 않게 된다."""
+    import tools.verify.evidence as evidence_mod
+    cache = tmp_path / "cache-bom.json"
+    cache.write_text('{"components": []}', encoding="utf-8")
+    monkeypatch.setattr(evidence_mod, "bom_cache_path", lambda target: cache)
+    result = ScanResult(findings=[], raw_results=[])
+    out = tmp_path / "out"
+    written = write_evidence(out, result=result, trace=None, meta={"snapshot": "x"}, target="/some/repo")
+    p = out / "raw" / "bom.cdx.json"
+    assert p in written
+    assert p.read_text(encoding="utf-8") == '{"components": []}'
+
+
+def test_write_evidence_skips_bom_copy_when_target_omitted(tmp_path):
+    """I3 — `target` 을 안 주면(기존 호출부·테스트) 동작이 그대로다 — BOM 복사를 시도하지 않는다."""
+    result = ScanResult(findings=[], raw_results=[])
+    out = tmp_path / "out"
+    write_evidence(out, result=result, trace=None, meta={"snapshot": "x"})
+    assert not (out / "raw" / "bom.cdx.json").exists()
+
+
+def test_write_evidence_skips_bom_copy_when_cache_missing(tmp_path, monkeypatch):
+    """I3 — `bom_cache_path(target)` 가 가리키는 파일이 없으면(BOM 미생성) 조용히 건너뛴다."""
+    import tools.verify.evidence as evidence_mod
+    monkeypatch.setattr(evidence_mod, "bom_cache_path", lambda target: tmp_path / "does-not-exist.json")
+    result = ScanResult(findings=[], raw_results=[])
+    out = tmp_path / "out"
+    write_evidence(out, result=result, trace=None, meta={"snapshot": "x"}, target="/some/repo")
+    assert not (out / "raw" / "bom.cdx.json").exists()
+
+
+def _fidelity_evidence(tmp_path, findings, meta=None):
+    from secscan.output.json_io import to_json
+    (tmp_path / "findings.json").write_text(to_json(findings, meta=meta or {}), encoding="utf-8")
+    (tmp_path / "meta.json").write_text(json.dumps(meta or {"scanner_status": [{"tool": "trivy", "status": "ok"}]}), encoding="utf-8")
+    return tmp_path
+
+
+def test_fidelity_all_formats_agree_on_decided_findings(tmp_path):
+    from secscan.disposition import decide
+    from secscan.models import Advisory, Component, Finding, Location, Reachability, UNREACHABLE
+    from tools.verify.fidelity import check, collect_facts
+    fs = decide([
+        Finding(category="sast", severity="high", rule_id="s1", confidence="high", location=Location("src/main/A.java", 1)),
+        Finding(category="secret", severity="high", rule_id="k", location=Location("c.properties", 1)),
+        Finding(category="sca", severity="high", rule_id="CVE-Z", component=Component("maven", "x:y", "1"),
+                advisory=Advisory("CVE-Z"), reachability=Reachability(UNREACHABLE)),
+    ])
+    r = check(_fidelity_evidence(tmp_path, fs))
+    assert r["roundtrip_identical"] and r["deterministic"]
+    assert r["id_set_mismatch"] == 0 and r["disposition_mismatch"] == 0 and r["undecided"] == 0
+    assert r["ids"]["markdown"] == r["ids"]["sarif"] == r["ids"]["xlsx"] == r["ids"]["findings"]
+    f = collect_facts(r)
+    assert f["fidelity.roundtrip_identical"] == "True" and f["fidelity.id_set_mismatch"] == 0
+    assert f["fidelity.actionable.findings"] == 2 and f["fidelity.meta_scanner_status_rows"] == 1
+
+
+def test_fidelity_reports_undecided_v1_style_evidence_as_fact(tmp_path):
+    from secscan.models import Finding, Location
+    from tools.verify.fidelity import check
+    raw = [Finding(category="secret", severity="high", rule_id="k", location=Location("c.properties", 1))]  # H 미실행
+    r = check(_fidelity_evidence(tmp_path, raw))
+    assert r["undecided"] == 1 and r["disposition_mismatch"] == 0  # 판정 없음은 불일치가 아니라 '미판정' 사실
+
+
+def test_reach_app_facts_match_fixture_expectations():
+    from tools.verify.reach_app import collect_facts, evaluate
+    r = evaluate()
+    f = collect_facts(r)
+    assert f["reachapp.cases"] == 3 and f["reachapp.false_unreachable"] == 2  # 플랜 1 사실(xfail strict 2건)과 동일
+    assert f["reachapp.reachable_expected_hit"] == "1/1"
+
+
+def test_gate_renders_mechanical_verdicts_with_markers():
+    from tools.verify.gate import GATES, render_gate
+    facts = {"profile.rows": 4, "profile.drift": 3, "sca.recall_cve": "37/46", "sca.recall_cve.team": "34/34",
+             "sca.recall_cve.dev-found": "3/12", "sca.missed": 9, "sca.missed_high_important": 3,
+             "sca.missed_by_stage.scanner": 9, "sca.missed_by_stage.normalize": 0,
+             "knownfp.component_present": "True", "knownfp.version_preserved": "True", "knownfp.not_reported": "True",
+             "knownfp.found_version": "13.2.1.jre11", "sca.extras": 1, "sca.extras.unclassified": 0,
+             "surface.bom_only": 77, "surface.jar_only": 9, "surface.version_differs": 1, "surface.gt_match_bom": "16/16",
+             "surface.gt_match_jar": "15/16", "reachapp.cases": 3, "reachapp.false_unreachable": 2,
+             "reach.reachable": 0, "reach.unreachable": 48, "reach.unknown": 0, "gta.in_category_pass": "2/4",
+             "fidelity.roundtrip_identical": "True", "fidelity.id_set_mismatch": 0, "fidelity.disposition_mismatch": 0,
+             "fidelity.deterministic": "True", "fidelity.meta_scanner_status_rows": 3, "fidelity.undecided": 0}
+    md = render_gate(facts)
+    rows = [l for l in md.splitlines() if l.startswith("| ") and not l.startswith("| 축")]
+    verdicts = {l.split("|")[1].strip().split(" ")[0]: l.split("|")[4].strip() for l in rows}
+    # 리뷰 I2(Ruling J) — 축 1 은 기계 판정할 predicate 가 없어 기록(축 9 와 동일 취급).
+    assert verdicts["3"] == "✓" and verdicts["4"] == "✓" and verdicts["8"] == "✓"
+    assert verdicts["2"].startswith("✗") and verdicts["5"].startswith("✗") and verdicts["6"].startswith("✗") and verdicts["7"].startswith("✗")
+    assert verdicts["1"] == "기록" and verdicts["9"] == "기록"
+    assert "37/46 <!-- fact:sca.recall_cve -->" in md and "2 <!-- fact:reachapp.false_unreachable -->" in md
+    assert len(GATES) == 9
+
+
+def test_gate_marks_missing_fact_as_unmeasured_not_pass():
+    from tools.verify.gate import render_gate
+    md = render_gate({"profile.rows": 4, "profile.drift": 3})
+    row2 = next(l for l in md.splitlines() if l.startswith("| 2 "))
+    assert "미측정" in row2 and "✓" not in row2
+
+
+def test_generators_registry_isolates_failures(tmp_path, monkeypatch):
+    from tools.verify import generators
+    from tools.verify.reconcile import regenerate
+    def boom(ctx):
+        raise FileNotFoundError("evidence missing")
+    monkeypatch.setattr(generators, "GENERATORS", [generators.Generator("boom.md", None, boom)])
+    rows = regenerate(tmp_path, tmp_path, "gt-b.json", "gt-a.json")
+    assert rows == [{"doc": "boom.md", "ok": False, "note": "생성 실패: FileNotFoundError: evidence missing"}]
+
+
+def test_reach_app_missing_fixture_is_isolated_not_fatal(tmp_path, monkeypatch):
+    """리뷰 I1 — reach_app 은 임포트 시점에 픽스처를 읽지 않는다(모듈 레벨 EXPECTED 제거,
+    evaluate() 가 FIXTURE/SLICE 를 호출 시점에 지연 조회). 픽스처가 없어도 generators 임포트나
+    reconcile.main 전체가 죽지 않고, regenerate 가 reach-app.md 행 하나만 ✗ 생성 실패로
+    격리한다(M4/N6)."""
+    from tools.verify import reach_app
+    from tools.verify.reconcile import regenerate
+    monkeypatch.setattr(reach_app, "FIXTURE", tmp_path / "missing-expected.json")
+    rows = regenerate(tmp_path, tmp_path, "gt-b.json", "gt-a.json")
+    reach_rows = [r for r in rows if r["doc"] == "reach-app.md"]
+    assert len(reach_rows) == 1
+    assert reach_rows[0]["ok"] is False
+    assert reach_rows[0]["note"].startswith("생성 실패: FileNotFoundError:")
+
+
+def test_reconcile_escapes_pipes_in_report_cells():
+    from tools.verify.reconcile import render_report
+    md = render_report([], {}, {}, [], {"raw_count": 0, "typed_count": 0, "only_raw": [], "only_typed": []},
+                       quotes=[{"header": "| a | b |", "quote": "x.md", "ok": True, "note": ""}], stats={})
+    line = next(l for l in md.splitlines() if "x.md" in l)
+    import re
+    assert len(re.findall(r"(?<!\\)\|", line)) == 4 and "\\|" in line  # 셀 3개 = 구분자 4개
+
+
+def test_check_quoted_tables_flags_declaration_line_without_filename():
+    """리뷰 I3 — N1: "전체 인용" 을 포함하는 줄에 백틱 파일명이 없으면 검증 불능 행(✗)으로 남기고
+    (조용히 건너뛰지 않는다), 그 행은 quote_mismatch 로 집계된다."""
+    from tools.verify.reconcile import check_quoted_tables, collect_facts
+    line = "이 절의 표는 전체 인용이다(파일명 생략)."
+    rows = check_quoted_tables(line + "\n", Path("/nonexistent"))
+    assert rows == [{"quote": line, "header": "", "ok": False, "note": "선언 줄에 파일명 없음"}]
+    facts = collect_facts([], {}, {}, [], {"raw_count": 0, "typed_count": 0, "only_raw": [], "only_typed": []}, quotes=rows)
+    assert facts["reconcile.quote_mismatch"] == 1
+
+
+def test_check_quoted_tables_resolves_backtick_path_to_basename():
+    """리뷰 I3 — 백틱 안 파일명이 전체 경로(`docs/verification/results/2026-09-05/gt.md`)여도
+    basename(`gt.md`)으로 원본을 찾아 비교한다. `_QUOTE_FILE` 을 브리핑의 `[\\w.-]+\\.md` 보다
+    넓게(`[^`\\n]+\\.md`) 잡은 것을 고정한다 — 다시 좁히면 이 테스트가 깨진다(캠페인 문서가
+    조용히 깨지는 대신)."""
+    from tools.verify.reconcile import check_quoted_tables
+    src = "# gt\n\n| 축 | 값 |\n|---|---|\n| a | 3 |\n"
+    md = "출처: `docs/verification/results/2026-09-05/gt.md` (전체 인용).\n\n| 축 | 값 |\n|---|---|\n| a | 3 |\n"
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        (td / "gt.md").write_text(src, encoding="utf-8")
+        rows = check_quoted_tables(md, td)
+        assert len(rows) == 1 and rows[0]["ok"] is True and rows[0]["quote"] == "gt.md"
+
+
+def test_attrition_rows_follow_trace_order():
+    from tools.verify.report import render_attrition
+    trace = {"stages": [{"stage": "normalize:semgrep", "count": 2, "keys": []}, {"stage": "normalize:trivy", "count": 3, "keys": []},
+                        {"stage": "merge", "count": 5, "keys": []}, {"stage": "exclude", "count": 4, "keys": []}]}
+    lines = [l for l in render_attrition(trace).splitlines() if l.startswith("| ")][2:]
+    assert [l.split("|")[1].strip() for l in lines] == ["normalize:semgrep", "normalize:trivy", "normalize(합계)", "merge", "exclude"]
+    assert lines[3].split("|")[3].strip() == "0" and lines[4].split("|")[3].strip() == "-1"
+
+
+# --- Task 13: 위생 — M1(iter_vulns 단일화) · M3(입력면 raw → evidence) · M7(gta id 위치 독립) ·
+# M8(증거 경로 상대화) · README 생성기 · 컨트롤러 룰링 K(Task 12 리뷰 잔여) · 플랜 1 파킹(Task 8) ---
+
+def test_iter_vulns_yields_target_and_vuln():
+    from tools.verify._trivy import iter_vulns
+    payload = json.dumps({"Results": [{"Target": "Java", "Vulnerabilities": [{"VulnerabilityID": "CVE-1"}]}, {"Target": "x", "Vulnerabilities": None}]})
+    assert list(iter_vulns(payload)) == [("Java", {"VulnerabilityID": "CVE-1"})]
+
+
+def test_gta_fact_ids_are_position_independent():
+    from tools.verify.differential import collect_facts
+    rows = [{"class": "in-category", "cwe": "CWE-89", "file_suffix": "LgCarrierMapper.xml", "passed": False, "fixed_residual": 8},
+            {"class": "in-category", "cwe": "CWE-89", "file_suffix": "OldLgCarrierMapper.xml", "passed": False, "fixed_residual": 5},
+            {"class": "measure-then-classify", "cwe": "CWE-489", "file_suffix": "App.java", "observed": []}]
+    f = collect_facts(rows)
+    assert f["gta.CWE-89.LgCarrierMapper.fixed_residual"] == 8 and f["gta.CWE-89.OldLgCarrierMapper.fixed_residual"] == 5
+    assert f["gta.CWE-489.App.observed"] == "없음"
+    assert collect_facts(list(reversed(rows))) == f  # 순서 무관
+
+
+def test_gta_fact_ids_dedupe_same_cwe_and_stem_with_numeric_suffix():
+    """M7 — 같은 (cwe, stem) 이 두 번 나오면(같은 파일에서 같은 CWE 로 두 케이스가 잡힌 경우)
+    두 번째부터 `-2`, `-3` 접미를 붙인다(Interfaces 절)."""
+    from tools.verify.differential import collect_facts
+    rows = [{"class": "in-category", "cwe": "CWE-89", "file_suffix": "Mapper.xml", "passed": True, "fixed_residual": 0},
+            {"class": "in-category", "cwe": "CWE-89", "file_suffix": "Mapper.xml", "passed": False, "fixed_residual": 3}]
+    f = collect_facts(rows)
+    assert set(f) - {"gta.in_category_pass"} == {
+        "gta.CWE-89.Mapper.passed", "gta.CWE-89.Mapper.fixed_residual",
+        "gta.CWE-89.Mapper-2.passed", "gta.CWE-89.Mapper-2.fixed_residual",
+    }
+
+
+def test_write_evidence_relativizes_paths_when_repo_root_given(tmp_path):
+    from secscan.disposition import decide
+    from secscan.models import Finding, Location
+    from secscan.output.json_io import from_json
+    from secscan.scan import ScanResult
+    from tools.verify.evidence import write_evidence
+    root = tmp_path / "repo"; (root / "src").mkdir(parents=True)
+    f = decide([Finding(category="sast", severity="high", rule_id="r", location=Location(str(root / "src" / "A.java"), 1), source=str(root / "pom.xml"))])
+    write_evidence(tmp_path / "ev", result=ScanResult(findings=f, raw_results=[]), trace=None, meta={}, repo_root=root)
+    back = from_json((tmp_path / "ev" / "findings.json").read_text())
+    assert back[0].location.file == "src/A.java" and back[0].source == "pom.xml"
+
+
+def test_write_evidence_leaves_paths_alone_when_repo_root_omitted(tmp_path):
+    """M8 — `repo_root` 를 안 주면(기본 None) 옛 증거와 동일하게 절대경로가 그대로 저장된다."""
+    from secscan.disposition import decide
+    from secscan.models import Finding, Location
+    from secscan.output.json_io import from_json
+    from secscan.scan import ScanResult
+    from tools.verify.evidence import write_evidence
+    abs_file = "/abs/src/A.java"
+    f = decide([Finding(category="sast", severity="high", rule_id="r", location=Location(abs_file, 1), source="/abs/pom.xml")])
+    write_evidence(tmp_path / "ev", result=ScanResult(findings=f, raw_results=[]), trace=None, meta={})
+    back = from_json((tmp_path / "ev" / "findings.json").read_text())
+    assert back[0].location.file == abs_file and back[0].source == "/abs/pom.xml"
+
+
+def test_evidence_readme_is_rendered_from_meta(tmp_path):
+    from tools.verify.evidence_readme import render
+    d = tmp_path / "abc-standard"; d.mkdir()
+    (d / "meta.json").write_text(json.dumps({"snapshot": "abc", "profile": "standard", "elapsed_s": 8.5,
+                                             "scanner_status": [{"tool": "trivy", "status": "ok"}], "reachability": {"ran": True, "reason": "ok"}}))
+    (d / "findings.json").write_text(json.dumps({"@context": "secscan-findings/v1", "meta": {}, "findings": []}))
+    md = render(tmp_path)
+    assert "| abc-standard | abc | standard | trivy(ok) | 0 | 8.5 | ok |" in md
+
+
+def test_jar_surface_main_evidence_out_writes_raw_and_status_under_evidence_dir(tmp_path, monkeypatch):
+    """M3 — `--evidence-out <dir>` 가 주어지면 raw(`raw/trivy-rootfs.json`)·status(`status.json`)
+    를 그 디렉토리에 쓴다(`--out` 은 여전히 md 경로만)."""
+    from tools.verify import jar_surface
+
+    def fake_build(repo_dir, out_json, *, run=None):
+        out_json.write_text(json.dumps({"Results": []}), encoding="utf-8")
+        return True
+
+    monkeypatch.setattr(jar_surface, "build_and_scan_jar", fake_build)
+    bom = tmp_path / "bom.json"; bom.write_text(json.dumps({"components": []}), encoding="utf-8")
+    gt = "docs/verification/ground-truth/gt-b-sca.json"
+    out_md = tmp_path / "results" / "input-surface.md"; out_md.parent.mkdir()
+    ev_dir = tmp_path / "evidence" / "a483b3b1-jar"
+    rc = jar_surface.main(["--repo-dir", str(tmp_path / "repo"), "--bom", str(bom), "--gt", gt,
+                          "--out", str(out_md), "--evidence-out", str(ev_dir)])
+    assert rc == 0
+    assert (ev_dir / "raw" / "trivy-rootfs.json").read_text(encoding="utf-8") == json.dumps({"Results": []})
+    assert json.loads((ev_dir / "status.json").read_text(encoding="utf-8")) == {"jar_build_scan_ok": True}
+    assert out_md.exists()
+    assert not (tmp_path / "results" / "input-surface.trivy-fs.json").exists()
+
+
+# --- 컨트롤러 룰링 K(Task 12 리뷰 잔여) ---
+
+def test_gate_axis7_no_vacuous_pass_on_zero_over_zero():
+    """M6 — `gta.in_category_pass` 가 `0/0` 이면(범주 내 항목이 아예 없음) 축 7 은 통과가 아니다
+    (분모 0 은 측정 불능이지 100% 달성이 아니다)."""
+    from tools.verify.gate import render_gate
+    facts = {"gta.in_category_pass": "0/0"}
+    md = render_gate(facts)
+    row7 = next(l for l in md.splitlines() if l.startswith("| 7 GT-A"))
+    assert "✓" not in row7 and "✗" in row7
+
+
+def test_regenerate_skips_optional_doc_only_for_legacy_results_dir(tmp_path, monkeypatch):
+    """M5 — `_OPTIONAL` 스킵은 `gate-v2.md` 가 있고 `gate.md` 가 없는(플랜 1 옛 결과) 디렉토리에만
+    적용된다. 이 디렉토리는 legacy 표지(gate-v2.md)가 있으므로 없는 선택 문서는 조용히 건너뛴다."""
+    from tools.verify import generators
+    from tools.verify.reconcile import regenerate
+    (tmp_path / "gate-v2.md").write_text("# 옛 게이트\n", encoding="utf-8")
+    monkeypatch.setattr(generators, "GENERATORS", [generators.Generator("gate.md", None, lambda c: ("내용", None))])
+    rows = regenerate(tmp_path, tmp_path, "gt-b.json", "gt-a.json")
+    assert rows == []
+
+
+def test_regenerate_fails_missing_optional_doc_when_not_legacy(tmp_path, monkeypatch):
+    """M5 — legacy 표지(`gate-v2.md`)가 없는 디렉토리는 `_OPTIONAL` 이 적용되지 않는다: 없는
+    문서는 검사를 약화하지 않고 ✗ 행("결과 파일 없음")으로 잡힌다."""
+    from tools.verify import generators
+    from tools.verify.reconcile import regenerate
+    monkeypatch.setattr(generators, "GENERATORS", [generators.Generator("gate.md", None, lambda c: ("내용", None))])
+    rows = regenerate(tmp_path, tmp_path, "gt-b.json", "gt-a.json")
+    assert rows == [{"doc": "gate.md", "ok": False, "note": "결과 파일 없음"}]
+
+
+def test_write_all_leaves_frozen_legacy_readme_byte_identical(tmp_path, monkeypatch):
+    """I1(최종 리뷰) — `write_all` 은 `regenerate` 와 같은 legacy 판정(`is_legacy_results_dir`)을
+    써서, legacy 결과 디렉토리(`gate-v2.md` 있음·`gate.md` 없음)에서는 `path` 오버라이드를 쓰는
+    README 생성기를 건너뛴다. 손기입 운영 로그를 재생성 문서로 덮어쓰면 V1 증거 불변이 도구
+    스스로에 의해 깨진다."""
+    from tools.verify import generators
+    ev = tmp_path / "evidence"; ev.mkdir()
+    res = tmp_path / "results"; res.mkdir()
+    (res / "gate-v2.md").write_text("# 옛 게이트\n", encoding="utf-8")
+    frozen = "# 손으로 쓴 운영 로그\n"
+    (ev / "README.md").write_text(frozen, encoding="utf-8")
+    monkeypatch.setattr(generators, "GENERATORS", [
+        generators.Generator("README.md", None, lambda c: ("# 생성된 README\n", None),
+                              path=lambda c: c.evidence_root / "README.md"),
+    ])
+    generators.write_all(generators.Ctx(res, ev, Path("gt-b.json"), Path("gt-a.json")))
+    assert (ev / "README.md").read_text(encoding="utf-8") == frozen
+
+
+def test_write_all_writes_readme_for_non_legacy_results_dir(tmp_path, monkeypatch):
+    """I1 — legacy 표지(`gate-v2.md`)가 없는 결과 디렉토리는 README 도 정상적으로 (재)생성한다."""
+    from tools.verify import generators
+    ev = tmp_path / "evidence"; ev.mkdir()
+    res = tmp_path / "results"; res.mkdir()
+    (ev / "README.md").write_text("# 손으로 쓴 운영 로그\n", encoding="utf-8")
+    monkeypatch.setattr(generators, "GENERATORS", [
+        generators.Generator("README.md", None, lambda c: ("# 생성된 README\n", None),
+                              path=lambda c: c.evidence_root / "README.md"),
+    ])
+    generators.write_all(generators.Ctx(res, ev, Path("gt-b.json"), Path("gt-a.json")))
+    assert (ev / "README.md").read_text(encoding="utf-8") == "# 생성된 README\n"
+
+
+def test_reconcile_final_facts_match_this_run_reconcile_computation(tmp_path):
+    """M2 — `main` 은 `collect_facts` 를 같은 인자로 두 번 부르지 않는다: 문서 대조(2단계, 전체
+    마커 포함)에 쓴 `this_run_reconcile` 값을 `facts-reconcile.json` 에 그대로 재사용한다. 관측 가능한
+    계약은 "값이 이번 실행의 seed 기반 계산과 같다"는 것 — 회귀 시 두 계산이 갈라지면 이 값이 흔들린다."""
+    from tools.verify.reconcile import main
+    res, ev, gt_b, gt_a = _fake_results(tmp_path)
+    rc = main(["--results", str(res), "--evidence-root", str(ev), "--gt-b", gt_b, "--gt-a", gt_a])
+    assert rc == 0
+    fr = json.loads((res / "facts-reconcile.json").read_text(encoding="utf-8"))
+    assert fr["reconcile.verdict"] == "통과"
+    assert all(fr[k] == 0 for k in ("reconcile.regen_mismatch", "reconcile.marker_mismatch", "reconcile.unmarked",
+                                    "reconcile.provenance_violations", "reconcile.quote_mismatch"))
+
+
+def test_sca_extras_unclassified_counts_nonzero_case():
+    """플랜 1 파킹 Task 8 잔여 — Task 8 은 `sca.extras.unclassified == 0` 케이스만 검증했다.
+    미분류 초과탐지가 실제로 1건 이상일 때도 올바르게 세는지 확인한다."""
+    from tools.verify.report import collect_facts
+    m = GtManifest("gt-b-sca", "a483b3b1", "2026-08-31", entries=(
+        GtEntry("CVE-1", "g:a", "1.0", "present", "team", 1, severity_team="HIGH"),), raw_entries=())
+    fs = [_sca("g:a", "1.0", "CVE-1"), _sca("g:z", "9.9", "CVE-9"), _sca("g:y", "1.1", "CVE-8")]
+    rep = match_ground_truth(fs, m)
+    facts = collect_facts(rep, {fs[1].dedup_key: "inventory-diff"}, fs,
+                          {"stages": [{"stage": "final", "count": 3}]},
+                          {"scanner_status": [{"tool": "trivy", "status": "ok"}]}, [])
+    assert facts["sca.extras"] == 2 and facts["sca.extras.unclassified"] == 1
+    assert facts["sca.extras.inventory-diff"] == 1

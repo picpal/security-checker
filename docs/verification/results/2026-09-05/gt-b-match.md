@@ -5,16 +5,16 @@
 raw: trivy=ok(313797B), gitleaks=ok(9393B), semgrep=ok(57924B)
 
 | 단계 | 건수 | 증감 |
-|---|---|---|
+| --- | --- | --- |
 | normalize:gitleaks | 13 |  |
 | normalize:semgrep | 15 |  |
 | normalize:trivy | 48 |  |
 | normalize(합계) | 76 |  |
 | merge | 73 | -3 |
-| exclude | 73 | +0 |
-| compliance | 73 | +0 |
-| reachability | 73 | +0 |
-| final | 73 | +0 |
+| exclude | 73 | 0 |
+| compliance | 73 | 0 |
+| reachability | 73 | 0 |
+| final | 73 | 0 |
 
 ## 정답지 대조
 

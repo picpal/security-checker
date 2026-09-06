@@ -1,0 +1,17 @@
+{
+  "fidelity.actionable.findings": 14,
+  "fidelity.actionable.markdown": 14,
+  "fidelity.actionable.sarif": 14,
+  "fidelity.actionable.xlsx": 14,
+  "fidelity.deterministic": "True",
+  "fidelity.disposition_mismatch": 0,
+  "fidelity.exit_code": 1,
+  "fidelity.id_set_mismatch": 0,
+  "fidelity.ids.findings": 73,
+  "fidelity.ids.markdown": 73,
+  "fidelity.ids.sarif": 73,
+  "fidelity.ids.xlsx": 73,
+  "fidelity.meta_scanner_status_rows": 3,
+  "fidelity.roundtrip_identical": "True",
+  "fidelity.undecided": 0
+}

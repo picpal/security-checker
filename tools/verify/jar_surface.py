@@ -19,6 +19,7 @@ from pathlib import Path
 from secscan.measure import GtManifest, load_gt_manifest
 
 from ._facts import facts_text
+from ._trivy import iter_vulns
 
 
 def inventory_from_bom(bom_json: str) -> dict[str, str]:
@@ -49,20 +50,19 @@ def inventory_from_trivy(trivy_json: str) -> dict[str, str]:
         for p in res.get("Packages") or []:
             if p.get("Name") and p.get("Version"):
                 versions.setdefault(p["Name"], set()).add(p["Version"])
-        for v in res.get("Vulnerabilities") or []:
-            if v.get("PkgName") and v.get("InstalledVersion"):
-                versions.setdefault(v["PkgName"], set()).add(v["InstalledVersion"])
+    for _, v in iter_vulns(trivy_json):
+        if v.get("PkgName") and v.get("InstalledVersion"):
+            versions.setdefault(v["PkgName"], set()).add(v["InstalledVersion"])
     return {k: " / ".join(sorted(vs)) for k, vs in versions.items()}
 
 
 def vuln_installed_versions(trivy_json: str) -> list[tuple[str, str, str]]:
     """(advisory, 패키지, InstalledVersion) — jar 표면에서 취약점이 실제로 부착된 버전(spec §5 축 5)."""
     rows: list[tuple[str, str, str]] = []
-    for res in json.loads(trivy_json or "{}").get("Results", []) or []:
-        for v in res.get("Vulnerabilities") or []:
-            vid, pkg, ver = v.get("VulnerabilityID"), v.get("PkgName"), v.get("InstalledVersion")
-            if vid and pkg and ver:
-                rows.append((vid, pkg, ver))
+    for _, v in iter_vulns(trivy_json):
+        vid, pkg, ver = v.get("VulnerabilityID"), v.get("PkgName"), v.get("InstalledVersion")
+        if vid and pkg and ver:
+            rows.append((vid, pkg, ver))
     return sorted(rows)
 
 
@@ -141,14 +141,24 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--bom", required=True)
     p.add_argument("--gt", required=True)
     p.add_argument("--out", required=True)
+    p.add_argument("--evidence-out", default=None,
+                   help="raw(raw/trivy-rootfs.json)·status(status.json) 를 여기에 쓴다(M3). "
+                        "생략하면 --out 기준 옛 경로에 쓴다(호환).")
     a = p.parse_args(argv)
     out = Path(a.out)
-    jar_json = out.with_suffix(".trivy-fs.json")
+    if a.evidence_out:
+        ev_dir = Path(a.evidence_out)
+        (ev_dir / "raw").mkdir(parents=True, exist_ok=True)
+        jar_json = ev_dir / "raw" / "trivy-rootfs.json"
+        status_path = ev_dir / "status.json"
+    else:
+        jar_json = out.with_suffix(".trivy-rootfs.json")
+        status_path = out.with_name("input-surface.status.json")
     ok = build_and_scan_jar(Path(a.repo_dir), jar_json)
     if not jar_json.exists():
         jar_json.write_text("{}", encoding="utf-8")  # reconcile 재생성용 — 실패도 파일로 남긴다
     jar_text = jar_json.read_text(encoding="utf-8")
-    out.with_name("input-surface.status.json").write_text(json.dumps({"jar_build_scan_ok": ok}) + "\n", encoding="utf-8")
+    status_path.write_text(json.dumps({"jar_build_scan_ok": ok}) + "\n", encoding="utf-8")
     bom_text = Path(a.bom).read_text(encoding="utf-8")
     manifest = load_gt_manifest(a.gt)
     out.write_text(render_doc(ok, bom_text, jar_text, manifest), encoding="utf-8")

@@ -10,6 +10,7 @@ import argparse
 import hashlib
 import json
 import shutil
+from dataclasses import asdict
 from datetime import date
 from pathlib import Path
 
@@ -17,7 +18,8 @@ from .detect import detect_stack, suggest_profile
 from .fetch import DEFAULT_BASE, FetchError, clean, fetch, list_clones
 from .doctor import MISSING, OK, DoctorReport, run_doctor
 from .measure import reachability_stats
-from .models import UNREACHABLE, sast_tier
+from .models import ACTIONABLE
+from .output.json_io import to_json
 from .output.markdown import to_markdown
 from .output.sarif import to_sarif
 from .profiles import build_adapters, get_profile
@@ -140,7 +142,7 @@ def render_scan_summary(result) -> str:
         lines.append(f"컴플라이언스: KISA 약점 {kisa_n}건 · PCI-DSS 6.2.4 {pci_n}건")
     sast = [f for f in result.findings if f.category == "sast"]
     if sast:
-        act = sum(1 for f in sast if sast_tier(f) == "actionable")
+        act = sum(1 for f in sast if f.tier == "actionable")
         lines.append(f"SAST: 우선 {act} · 검토후보 {len(sast) - act}")
     if result.secret_policy == "verify":
         lines.append(f"시크릿 검증: 적용됨 — 라이브 {result.secret_verified_count}건 확인")
@@ -159,18 +161,10 @@ def render_scan_summary(result) -> str:
 
 
 def _has_actionable(findings) -> bool:
-    # exit code 게이트(P1③): SAST 는 actionable tier 만, SCA 는 도달 가능/미상,
-    # secret 은 항상. SAST review 와 도달 불가 SCA 는 CI 를 막지 않는다.
-    for f in findings:
-        if f.category == "sast":
-            if sast_tier(f) == "actionable":
-                return True
-        elif f.category == "sca":
-            if f.reachability.status != UNREACHABLE:
-                return True
-        else:  # secret 등
-            return True
-    return False
+    """exit code 게이트 — 판정 H 가 저장한 disposition 만 읽는다(재계산 금지, spec §7.4)."""
+    if any(f.disposition is None for f in findings):
+        raise ValueError("판정 단계(H) 미실행 finding 이 있다 — run_scan 을 거치지 않은 입력")
+    return any(f.disposition == ACTIONABLE for f in findings)
 
 
 def _cmd_scan(args) -> int:
@@ -223,11 +217,27 @@ def _cmd_scan(args) -> int:
     )
     (out / "report.md").write_text(
         to_markdown(result.findings, target=str(args.target),
-                    meta={"scanners": [a.name for a in adapters]})
+                    meta={"scanner_status": [asdict(s) for s in result.scanner_status]})
     )
+    (out / "findings.json").write_text(
+        to_json(result.findings, meta={
+            "target": str(args.target), "profile": args.profile,
+            "scanner_status": [asdict(s) for s in result.scanner_status],
+            "reachability": {"ran": result.reachability_ran, "reason": result.reachability_reason},
+            "secret_policy": result.secret_policy, "excluded_count": result.excluded_count,
+        }), encoding="utf-8")
+
+    from .output.xlsx import write_workbook
+    wb_meta = {"target": str(args.target), "profile": args.profile, "run_date": date.today().isoformat(),
+               "scanner_status": [asdict(s) for s in result.scanner_status],
+               "reachability": {"ran": result.reachability_ran, "reason": result.reachability_reason},
+               "secret_policy": result.secret_policy, "excluded_count": result.excluded_count}
+    wb_paths, wb_warn = write_workbook(result.findings, wb_meta, out)
+    if wb_warn:
+        print(f"⚠️ {wb_warn}")
 
     print(render_scan_summary(result))
-    print(f"\n출력: {out / 'report.md'} · {out / 'findings.sarif'}")
+    print(f"\n출력: {out / 'report.md'} · {out / 'findings.sarif'} · {out / 'findings.json'} · {wb_paths[0]}")
     return 1 if _has_actionable(result.findings) else 0
 
 
@@ -302,7 +312,7 @@ def main(argv: list[str] | None = None) -> int:
     sp = sub.add_parser("scan", help="보안 점검 실행 (SCA + 도달성)")
     sp.add_argument("--target", required=True, help="점검 대상 프로젝트 경로")
     sp.add_argument("--profile", default="accurate-sca",
-                    help="quick | accurate-sca | standard (기본: accurate-sca)")
+                    help="quick | accurate-sca | standard | deep (기본: accurate-sca)")
     sp.add_argument("--out", default="out", help="보고서 출력 디렉토리")
     sp.add_argument("--cache-dir", default=".secscan/reach",
                     help="도달성(atom 슬라이스) 캐시 디렉토리")

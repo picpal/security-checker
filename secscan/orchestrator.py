@@ -6,9 +6,18 @@
 
 from __future__ import annotations
 
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from .adapters.base import FAILED, RawResult
+
+
+def _timed_run(adapter, target) -> RawResult:
+    t0 = time.perf_counter()
+    r = adapter.run(target)
+    if r.duration_s is None:
+        r.duration_s = round(time.perf_counter() - t0, 3)
+    return r
 
 
 def scan(adapters, target, *, max_workers: int | None = None) -> list[RawResult]:
@@ -17,13 +26,11 @@ def scan(adapters, target, *, max_workers: int | None = None) -> list[RawResult]
     workers = max_workers or min(len(adapters), 8)
     results: list[RawResult] = []
     with ThreadPoolExecutor(max_workers=workers) as ex:
-        futures = {ex.submit(a.run, target): a for a in adapters}
+        futures = {ex.submit(_timed_run, a, target): a for a in adapters}
         for fut in as_completed(futures):
             adapter = futures[fut]
             try:
                 results.append(fut.result())
             except Exception as e:  # 어댑터가 자체 격리에 실패한 경우의 backstop
-                results.append(
-                    RawResult(adapter.name, FAILED, error=f"orchestrator: {e}")
-                )
+                results.append(RawResult(adapter.name, FAILED, error=f"orchestrator: {e}"))
     return results

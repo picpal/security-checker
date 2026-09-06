@@ -1,0 +1,4845 @@
+{
+  "@context": "secscan-findings/v1",
+  "meta": {
+    "snapshot": "a483b3b1",
+    "repo": "/Users/picpal/Desktop/workspace/message-gate",
+    "profile": "standard",
+    "run_date": "2026-09-06",
+    "elapsed_s": 156.9,
+    "children_max_rss_bytes": 576634880,
+    "tool_versions": {
+      "trivy": "Version: 0.71.2 Vulnerability DB: Version: 2 UpdatedAt: 2026-09-05 01:12:13.234084756 +0000 UTC NextUpdate: 2026-09-06 01:12:13.234084357 +0000 UTC DownloadedAt: 2026-09-05 05:47:16.400993 +0000 UTC J",
+      "cdxgen": "\u001b[1mCycloneDX Generator 12.7.0\u001b[0m Runtime: Node.js, Version: 24.5.0",
+      "semgrep": "1.168.0 A new version of Semgrep is available. See https://semgrep.dev/docs/upgrading",
+      "gitleaks": "8.30.1",
+      "depscan": "depscan 6.2.0",
+      "spotbugs": "4.10.2",
+      "java": "openjdk version \"21.0.10\" 2026-01-20 LTS OpenJDK Runtime Environment Corretto-21.0.10.7.1 (build 21.0.10+7-LTS) OpenJDK 64-Bit Server VM Corretto-21.0.10.7.1 (build 21.0.10+7-LTS, mixed mode, sharing)",
+      "gradle": "------------------------------------------------------------ Gradle 9.5.1 ------------------------------------------------------------ Build time: 2026-05-12 13:19:42 UTC Revision: fd78213f09782e62ca4"
+    },
+    "isolated": {
+      "gradle_user_home": "/private/tmp/secscan-verify/a483b3b1/gradle-home",
+      "secret_policy": "never"
+    }
+  },
+  "findings": [
+    {
+      "category": "sast",
+      "severity": "high",
+      "title": "하드코딩된 자격증명입니다(CWE-798/259). 환경변수·시크릿 매니저·설정 외부화로 옮기고, 이미 노출된 값은 회수(revoke)·교체하세요.",
+      "tool": "semgrep",
+      "rule_id": "secscan.rules.hardcoded-credential",
+      "cwe": [
+        "CWE-798",
+        "CWE-259"
+      ],
+      "owasp": [
+        "A07:2021 - Identification and Authentication Failures"
+      ],
+      "confidence": "high",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "src/main/java/com/messagegate/common/constants/KmsProfilePolicy.java",
+        "start_line": 30,
+        "end_line": 30,
+        "snippet_ref": "requires login"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "semgrep"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "SF-06",
+            "category": "보안기능",
+            "name": "하드코드된 중요정보"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — access control"
+        ]
+      },
+      "occurrences": [],
+      "disposition": "actionable",
+      "tier": "actionable",
+      "id": "3c515977938d",
+      "dedup_key": "sast|src/main/java/com/messagegate/common/constants/KmsProfilePolicy.java|30|secscan.rules.hardcoded-credential"
+    },
+    {
+      "category": "sast",
+      "severity": "medium",
+      "title": "MyBatis 식별자 위치 ${} 치환(CWE-89). 테이블/컬럼명은 #{} 바인딩이 구조적으로 불가하므로, 입력 화이트리스트 검증 관문이 있는지 확인하세요(#305 패턴).",
+      "tool": "semgrep",
+      "rule_id": "secscan.rules.mybatis-sqli-identifier",
+      "cwe": [
+        "CWE-89"
+      ],
+      "owasp": [
+        "A03:2021 - Injection"
+      ],
+      "confidence": "low",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "src/main/java/com/messagegate/mapper/lg/LgCarrierMapper.java",
+        "start_line": 40,
+        "end_line": 40,
+        "snippet_ref": "requires login"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "semgrep"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "IV-01",
+            "category": "입력데이터 검증 및 표현",
+            "name": "SQL 삽입"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — injection"
+        ]
+      },
+      "occurrences": [],
+      "disposition": "review",
+      "tier": "review",
+      "id": "6b755dee0421",
+      "dedup_key": "sast|src/main/java/com/messagegate/mapper/lg/LgCarrierMapper.java|40|secscan.rules.mybatis-sqli-identifier"
+    },
+    {
+      "category": "sast",
+      "severity": "medium",
+      "title": "MyBatis 식별자 위치 ${} 치환(CWE-89). 테이블/컬럼명은 #{} 바인딩이 구조적으로 불가하므로, 입력 화이트리스트 검증 관문이 있는지 확인하세요(#305 패턴).",
+      "tool": "semgrep",
+      "rule_id": "secscan.rules.mybatis-sqli-identifier",
+      "cwe": [
+        "CWE-89"
+      ],
+      "owasp": [
+        "A03:2021 - Injection"
+      ],
+      "confidence": "low",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "src/main/java/com/messagegate/mapper/oldlg/OldLgCarrierMapper.java",
+        "start_line": 70,
+        "end_line": 70,
+        "snippet_ref": "requires login"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "semgrep"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "IV-01",
+            "category": "입력데이터 검증 및 표현",
+            "name": "SQL 삽입"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — injection"
+        ]
+      },
+      "occurrences": [],
+      "disposition": "review",
+      "tier": "review",
+      "id": "f940134d24a8",
+      "dedup_key": "sast|src/main/java/com/messagegate/mapper/oldlg/OldLgCarrierMapper.java|70|secscan.rules.mybatis-sqli-identifier"
+    },
+    {
+      "category": "sast",
+      "severity": "medium",
+      "title": "MyBatis 식별자 위치 ${} 치환(CWE-89). 테이블/컬럼명은 #{} 바인딩이 구조적으로 불가하므로, 입력 화이트리스트 검증 관문이 있는지 확인하세요(#305 패턴).",
+      "tool": "semgrep",
+      "rule_id": "secscan.rules.mybatis-sqli-identifier",
+      "cwe": [
+        "CWE-89"
+      ],
+      "owasp": [
+        "A03:2021 - Injection"
+      ],
+      "confidence": "low",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "src/main/java/com/messagegate/mapper/oldlg/OldLgCarrierMapper.java",
+        "start_line": 92,
+        "end_line": 92,
+        "snippet_ref": "requires login"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "semgrep"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "IV-01",
+            "category": "입력데이터 검증 및 표현",
+            "name": "SQL 삽입"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — injection"
+        ]
+      },
+      "occurrences": [],
+      "disposition": "review",
+      "tier": "review",
+      "id": "4db956798d6a",
+      "dedup_key": "sast|src/main/java/com/messagegate/mapper/oldlg/OldLgCarrierMapper.java|92|secscan.rules.mybatis-sqli-identifier"
+    },
+    {
+      "category": "sast",
+      "severity": "medium",
+      "title": "MyBatis 식별자 위치 ${} 치환(CWE-89). 테이블/컬럼명은 #{} 바인딩이 구조적으로 불가하므로, 입력 화이트리스트 검증 관문이 있는지 확인하세요(#305 패턴).",
+      "tool": "semgrep",
+      "rule_id": "secscan.rules.mybatis-sqli-identifier",
+      "cwe": [
+        "CWE-89"
+      ],
+      "owasp": [
+        "A03:2021 - Injection"
+      ],
+      "confidence": "low",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "src/main/resources/mybatis/mapper/lg/LgCarrierMapper.xml",
+        "start_line": 18,
+        "end_line": 18,
+        "snippet_ref": "requires login"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "semgrep"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "IV-01",
+            "category": "입력데이터 검증 및 표현",
+            "name": "SQL 삽입"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — injection"
+        ]
+      },
+      "occurrences": [],
+      "disposition": "review",
+      "tier": "review",
+      "id": "dfd8e958e0a2",
+      "dedup_key": "sast|src/main/resources/mybatis/mapper/lg/LgCarrierMapper.xml|18|secscan.rules.mybatis-sqli-identifier"
+    },
+    {
+      "category": "sast",
+      "severity": "medium",
+      "title": "MyBatis 식별자 위치 ${} 치환(CWE-89). 테이블/컬럼명은 #{} 바인딩이 구조적으로 불가하므로, 입력 화이트리스트 검증 관문이 있는지 확인하세요(#305 패턴).",
+      "tool": "semgrep",
+      "rule_id": "secscan.rules.mybatis-sqli-identifier",
+      "cwe": [
+        "CWE-89"
+      ],
+      "owasp": [
+        "A03:2021 - Injection"
+      ],
+      "confidence": "low",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "src/main/resources/mybatis/mapper/lg/LgCarrierMapper.xml",
+        "start_line": 19,
+        "end_line": 19,
+        "snippet_ref": "requires login"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "semgrep"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "IV-01",
+            "category": "입력데이터 검증 및 표현",
+            "name": "SQL 삽입"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — injection"
+        ]
+      },
+      "occurrences": [],
+      "disposition": "review",
+      "tier": "review",
+      "id": "b2274769a4d7",
+      "dedup_key": "sast|src/main/resources/mybatis/mapper/lg/LgCarrierMapper.xml|19|secscan.rules.mybatis-sqli-identifier"
+    },
+    {
+      "category": "sast",
+      "severity": "medium",
+      "title": "MyBatis 식별자 위치 ${} 치환(CWE-89). 테이블/컬럼명은 #{} 바인딩이 구조적으로 불가하므로, 입력 화이트리스트 검증 관문이 있는지 확인하세요(#305 패턴).",
+      "tool": "semgrep",
+      "rule_id": "secscan.rules.mybatis-sqli-identifier",
+      "cwe": [
+        "CWE-89"
+      ],
+      "owasp": [
+        "A03:2021 - Injection"
+      ],
+      "confidence": "low",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "src/main/resources/mybatis/mapper/lg/LgCarrierMapper.xml",
+        "start_line": 27,
+        "end_line": 27,
+        "snippet_ref": "requires login"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "semgrep"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "IV-01",
+            "category": "입력데이터 검증 및 표현",
+            "name": "SQL 삽입"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — injection"
+        ]
+      },
+      "occurrences": [],
+      "disposition": "review",
+      "tier": "review",
+      "id": "bf038aa3a89b",
+      "dedup_key": "sast|src/main/resources/mybatis/mapper/lg/LgCarrierMapper.xml|27|secscan.rules.mybatis-sqli-identifier"
+    },
+    {
+      "category": "sast",
+      "severity": "medium",
+      "title": "MyBatis 식별자 위치 ${} 치환(CWE-89). 테이블/컬럼명은 #{} 바인딩이 구조적으로 불가하므로, 입력 화이트리스트 검증 관문이 있는지 확인하세요(#305 패턴).",
+      "tool": "semgrep",
+      "rule_id": "secscan.rules.mybatis-sqli-identifier",
+      "cwe": [
+        "CWE-89"
+      ],
+      "owasp": [
+        "A03:2021 - Injection"
+      ],
+      "confidence": "low",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "src/main/resources/mybatis/mapper/oldlg/OldLgCarrierMapper.xml",
+        "start_line": 36,
+        "end_line": 36,
+        "snippet_ref": "requires login"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "semgrep"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "IV-01",
+            "category": "입력데이터 검증 및 표현",
+            "name": "SQL 삽입"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — injection"
+        ]
+      },
+      "occurrences": [],
+      "disposition": "review",
+      "tier": "review",
+      "id": "d00efbc757bd",
+      "dedup_key": "sast|src/main/resources/mybatis/mapper/oldlg/OldLgCarrierMapper.xml|36|secscan.rules.mybatis-sqli-identifier"
+    },
+    {
+      "category": "sast",
+      "severity": "medium",
+      "title": "MyBatis 식별자 위치 ${} 치환(CWE-89). 테이블/컬럼명은 #{} 바인딩이 구조적으로 불가하므로, 입력 화이트리스트 검증 관문이 있는지 확인하세요(#305 패턴).",
+      "tool": "semgrep",
+      "rule_id": "secscan.rules.mybatis-sqli-identifier",
+      "cwe": [
+        "CWE-89"
+      ],
+      "owasp": [
+        "A03:2021 - Injection"
+      ],
+      "confidence": "low",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "src/main/resources/mybatis/mapper/oldlg/OldLgCarrierMapper.xml",
+        "start_line": 37,
+        "end_line": 37,
+        "snippet_ref": "requires login"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "semgrep"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "IV-01",
+            "category": "입력데이터 검증 및 표현",
+            "name": "SQL 삽입"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — injection"
+        ]
+      },
+      "occurrences": [],
+      "disposition": "review",
+      "tier": "review",
+      "id": "518a733267ca",
+      "dedup_key": "sast|src/main/resources/mybatis/mapper/oldlg/OldLgCarrierMapper.xml|37|secscan.rules.mybatis-sqli-identifier"
+    },
+    {
+      "category": "sast",
+      "severity": "medium",
+      "title": "MyBatis 식별자 위치 ${} 치환(CWE-89). 테이블/컬럼명은 #{} 바인딩이 구조적으로 불가하므로, 입력 화이트리스트 검증 관문이 있는지 확인하세요(#305 패턴).",
+      "tool": "semgrep",
+      "rule_id": "secscan.rules.mybatis-sqli-identifier",
+      "cwe": [
+        "CWE-89"
+      ],
+      "owasp": [
+        "A03:2021 - Injection"
+      ],
+      "confidence": "low",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "src/main/resources/mybatis/mapper/oldlg/OldLgCarrierMapper.xml",
+        "start_line": 46,
+        "end_line": 46,
+        "snippet_ref": "requires login"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "semgrep"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "IV-01",
+            "category": "입력데이터 검증 및 표현",
+            "name": "SQL 삽입"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — injection"
+        ]
+      },
+      "occurrences": [],
+      "disposition": "review",
+      "tier": "review",
+      "id": "4aa2d344ae87",
+      "dedup_key": "sast|src/main/resources/mybatis/mapper/oldlg/OldLgCarrierMapper.xml|46|secscan.rules.mybatis-sqli-identifier"
+    },
+    {
+      "category": "sast",
+      "severity": "medium",
+      "title": "MyBatis 식별자 위치 ${} 치환(CWE-89). 테이블/컬럼명은 #{} 바인딩이 구조적으로 불가하므로, 입력 화이트리스트 검증 관문이 있는지 확인하세요(#305 패턴).",
+      "tool": "semgrep",
+      "rule_id": "secscan.rules.mybatis-sqli-identifier",
+      "cwe": [
+        "CWE-89"
+      ],
+      "owasp": [
+        "A03:2021 - Injection"
+      ],
+      "confidence": "low",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "src/main/resources/mybatis/mapper/oldlg/OldLgCarrierMapper.xml",
+        "start_line": 60,
+        "end_line": 60,
+        "snippet_ref": "requires login"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "semgrep"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "IV-01",
+            "category": "입력데이터 검증 및 표현",
+            "name": "SQL 삽입"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — injection"
+        ]
+      },
+      "occurrences": [],
+      "disposition": "review",
+      "tier": "review",
+      "id": "87f6be044225",
+      "dedup_key": "sast|src/main/resources/mybatis/mapper/oldlg/OldLgCarrierMapper.xml|60|secscan.rules.mybatis-sqli-identifier"
+    },
+    {
+      "category": "sast",
+      "severity": "medium",
+      "title": "MyBatis 식별자 위치 ${} 치환(CWE-89). 테이블/컬럼명은 #{} 바인딩이 구조적으로 불가하므로, 입력 화이트리스트 검증 관문이 있는지 확인하세요(#305 패턴).",
+      "tool": "semgrep",
+      "rule_id": "secscan.rules.mybatis-sqli-identifier",
+      "cwe": [
+        "CWE-89"
+      ],
+      "owasp": [
+        "A03:2021 - Injection"
+      ],
+      "confidence": "low",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "src/main/resources/mybatis/mapper/oldlg/OldLgCarrierMapper.xml",
+        "start_line": 69,
+        "end_line": 69,
+        "snippet_ref": "requires login"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "semgrep"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "IV-01",
+            "category": "입력데이터 검증 및 표현",
+            "name": "SQL 삽입"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — injection"
+        ]
+      },
+      "occurrences": [],
+      "disposition": "review",
+      "tier": "review",
+      "id": "e7ab5de86297",
+      "dedup_key": "sast|src/main/resources/mybatis/mapper/oldlg/OldLgCarrierMapper.xml|69|secscan.rules.mybatis-sqli-identifier"
+    },
+    {
+      "category": "sca",
+      "severity": "critical",
+      "title": "Apache Tomcat: Apache Tomcat: Security constraint bypass due to improper access control",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-65182",
+      "cwe": [
+        "CWE-284",
+        "CWE-863"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.apache.tomcat.embed:tomcat-embed-core",
+        "version": "11.0.22"
+      },
+      "advisory": {
+        "id": "CVE-2026-65182",
+        "aliases": [
+          "CVE-2026-65182"
+        ],
+        "fixed_versions": [
+          "11.0.25",
+          "10.1.58",
+          "9.0.121"
+        ],
+        "cvss": [
+          {
+            "source": "bitnami",
+            "version": "3.1",
+            "score": 9.1,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N"
+          },
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 9.1,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 8.2,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:L/A:N"
+          }
+        ],
+        "published": "2026-08-25T22:17:04.9Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-65182"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.apache.tomcat.embed:tomcat-embed-core",
+          "version": "11.0.22"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "494bf1b2dc7d",
+      "dedup_key": "sca|maven|org.apache.tomcat.embed:tomcat-embed-core|11.0.22|CVE-2026-65182"
+    },
+    {
+      "category": "sca",
+      "severity": "critical",
+      "title": "tomcat: Apache Tomcat: Authentication bypass via limited replay attack in DIGEST authenticator",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-65905",
+      "cwe": [
+        "CWE-294"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.apache.tomcat.embed:tomcat-embed-core",
+        "version": "11.0.22"
+      },
+      "advisory": {
+        "id": "CVE-2026-65905",
+        "aliases": [
+          "CVE-2026-65905"
+        ],
+        "fixed_versions": [
+          "11.0.25",
+          "10.1.58",
+          "9.0.121"
+        ],
+        "cvss": [
+          {
+            "source": "bitnami",
+            "version": "3.1",
+            "score": 9.8,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+          },
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 9.8,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 4.8,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:L/A:N"
+          }
+        ],
+        "published": "2026-08-25T22:17:05.303Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-65905"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.apache.tomcat.embed:tomcat-embed-core",
+          "version": "11.0.22"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "eca2f3434dc5",
+      "dedup_key": "sca|maven|org.apache.tomcat.embed:tomcat-embed-core|11.0.22|CVE-2026-65905"
+    },
+    {
+      "category": "sca",
+      "severity": "critical",
+      "title": "org.apache.tomcat/tomcat: Apache Tomcat: Unauthorized resource access via FORM authentication bypass",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-68525",
+      "cwe": [
+        "CWE-863"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.apache.tomcat.embed:tomcat-embed-core",
+        "version": "11.0.22"
+      },
+      "advisory": {
+        "id": "CVE-2026-68525",
+        "aliases": [
+          "CVE-2026-68525"
+        ],
+        "fixed_versions": [
+          "11.0.25",
+          "10.1.58",
+          "9.0.121"
+        ],
+        "cvss": [
+          {
+            "source": "bitnami",
+            "version": "3.1",
+            "score": 9.1,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N"
+          },
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 9.1,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 6.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N"
+          }
+        ],
+        "published": "2026-08-25T22:17:05.7Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-68525"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.apache.tomcat.embed:tomcat-embed-core",
+          "version": "11.0.22"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "f95f95fa4dd7",
+      "dedup_key": "sca|maven|org.apache.tomcat.embed:tomcat-embed-core|11.0.22|CVE-2026-68525"
+    },
+    {
+      "category": "sca",
+      "severity": "high",
+      "title": "jackson-core: Async parser maxNumberLength bypass via chunked digit accumulation (incomplete fix for GHSA-72hv-8253-57qq)",
+      "tool": "trivy",
+      "rule_id": "GHSA-r7wm-3cxj-wff9",
+      "cwe": [],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "com.fasterxml.jackson.core:jackson-core",
+        "version": "2.21.2"
+      },
+      "advisory": {
+        "id": "GHSA-r7wm-3cxj-wff9",
+        "aliases": [
+          "GHSA-r7wm-3cxj-wff9"
+        ],
+        "fixed_versions": [
+          "2.18.8",
+          "2.21.4"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "4.0",
+            "score": 8.7,
+            "vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N"
+          }
+        ],
+        "published": "2026-07-21T21:58:53Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://github.com/advisories/GHSA-r7wm-3cxj-wff9"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "com.fasterxml.jackson.core:jackson-core",
+          "version": "2.21.2"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "97b125c3ca5a",
+      "dedup_key": "sca|maven|com.fasterxml.jackson.core:jackson-core|2.21.2|GHSA-r7wm-3cxj-wff9"
+    },
+    {
+      "category": "sca",
+      "severity": "high",
+      "title": "jackson-databind: jackson-databind: Arbitrary code execution via PolymorphicTypeValidator bypass",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-54512",
+      "cwe": [
+        "CWE-184",
+        "CWE-502"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "com.fasterxml.jackson.core:jackson-databind",
+        "version": "2.21.2"
+      },
+      "advisory": {
+        "id": "CVE-2026-54512",
+        "aliases": [
+          "CVE-2026-54512"
+        ],
+        "fixed_versions": [
+          "2.18.8",
+          "3.1.4",
+          "2.21.4"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 8.1,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 8.1,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H"
+          }
+        ],
+        "published": "2026-06-23T21:17:02.203Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-54512"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "CE-05",
+            "category": "코드오류",
+            "name": "신뢰할 수 없는 데이터의 역직렬화"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — injection"
+        ]
+      },
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "com.fasterxml.jackson.core:jackson-databind",
+          "version": "2.21.2"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "5a948d71dd88",
+      "dedup_key": "sca|maven|com.fasterxml.jackson.core:jackson-databind|2.21.2|CVE-2026-54512"
+    },
+    {
+      "category": "sca",
+      "severity": "high",
+      "title": "jackson-databind: Jackson-databind: Security bypass allows arbitrary code execution",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-54513",
+      "cwe": [
+        "CWE-184"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "com.fasterxml.jackson.core:jackson-databind",
+        "version": "2.21.2"
+      },
+      "advisory": {
+        "id": "CVE-2026-54513",
+        "aliases": [
+          "CVE-2026-54513"
+        ],
+        "fixed_versions": [
+          "2.18.8",
+          "2.21.4",
+          "3.1.4"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 8.1,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 8.1,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H"
+          }
+        ],
+        "published": "2026-06-23T21:17:02.333Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-54513"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "com.fasterxml.jackson.core:jackson-databind",
+          "version": "2.21.2"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "dee6ba128869",
+      "dedup_key": "sca|maven|com.fasterxml.jackson.core:jackson-databind|2.21.2|CVE-2026-54513"
+    },
+    {
+      "category": "sca",
+      "severity": "high",
+      "title": "micrometer: micrometer-core: Micrometer: Denial of Service via specially crafted gRPC requests",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-40983",
+      "cwe": [
+        "CWE-400",
+        "CWE-770"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "io.micrometer:micrometer-core",
+        "version": "1.16.5"
+      },
+      "advisory": {
+        "id": "CVE-2026-40983",
+        "aliases": [
+          "CVE-2026-40983"
+        ],
+        "fixed_versions": [
+          "1.16.6",
+          "1.15.12"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 7.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 7.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          }
+        ],
+        "published": "2026-06-09T05:16:34.653Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-40983"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "io.micrometer:micrometer-core",
+          "version": "1.16.5"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "ec2ddc6ed4d6",
+      "dedup_key": "sca|maven|io.micrometer:micrometer-core|1.16.5|CVE-2026-40983"
+    },
+    {
+      "category": "sca",
+      "severity": "high",
+      "title": "micrometer-core: micrometer-jetty11: micrometer-jetty12: Micrometer: Denial of Service via specially crafted HTTP requests",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-40984",
+      "cwe": [
+        "CWE-400",
+        "CWE-770"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "io.micrometer:micrometer-core",
+        "version": "1.16.5"
+      },
+      "advisory": {
+        "id": "CVE-2026-40984",
+        "aliases": [
+          "CVE-2026-40984"
+        ],
+        "fixed_versions": [
+          "1.16.6",
+          "1.15.12"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 7.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 7.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          }
+        ],
+        "published": "2026-06-09T05:16:34.78Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-40984"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "io.micrometer:micrometer-core",
+          "version": "1.16.5"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "63c7e5b17ce4",
+      "dedup_key": "sca|maven|io.micrometer:micrometer-core|1.16.5|CVE-2026-40984"
+    },
+    {
+      "category": "sca",
+      "severity": "high",
+      "title": "Spring Data Commons: Spring Data Commons: Denial of Service via crafted property path strings",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-41695",
+      "cwe": [
+        "CWE-400"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.springframework.data:spring-data-commons",
+        "version": "4.0.5"
+      },
+      "advisory": {
+        "id": "CVE-2026-41695",
+        "aliases": [
+          "CVE-2026-41695"
+        ],
+        "fixed_versions": [
+          "4.0.6",
+          "3.5.12"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 7.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 7.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          }
+        ],
+        "published": "2026-06-10T00:16:50.683Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-41695"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.springframework.data:spring-data-commons",
+          "version": "4.0.5"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "27770b969d5c",
+      "dedup_key": "sca|maven|org.springframework.data:spring-data-commons|4.0.5|CVE-2026-41695"
+    },
+    {
+      "category": "sca",
+      "severity": "high",
+      "title": "Spring Data Commons: Spring Data Commons: Denial of Service due to cache exhaustion via attacker-supplied strings",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-41716",
+      "cwe": [
+        "CWE-770"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.springframework.data:spring-data-commons",
+        "version": "4.0.5"
+      },
+      "advisory": {
+        "id": "CVE-2026-41716",
+        "aliases": [
+          "CVE-2026-41716"
+        ],
+        "fixed_versions": [
+          "4.0.6",
+          "3.5.12"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 7.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 7.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          }
+        ],
+        "published": "2026-06-10T00:16:51.567Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-41716"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.springframework.data:spring-data-commons",
+          "version": "4.0.5"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "63ae23f65444",
+      "dedup_key": "sca|maven|org.springframework.data:spring-data-commons|4.0.5|CVE-2026-41716"
+    },
+    {
+      "category": "sca",
+      "severity": "high",
+      "title": "spring-framework: Spring Framework: Denial of Service via specially crafted SpEL expressions",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-41850",
+      "cwe": [
+        "CWE-407"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.springframework:spring-expression",
+        "version": "7.0.7"
+      },
+      "advisory": {
+        "id": "CVE-2026-41850",
+        "aliases": [
+          "CVE-2026-41850"
+        ],
+        "fixed_versions": [
+          "7.0.8",
+          "6.2.19"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 7.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 5.9,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          }
+        ],
+        "published": "2026-06-09T05:16:37.177Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-41850"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.springframework:spring-expression",
+          "version": "7.0.7"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "ec11668ec58e",
+      "dedup_key": "sca|maven|org.springframework:spring-expression|7.0.7|CVE-2026-41850"
+    },
+    {
+      "category": "sca",
+      "severity": "high",
+      "title": "spring-framework: Spring Framework: Denial of Service when resolving static resources",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-41842",
+      "cwe": [
+        "CWE-400"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.springframework:spring-webmvc",
+        "version": "7.0.7"
+      },
+      "advisory": {
+        "id": "CVE-2026-41842",
+        "aliases": [
+          "CVE-2026-41842"
+        ],
+        "fixed_versions": [
+          "7.0.8",
+          "6.2.19"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 7.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 5.9,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          }
+        ],
+        "published": "2026-06-09T05:16:36.203Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-41842"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.springframework:spring-webmvc",
+          "version": "7.0.7"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "2bd37a7f5e43",
+      "dedup_key": "sca|maven|org.springframework:spring-webmvc|7.0.7|CVE-2026-41842"
+    },
+    {
+      "category": "sca",
+      "severity": "high",
+      "title": "org.springframework: Spring Framework: Cross-site scripting (XSS) via incorrect JavaScript escaping",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-41845",
+      "cwe": [
+        "CWE-79"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.springframework:spring-webmvc",
+        "version": "7.0.7"
+      },
+      "advisory": {
+        "id": "CVE-2026-41845",
+        "aliases": [
+          "CVE-2026-41845"
+        ],
+        "fixed_versions": [
+          "7.0.8",
+          "6.2.19"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 7.1,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:L/A:N"
+          },
+          {
+            "source": "nvd",
+            "version": "3.1",
+            "score": 6.1,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 7.1,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:L/A:N"
+          }
+        ],
+        "published": "2026-06-09T05:16:36.557Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-41845"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "IV-04",
+            "category": "입력데이터 검증 및 표현",
+            "name": "크로스사이트 스크립트(XSS)"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — injection"
+        ]
+      },
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.springframework:spring-webmvc",
+          "version": "7.0.7"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "f83f4a9723f8",
+      "dedup_key": "sca|maven|org.springframework:spring-webmvc|7.0.7|CVE-2026-41845"
+    },
+    {
+      "category": "sca",
+      "severity": "high",
+      "title": "jackson-core: Async parser maxNumberLength bypass via chunked digit accumulation (incomplete fix for GHSA-72hv-8253-57qq)",
+      "tool": "trivy",
+      "rule_id": "GHSA-r7wm-3cxj-wff9",
+      "cwe": [],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "tools.jackson.core:jackson-core",
+        "version": "3.1.2"
+      },
+      "advisory": {
+        "id": "GHSA-r7wm-3cxj-wff9",
+        "aliases": [
+          "GHSA-r7wm-3cxj-wff9"
+        ],
+        "fixed_versions": [
+          "3.1.4"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "4.0",
+            "score": 8.7,
+            "vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N"
+          }
+        ],
+        "published": "2026-07-21T21:58:53Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://github.com/advisories/GHSA-r7wm-3cxj-wff9"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "tools.jackson.core:jackson-core",
+          "version": "3.1.2"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "32d151df56d7",
+      "dedup_key": "sca|maven|tools.jackson.core:jackson-core|3.1.2|GHSA-r7wm-3cxj-wff9"
+    },
+    {
+      "category": "sca",
+      "severity": "high",
+      "title": "jackson-databind: jackson-databind: Arbitrary code execution via PolymorphicTypeValidator bypass",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-54512",
+      "cwe": [
+        "CWE-184",
+        "CWE-502"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "tools.jackson.core:jackson-databind",
+        "version": "3.1.2"
+      },
+      "advisory": {
+        "id": "CVE-2026-54512",
+        "aliases": [
+          "CVE-2026-54512"
+        ],
+        "fixed_versions": [
+          "3.1.4"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 8.1,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 8.1,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H"
+          }
+        ],
+        "published": "2026-06-23T21:17:02.203Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-54512"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "CE-05",
+            "category": "코드오류",
+            "name": "신뢰할 수 없는 데이터의 역직렬화"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — injection"
+        ]
+      },
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "tools.jackson.core:jackson-databind",
+          "version": "3.1.2"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "5381c1a80d26",
+      "dedup_key": "sca|maven|tools.jackson.core:jackson-databind|3.1.2|CVE-2026-54512"
+    },
+    {
+      "category": "sca",
+      "severity": "high",
+      "title": "jackson-databind: Jackson-databind: Security bypass allows arbitrary code execution",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-54513",
+      "cwe": [
+        "CWE-184"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "tools.jackson.core:jackson-databind",
+        "version": "3.1.2"
+      },
+      "advisory": {
+        "id": "CVE-2026-54513",
+        "aliases": [
+          "CVE-2026-54513"
+        ],
+        "fixed_versions": [
+          "3.1.4"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 8.1,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 8.1,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H"
+          }
+        ],
+        "published": "2026-06-23T21:17:02.333Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-54513"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "tools.jackson.core:jackson-databind",
+          "version": "3.1.2"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "f973cf6af03a",
+      "dedup_key": "sca|maven|tools.jackson.core:jackson-databind|3.1.2|CVE-2026-54513"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "jackson-databind: jackson-databind: Information Disclosure via Eager DNS Resolution",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-54514",
+      "cwe": [
+        "CWE-918"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "com.fasterxml.jackson.core:jackson-databind",
+        "version": "2.21.2"
+      },
+      "advisory": {
+        "id": "CVE-2026-54514",
+        "aliases": [
+          "CVE-2026-54514"
+        ],
+        "fixed_versions": [
+          "2.18.8",
+          "2.21.4",
+          "3.1.4"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 5.3,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 5.3,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N"
+          }
+        ],
+        "published": "2026-06-23T21:17:02.467Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-54514"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "IV-12",
+            "category": "입력데이터 검증 및 표현",
+            "name": "서버사이드 요청 위조(SSRF)"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — business logic"
+        ]
+      },
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "com.fasterxml.jackson.core:jackson-databind",
+          "version": "2.21.2"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "6a8468772377",
+      "dedup_key": "sca|maven|com.fasterxml.jackson.core:jackson-databind|2.21.2|CVE-2026-54514"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "jackson-databind: jackson-databind: Ignored properties can be unexpectedly modified",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-54515",
+      "cwe": [
+        "CWE-915"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "com.fasterxml.jackson.core:jackson-databind",
+        "version": "2.21.2"
+      },
+      "advisory": {
+        "id": "CVE-2026-54515",
+        "aliases": [
+          "CVE-2026-54515"
+        ],
+        "fixed_versions": [
+          "3.1.4",
+          "2.18.9",
+          "2.21.5",
+          "2.22.1"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 5.3,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 5.3,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:N"
+          }
+        ],
+        "published": "2026-06-23T21:17:02.597Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-54515"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "com.fasterxml.jackson.core:jackson-databind",
+          "version": "2.21.2"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "70f5ca7b9c8d",
+      "dedup_key": "sca|maven|com.fasterxml.jackson.core:jackson-databind|2.21.2|CVE-2026-54515"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "jackson-databind: jackson-databind: Security bypass due to improper handling of renamed properties",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-54516",
+      "cwe": [
+        "CWE-915"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "com.fasterxml.jackson.core:jackson-databind",
+        "version": "2.21.2"
+      },
+      "advisory": {
+        "id": "CVE-2026-54516",
+        "aliases": [
+          "CVE-2026-54516"
+        ],
+        "fixed_versions": [
+          "2.21.4",
+          "3.1.4"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 5.3,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 5.3,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:N"
+          }
+        ],
+        "published": "2026-06-23T21:17:02.723Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-54516"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "com.fasterxml.jackson.core:jackson-databind",
+          "version": "2.21.2"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "26157a86e040",
+      "dedup_key": "sca|maven|com.fasterxml.jackson.core:jackson-databind|2.21.2|CVE-2026-54516"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "jackson-databind: jackson-databind: Information disclosure via improper JsonView filter application",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-54517",
+      "cwe": [
+        "CWE-863"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "com.fasterxml.jackson.core:jackson-databind",
+        "version": "2.21.2"
+      },
+      "advisory": {
+        "id": "CVE-2026-54517",
+        "aliases": [
+          "CVE-2026-54517"
+        ],
+        "fixed_versions": [
+          "2.21.4",
+          "3.1.4"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 5.3,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 5.3,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N"
+          }
+        ],
+        "published": "2026-06-23T21:17:02.853Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-54517"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "com.fasterxml.jackson.core:jackson-databind",
+          "version": "2.21.2"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "da7a8a4395ac",
+      "dedup_key": "sca|maven|com.fasterxml.jackson.core:jackson-databind|2.21.2|CVE-2026-54517"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "jackson-databind: jackson-databind: Information disclosure and data manipulation via view-based access control bypass",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-54518",
+      "cwe": [
+        "CWE-863"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "com.fasterxml.jackson.core:jackson-databind",
+        "version": "2.21.2"
+      },
+      "advisory": {
+        "id": "CVE-2026-54518",
+        "aliases": [
+          "CVE-2026-54518"
+        ],
+        "fixed_versions": [
+          "2.21.4"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 6.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 6.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N"
+          }
+        ],
+        "published": "2026-06-23T22:16:32.073Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-54518"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "com.fasterxml.jackson.core:jackson-databind",
+          "version": "2.21.2"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "8ea8abe066bd",
+      "dedup_key": "sca|maven|com.fasterxml.jackson.core:jackson-databind|2.21.2|CVE-2026-54518"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "com.fasterxml.jackson.core/jackson-databind: tools.jackson.core/jackson-databind: jackson-databind: @JsonIgnore bypass in Java Records",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-59888",
+      "cwe": [
+        "CWE-915"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "com.fasterxml.jackson.core:jackson-databind",
+        "version": "2.21.2"
+      },
+      "advisory": {
+        "id": "CVE-2026-59888",
+        "aliases": [
+          "CVE-2026-59888"
+        ],
+        "fixed_versions": [
+          "2.18.8",
+          "2.21.4"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 6.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 6.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N"
+          }
+        ],
+        "published": "2026-07-14T17:17:15.137Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-59888"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "com.fasterxml.jackson.core:jackson-databind",
+          "version": "2.21.2"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "73193fb7f937",
+      "dedup_key": "sca|maven|com.fasterxml.jackson.core:jackson-databind|2.21.2|CVE-2026-59888"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "com.fasterxml.jackson.core/jackson-databind: Jackson-databind: Privilege escalation via improper handling of @JsonUnwrapped properties",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-59889",
+      "cwe": [
+        "CWE-863"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "com.fasterxml.jackson.core:jackson-databind",
+        "version": "2.21.2"
+      },
+      "advisory": {
+        "id": "CVE-2026-59889",
+        "aliases": [
+          "CVE-2026-59889"
+        ],
+        "fixed_versions": [
+          "2.21.5",
+          "2.18.9",
+          "2.22.1"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 6.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:H/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 6.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:H/A:N"
+          }
+        ],
+        "published": "2026-07-14T21:17:06.16Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-59889"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "com.fasterxml.jackson.core:jackson-databind",
+          "version": "2.21.2"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "9cb4c6240105",
+      "dedup_key": "sca|maven|com.fasterxml.jackson.core:jackson-databind|2.21.2|CVE-2026-59889"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "jackson-databind: `@JsonView` bypass for creator properties with `@JsonTypeInfo(include=As.EXTERNAL_PROPERTY)`",
+      "tool": "trivy",
+      "rule_id": "GHSA-mhm7-754m-9p8w",
+      "cwe": [],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "com.fasterxml.jackson.core:jackson-databind",
+        "version": "2.21.2"
+      },
+      "advisory": {
+        "id": "GHSA-mhm7-754m-9p8w",
+        "aliases": [
+          "GHSA-mhm7-754m-9p8w"
+        ],
+        "fixed_versions": [
+          "2.18.9",
+          "2.21.5"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 6.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N"
+          }
+        ],
+        "published": "2026-07-21T19:40:12Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://github.com/advisories/GHSA-mhm7-754m-9p8w"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "com.fasterxml.jackson.core:jackson-databind",
+          "version": "2.21.2"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "849aa917d353",
+      "dedup_key": "sca|maven|com.fasterxml.jackson.core:jackson-databind|2.21.2|GHSA-mhm7-754m-9p8w"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "org.apache.logging.log4j/log4j-api: Apache Log4j API: Malformed JSON output due to improper encoding of floating-point values",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-49844",
+      "cwe": [
+        "CWE-116"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.apache.logging.log4j:log4j-api",
+        "version": "2.25.4"
+      },
+      "advisory": {
+        "id": "CVE-2026-49844",
+        "aliases": [
+          "CVE-2026-49844"
+        ],
+        "fixed_versions": [
+          "2.25.5",
+          "2.26.1"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "4.0",
+            "score": 6.3,
+            "vector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:N/VI:N/VA:N/SC:N/SI:L/SA:N"
+          },
+          {
+            "source": "nvd",
+            "version": "3.1",
+            "score": 5.9,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 5.9,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:N"
+          }
+        ],
+        "published": "2026-07-10T22:16:42.54Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-49844"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.apache.logging.log4j:log4j-api",
+          "version": "2.25.4"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "e0bd29ddbb20",
+      "dedup_key": "sca|maven|org.apache.logging.log4j:log4j-api|2.25.4|CVE-2026-49844"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "spring-boot: Spring Boot: Local attacker can manipulate data directory due to predictable path",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-41001",
+      "cwe": [
+        "CWE-377"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.springframework.boot:spring-boot-autoconfigure",
+        "version": "4.0.6"
+      },
+      "advisory": {
+        "id": "CVE-2026-41001",
+        "aliases": [
+          "CVE-2026-41001"
+        ],
+        "fixed_versions": [
+          "4.0.7",
+          "3.5.15"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 5.3,
+            "vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:L"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 5.3,
+            "vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:L"
+          }
+        ],
+        "published": "2026-06-11T07:16:28.163Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-41001"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.springframework.boot:spring-boot-autoconfigure",
+          "version": "4.0.6"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "d90388f4a666",
+      "dedup_key": "sca|maven|org.springframework.boot:spring-boot-autoconfigure|4.0.6|CVE-2026-41001"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "Spring Boot's Mail Auto-Configuration Does Not Enable SSL Hostname Verification",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-40992",
+      "cwe": [
+        "CWE-295"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.springframework.boot:spring-boot-starter-mail",
+        "version": "4.0.6"
+      },
+      "advisory": {
+        "id": "CVE-2026-40992",
+        "aliases": [
+          "CVE-2026-40992"
+        ],
+        "fixed_versions": [
+          "4.0.7",
+          "3.5.15"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 5.0,
+            "vector": "CVSS:3.1/AV:A/AC:H/PR:N/UI:N/S:U/C:L/I:L/A:L"
+          }
+        ],
+        "published": "2026-06-11T07:16:27.177Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-40992"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "SF-11",
+            "category": "보안기능",
+            "name": "부적절한 인증서 유효성 검증"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — cryptography"
+        ]
+      },
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.springframework.boot:spring-boot-starter-mail",
+          "version": "4.0.6"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "50e2592380a5",
+      "dedup_key": "sca|maven|org.springframework.boot:spring-boot-starter-mail|4.0.6|CVE-2026-40992"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "Spring Data Commons: Spring Data Commons: Denial of Service via parsing Sort parameters",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-41711",
+      "cwe": [
+        "CWE-400"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.springframework.data:spring-data-commons",
+        "version": "4.0.5"
+      },
+      "advisory": {
+        "id": "CVE-2026-41711",
+        "aliases": [
+          "CVE-2026-41711"
+        ],
+        "fixed_versions": [
+          "4.0.6",
+          "3.5.12"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 5.9,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 5.9,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          }
+        ],
+        "published": "2026-06-10T00:16:51.337Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-41711"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.springframework.data:spring-data-commons",
+          "version": "4.0.5"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "32a87b644940",
+      "dedup_key": "sca|maven|org.springframework.data:spring-data-commons|4.0.5|CVE-2026-41711"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "Spring Data Commons: Spring Data Commons: Denial of Service via specially crafted HTTP request with @ProjectedPayload",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-41721",
+      "cwe": [
+        "CWE-400"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.springframework.data:spring-data-commons",
+        "version": "4.0.5"
+      },
+      "advisory": {
+        "id": "CVE-2026-41721",
+        "aliases": [
+          "CVE-2026-41721"
+        ],
+        "fixed_versions": [
+          "4.0.6",
+          "3.5.12"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 5.9,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 5.9,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          }
+        ],
+        "published": "2026-06-10T00:16:51.917Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-41721"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.springframework.data:spring-data-commons",
+          "version": "4.0.5"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "da73be808e24",
+      "dedup_key": "sca|maven|org.springframework.data:spring-data-commons|4.0.5|CVE-2026-41721"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "Spring Security: Open Redirect via Unvalidated Post-Login Redirect URL Stored in CookieRequestCache",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-41706",
+      "cwe": [
+        "CWE-601"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.springframework.security:spring-security-web",
+        "version": "7.0.5"
+      },
+      "advisory": {
+        "id": "CVE-2026-41706",
+        "aliases": [
+          "CVE-2026-41706"
+        ],
+        "fixed_versions": [
+          "7.0.6",
+          "6.5.11"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 6.1,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N"
+          }
+        ],
+        "published": "2026-06-10T00:16:51.223Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-41706"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "IV-07",
+            "category": "입력데이터 검증 및 표현",
+            "name": "신뢰되지 않는 URL 주소로 자동접속 연결"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — business logic"
+        ]
+      },
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.springframework.security:spring-security-web",
+          "version": "7.0.5"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "f8eeb1ae7dec",
+      "dedup_key": "sca|maven|org.springframework.security:spring-security-web|7.0.5|CVE-2026-41706"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "Spring Framework: Spring Framework: Denial of Service via unbounded cache growth in SpEL evaluation",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-41851",
+      "cwe": [
+        "CWE-770"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.springframework:spring-expression",
+        "version": "7.0.7"
+      },
+      "advisory": {
+        "id": "CVE-2026-41851",
+        "aliases": [
+          "CVE-2026-41851"
+        ],
+        "fixed_versions": [
+          "7.0.8",
+          "6.2.19"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 5.3,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+          },
+          {
+            "source": "nvd",
+            "version": "3.1",
+            "score": 7.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 5.3,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+          }
+        ],
+        "published": "2026-06-09T05:16:37.297Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-41851"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.springframework:spring-expression",
+          "version": "7.0.7"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "597228550044",
+      "dedup_key": "sca|maven|org.springframework:spring-expression|7.0.7|CVE-2026-41851"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "Spring MVC and WebFlux applications are vulnerable to Information Disc ...",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-41841",
+      "cwe": [
+        "CWE-524"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.springframework:spring-webmvc",
+        "version": "7.0.7"
+      },
+      "advisory": {
+        "id": "CVE-2026-41841",
+        "aliases": [
+          "CVE-2026-41841"
+        ],
+        "fixed_versions": [
+          "7.0.8",
+          "6.2.19"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 5.9,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N"
+          }
+        ],
+        "published": "2026-06-09T05:16:36.087Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-41841"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.springframework:spring-webmvc",
+          "version": "7.0.7"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "a32cec304e8e",
+      "dedup_key": "sca|maven|org.springframework:spring-webmvc|7.0.7|CVE-2026-41841"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "spring-webflux: spring-webmvc: Spring Framework: Information Disclosure via Path Traversal",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-41843",
+      "cwe": [
+        "CWE-22"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.springframework:spring-webmvc",
+        "version": "7.0.7"
+      },
+      "advisory": {
+        "id": "CVE-2026-41843",
+        "aliases": [
+          "CVE-2026-41843"
+        ],
+        "fixed_versions": [
+          "7.0.8",
+          "6.2.19"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 5.9,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 5.9,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N"
+          }
+        ],
+        "published": "2026-06-09T05:16:36.32Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-41843"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "IV-03",
+            "category": "입력데이터 검증 및 표현",
+            "name": "경로 조작 및 자원 삽입"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — injection"
+        ]
+      },
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.springframework:spring-webmvc",
+          "version": "7.0.7"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "1152f302a96c",
+      "dedup_key": "sca|maven|org.springframework:spring-webmvc|7.0.7|CVE-2026-41843"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "Spring Framework: Spring Framework: Open Redirect via crafted link",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-41844",
+      "cwe": [
+        "CWE-601"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.springframework:spring-webmvc",
+        "version": "7.0.7"
+      },
+      "advisory": {
+        "id": "CVE-2026-41844",
+        "aliases": [
+          "CVE-2026-41844"
+        ],
+        "fixed_versions": [
+          "7.0.8",
+          "6.2.19"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 4.2,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:L/I:L/A:N"
+          },
+          {
+            "source": "nvd",
+            "version": "3.1",
+            "score": 6.1,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 4.2,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:L/I:L/A:N"
+          }
+        ],
+        "published": "2026-06-09T05:16:36.44Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-41844"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "IV-07",
+            "category": "입력데이터 검증 및 표현",
+            "name": "신뢰되지 않는 URL 주소로 자동접속 연결"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — business logic"
+        ]
+      },
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.springframework:spring-webmvc",
+          "version": "7.0.7"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "721c61d5119b",
+      "dedup_key": "sca|maven|org.springframework:spring-webmvc|7.0.7|CVE-2026-41844"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "Spring Framework: Spring Framework: Cross-site scripting (XSS) via user-supplied values in JSP form tags",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-41846",
+      "cwe": [
+        "CWE-79"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.springframework:spring-webmvc",
+        "version": "7.0.7"
+      },
+      "advisory": {
+        "id": "CVE-2026-41846",
+        "aliases": [
+          "CVE-2026-41846"
+        ],
+        "fixed_versions": [
+          "7.0.8",
+          "6.2.19"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 5.9,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:H/I:L/A:N"
+          },
+          {
+            "source": "nvd",
+            "version": "3.1",
+            "score": 6.1,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 6.8,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:H/I:H/A:N"
+          }
+        ],
+        "published": "2026-06-09T05:16:36.693Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-41846"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "IV-04",
+            "category": "입력데이터 검증 및 표현",
+            "name": "크로스사이트 스크립트(XSS)"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — injection"
+        ]
+      },
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.springframework:spring-webmvc",
+          "version": "7.0.7"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "1c725b3e6882",
+      "dedup_key": "sca|maven|org.springframework:spring-webmvc|7.0.7|CVE-2026-41846"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "Spring Framework: Spring Framework: Request smuggling vulnerability in Spring MVC and WebFlux",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-41853",
+      "cwe": [
+        "CWE-444"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.springframework:spring-webmvc",
+        "version": "7.0.7"
+      },
+      "advisory": {
+        "id": "CVE-2026-41853",
+        "aliases": [
+          "CVE-2026-41853"
+        ],
+        "fixed_versions": [
+          "7.0.8",
+          "6.2.19"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 5.3,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 5.3,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:N"
+          }
+        ],
+        "published": "2026-06-09T05:16:37.523Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-41853"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.springframework:spring-webmvc",
+          "version": "7.0.7"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "21037de4c299",
+      "dedup_key": "sca|maven|org.springframework:spring-webmvc|7.0.7|CVE-2026-41853"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "spring-framework: Spring Framework: Server-Side Request Forgery via incorrect host parsing",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-41854",
+      "cwe": [
+        "CWE-918"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.springframework:spring-web",
+        "version": "7.0.7"
+      },
+      "advisory": {
+        "id": "CVE-2026-41854",
+        "aliases": [
+          "CVE-2026-41854"
+        ],
+        "fixed_versions": [
+          "7.0.8",
+          "6.2.19"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 4.2,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:L/I:L/A:N"
+          },
+          {
+            "source": "nvd",
+            "version": "3.1",
+            "score": 6.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 4.2,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:L/I:L/A:N"
+          }
+        ],
+        "published": "2026-06-09T05:16:37.647Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-41854"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "IV-12",
+            "category": "입력데이터 검증 및 표현",
+            "name": "서버사이드 요청 위조(SSRF)"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — business logic"
+        ]
+      },
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.springframework:spring-web",
+          "version": "7.0.7"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "c9d6e8495d18",
+      "dedup_key": "sca|maven|org.springframework:spring-web|7.0.7|CVE-2026-41854"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "jackson-databind: jackson-databind: Information Disclosure via Eager DNS Resolution",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-54514",
+      "cwe": [
+        "CWE-918"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "tools.jackson.core:jackson-databind",
+        "version": "3.1.2"
+      },
+      "advisory": {
+        "id": "CVE-2026-54514",
+        "aliases": [
+          "CVE-2026-54514"
+        ],
+        "fixed_versions": [
+          "2.21.4",
+          "3.1.4"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 5.3,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 5.3,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N"
+          }
+        ],
+        "published": "2026-06-23T21:17:02.467Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-54514"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "IV-12",
+            "category": "입력데이터 검증 및 표현",
+            "name": "서버사이드 요청 위조(SSRF)"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — business logic"
+        ]
+      },
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "tools.jackson.core:jackson-databind",
+          "version": "3.1.2"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "b51207774023",
+      "dedup_key": "sca|maven|tools.jackson.core:jackson-databind|3.1.2|CVE-2026-54514"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "jackson-databind: jackson-databind: Ignored properties can be unexpectedly modified",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-54515",
+      "cwe": [
+        "CWE-915"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "tools.jackson.core:jackson-databind",
+        "version": "3.1.2"
+      },
+      "advisory": {
+        "id": "CVE-2026-54515",
+        "aliases": [
+          "CVE-2026-54515"
+        ],
+        "fixed_versions": [
+          "3.1.4"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 5.3,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 5.3,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:N"
+          }
+        ],
+        "published": "2026-06-23T21:17:02.597Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-54515"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "tools.jackson.core:jackson-databind",
+          "version": "3.1.2"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "e340a403d09c",
+      "dedup_key": "sca|maven|tools.jackson.core:jackson-databind|3.1.2|CVE-2026-54515"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "jackson-databind: jackson-databind: Security bypass due to improper handling of renamed properties",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-54516",
+      "cwe": [
+        "CWE-915"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "tools.jackson.core:jackson-databind",
+        "version": "3.1.2"
+      },
+      "advisory": {
+        "id": "CVE-2026-54516",
+        "aliases": [
+          "CVE-2026-54516"
+        ],
+        "fixed_versions": [
+          "3.1.4"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 5.3,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 5.3,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:N"
+          }
+        ],
+        "published": "2026-06-23T21:17:02.723Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-54516"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "tools.jackson.core:jackson-databind",
+          "version": "3.1.2"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "36dc696461c0",
+      "dedup_key": "sca|maven|tools.jackson.core:jackson-databind|3.1.2|CVE-2026-54516"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "jackson-databind: jackson-databind: Information disclosure via improper JsonView filter application",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-54517",
+      "cwe": [
+        "CWE-863"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "tools.jackson.core:jackson-databind",
+        "version": "3.1.2"
+      },
+      "advisory": {
+        "id": "CVE-2026-54517",
+        "aliases": [
+          "CVE-2026-54517"
+        ],
+        "fixed_versions": [
+          "3.1.4"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 5.3,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 5.3,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N"
+          }
+        ],
+        "published": "2026-06-23T21:17:02.853Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-54517"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "tools.jackson.core:jackson-databind",
+          "version": "3.1.2"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "a5fb2a0b5507",
+      "dedup_key": "sca|maven|tools.jackson.core:jackson-databind|3.1.2|CVE-2026-54517"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "jackson-databind: jackson-databind: Information disclosure and data manipulation via view-based access control bypass",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-54518",
+      "cwe": [
+        "CWE-863"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "tools.jackson.core:jackson-databind",
+        "version": "3.1.2"
+      },
+      "advisory": {
+        "id": "CVE-2026-54518",
+        "aliases": [
+          "CVE-2026-54518"
+        ],
+        "fixed_versions": [
+          "3.1.4"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 6.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 6.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N"
+          }
+        ],
+        "published": "2026-06-23T22:16:32.073Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-54518"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "tools.jackson.core:jackson-databind",
+          "version": "3.1.2"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "338c83011c94",
+      "dedup_key": "sca|maven|tools.jackson.core:jackson-databind|3.1.2|CVE-2026-54518"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "com.fasterxml.jackson.core/jackson-databind: tools.jackson.core/jackson-databind: jackson-databind: @JsonIgnore bypass in Java Records",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-59888",
+      "cwe": [
+        "CWE-915"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "tools.jackson.core:jackson-databind",
+        "version": "3.1.2"
+      },
+      "advisory": {
+        "id": "CVE-2026-59888",
+        "aliases": [
+          "CVE-2026-59888"
+        ],
+        "fixed_versions": [
+          "3.1.4"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 6.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 6.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N"
+          }
+        ],
+        "published": "2026-07-14T17:17:15.137Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-59888"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "tools.jackson.core:jackson-databind",
+          "version": "3.1.2"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "4f7f6582dfc0",
+      "dedup_key": "sca|maven|tools.jackson.core:jackson-databind|3.1.2|CVE-2026-59888"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "com.fasterxml.jackson.core/jackson-databind: Jackson-databind: Privilege escalation via improper handling of @JsonUnwrapped properties",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-59889",
+      "cwe": [
+        "CWE-863"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "tools.jackson.core:jackson-databind",
+        "version": "3.1.2"
+      },
+      "advisory": {
+        "id": "CVE-2026-59889",
+        "aliases": [
+          "CVE-2026-59889"
+        ],
+        "fixed_versions": [
+          "3.1.5",
+          "3.2.1"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 6.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:H/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 6.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:H/A:N"
+          }
+        ],
+        "published": "2026-07-14T21:17:06.16Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-59889"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "tools.jackson.core:jackson-databind",
+          "version": "3.1.2"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "9baaafc6e4d2",
+      "dedup_key": "sca|maven|tools.jackson.core:jackson-databind|3.1.2|CVE-2026-59889"
+    },
+    {
+      "category": "sca",
+      "severity": "low",
+      "title": "Deserialization of untrusted data vulnerability in QOS.CH Sarl logback ...",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-10532",
+      "cwe": [
+        "CWE-502"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "ch.qos.logback:logback-core",
+        "version": "1.5.32"
+      },
+      "advisory": {
+        "id": "CVE-2026-10532",
+        "aliases": [
+          "CVE-2026-10532"
+        ],
+        "fixed_versions": [
+          "1.5.34"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "4.0",
+            "score": 2.9,
+            "vector": "CVSS:4.0/AV:N/AC:H/AT:P/PR:N/UI:N/VC:L/VI:L/VA:N/SC:L/SI:L/SA:N/E:P/RE:M/U:Green"
+          }
+        ],
+        "published": "2026-06-01T13:16:30.34Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-10532"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "CE-05",
+            "category": "코드오류",
+            "name": "신뢰할 수 없는 데이터의 역직렬화"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — injection"
+        ]
+      },
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "ch.qos.logback:logback-core",
+          "version": "1.5.32"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "6fd0eca65eae",
+      "dedup_key": "sca|maven|ch.qos.logback:logback-core|1.5.32|CVE-2026-10532"
+    },
+    {
+      "category": "sca",
+      "severity": "low",
+      "title": "Deserialization of untrusted data vulnerability in QOS.CH Sarl logback ...",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-9828",
+      "cwe": [
+        "CWE-502"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "ch.qos.logback:logback-core",
+        "version": "1.5.32"
+      },
+      "advisory": {
+        "id": "CVE-2026-9828",
+        "aliases": [
+          "CVE-2026-9828"
+        ],
+        "fixed_versions": [
+          "1.5.33"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "4.0",
+            "score": 1.2,
+            "vector": "CVSS:4.0/AV:L/AC:H/AT:P/PR:N/UI:N/VC:L/VI:L/VA:N/SC:L/SI:L/SA:N/E:P/RE:L/U:Green"
+          }
+        ],
+        "published": "2026-05-28T14:16:27.43Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-9828"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "CE-05",
+            "category": "코드오류",
+            "name": "신뢰할 수 없는 데이터의 역직렬화"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — injection"
+        ]
+      },
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "ch.qos.logback:logback-core",
+          "version": "1.5.32"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "1a4f28dc8fac",
+      "dedup_key": "sca|maven|ch.qos.logback:logback-core|1.5.32|CVE-2026-9828"
+    },
+    {
+      "category": "sca",
+      "severity": "low",
+      "title": "spring-framework: Spring Framework: Regular Expression Denial of Service in AntPathMatcher",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-41848",
+      "cwe": [
+        "CWE-1333"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.springframework:spring-core",
+        "version": "7.0.7"
+      },
+      "advisory": {
+        "id": "CVE-2026-41848",
+        "aliases": [
+          "CVE-2026-41848"
+        ],
+        "fixed_versions": [
+          "7.0.8",
+          "6.2.19"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 3.7,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:L"
+          },
+          {
+            "source": "nvd",
+            "version": "3.1",
+            "score": 7.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 5.9,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          }
+        ],
+        "published": "2026-06-09T05:16:36.94Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-41848"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.springframework:spring-core",
+          "version": "7.0.7"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "12ef34192ff5",
+      "dedup_key": "sca|maven|org.springframework:spring-core|7.0.7|CVE-2026-41848"
+    },
+    {
+      "category": "sca",
+      "severity": "low",
+      "title": "spring-framework: org.springframework/spring-expression: Spring Framework: SpEL vulnerability allows unintended application logic invocation",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-41852",
+      "cwe": [
+        "CWE-863"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.springframework:spring-expression",
+        "version": "7.0.7"
+      },
+      "advisory": {
+        "id": "CVE-2026-41852",
+        "aliases": [
+          "CVE-2026-41852"
+        ],
+        "fixed_versions": [
+          "7.0.8",
+          "6.2.19"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 3.7,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:L"
+          },
+          {
+            "source": "nvd",
+            "version": "3.1",
+            "score": 5.3,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 3.7,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:L"
+          }
+        ],
+        "published": "2026-06-09T05:16:37.407Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-41852"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.springframework:spring-expression",
+          "version": "7.0.7"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "c986cf4e4411",
+      "dedup_key": "sca|maven|org.springframework:spring-expression|7.0.7|CVE-2026-41852"
+    },
+    {
+      "category": "secret",
+      "severity": "high",
+      "title": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+      "tool": "gitleaks",
+      "rule_id": "generic-api-key",
+      "cwe": [],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "docs/superpowers/plans/2026-05-20-sha512-password-encoder.md",
+        "start_line": 960,
+        "end_line": 960,
+        "snippet_ref": "/private/tmp/secscan-verify/a483b3b1/repo/docs/superpowers/plans/2026-05-20-sha512-password-encoder.md:generic-api-key:960"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "gitleaks"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [],
+      "disposition": "actionable",
+      "tier": null,
+      "id": "476a08d084f4",
+      "dedup_key": "secret|docs/superpowers/plans/2026-05-20-sha512-password-encoder.md|960|generic-api-key"
+    },
+    {
+      "category": "secret",
+      "severity": "high",
+      "title": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+      "tool": "gitleaks",
+      "rule_id": "generic-api-key",
+      "cwe": [],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "docs/superpowers/plans/2026-05-20-sha512-password-encoder.md",
+        "start_line": 977,
+        "end_line": 977,
+        "snippet_ref": "/private/tmp/secscan-verify/a483b3b1/repo/docs/superpowers/plans/2026-05-20-sha512-password-encoder.md:generic-api-key:977"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "gitleaks"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [],
+      "disposition": "actionable",
+      "tier": null,
+      "id": "2b78c2db86f3",
+      "dedup_key": "secret|docs/superpowers/plans/2026-05-20-sha512-password-encoder.md|977|generic-api-key"
+    },
+    {
+      "category": "secret",
+      "severity": "high",
+      "title": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+      "tool": "gitleaks",
+      "rule_id": "generic-api-key",
+      "cwe": [],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "docs/superpowers/plans/2026-06-07-kms-cbc-payload-encryption.md",
+        "start_line": 182,
+        "end_line": 182,
+        "snippet_ref": "/private/tmp/secscan-verify/a483b3b1/repo/docs/superpowers/plans/2026-06-07-kms-cbc-payload-encryption.md:generic-api-key:182"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "gitleaks"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [],
+      "disposition": "actionable",
+      "tier": null,
+      "id": "675cff8c0fd4",
+      "dedup_key": "secret|docs/superpowers/plans/2026-06-07-kms-cbc-payload-encryption.md|182|generic-api-key"
+    },
+    {
+      "category": "secret",
+      "severity": "high",
+      "title": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+      "tool": "gitleaks",
+      "rule_id": "generic-api-key",
+      "cwe": [],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "docs/superpowers/specs/2026-06-29-password-self-renewal-design.md",
+        "start_line": 79,
+        "end_line": 79,
+        "snippet_ref": "/private/tmp/secscan-verify/a483b3b1/repo/docs/superpowers/specs/2026-06-29-password-self-renewal-design.md:generic-api-key:79"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "gitleaks"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [],
+      "disposition": "actionable",
+      "tier": null,
+      "id": "e6c03578d14c",
+      "dedup_key": "secret|docs/superpowers/specs/2026-06-29-password-self-renewal-design.md|79|generic-api-key"
+    },
+    {
+      "category": "secret",
+      "severity": "high",
+      "title": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+      "tool": "gitleaks",
+      "rule_id": "generic-api-key",
+      "cwe": [],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "docs/superpowers/specs/2026-06-30-structured-access-logging-design.md",
+        "start_line": 104,
+        "end_line": 104,
+        "snippet_ref": "/private/tmp/secscan-verify/a483b3b1/repo/docs/superpowers/specs/2026-06-30-structured-access-logging-design.md:generic-api-key:104"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "gitleaks"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [],
+      "disposition": "actionable",
+      "tier": null,
+      "id": "35d37f1243b5",
+      "dedup_key": "secret|docs/superpowers/specs/2026-06-30-structured-access-logging-design.md|104|generic-api-key"
+    },
+    {
+      "category": "secret",
+      "severity": "high",
+      "title": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+      "tool": "gitleaks",
+      "rule_id": "generic-api-key",
+      "cwe": [],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "docs/superpowers/specs/2026-06-30-structured-access-logging-design.md",
+        "start_line": 99,
+        "end_line": 99,
+        "snippet_ref": "/private/tmp/secscan-verify/a483b3b1/repo/docs/superpowers/specs/2026-06-30-structured-access-logging-design.md:generic-api-key:99"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "gitleaks"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [],
+      "disposition": "actionable",
+      "tier": null,
+      "id": "8da7b0f560ae",
+      "dedup_key": "secret|docs/superpowers/specs/2026-06-30-structured-access-logging-design.md|99|generic-api-key"
+    },
+    {
+      "category": "secret",
+      "severity": "high",
+      "title": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+      "tool": "gitleaks",
+      "rule_id": "generic-api-key",
+      "cwe": [],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "docs/testing/api-test-cases.md",
+        "start_line": 860,
+        "end_line": 860,
+        "snippet_ref": "/private/tmp/secscan-verify/a483b3b1/repo/docs/testing/api-test-cases.md:generic-api-key:860"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "gitleaks"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [],
+      "disposition": "actionable",
+      "tier": null,
+      "id": "4d1d0356c0de",
+      "dedup_key": "secret|docs/testing/api-test-cases.md|860|generic-api-key"
+    },
+    {
+      "category": "secret",
+      "severity": "high",
+      "title": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+      "tool": "gitleaks",
+      "rule_id": "generic-api-key",
+      "cwe": [],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "docs/testing/api-test-cases.md",
+        "start_line": 909,
+        "end_line": 909,
+        "snippet_ref": "/private/tmp/secscan-verify/a483b3b1/repo/docs/testing/api-test-cases.md:generic-api-key:909"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "gitleaks"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [],
+      "disposition": "actionable",
+      "tier": null,
+      "id": "4b15161ba0ad",
+      "dedup_key": "secret|docs/testing/api-test-cases.md|909|generic-api-key"
+    },
+    {
+      "category": "secret",
+      "severity": "high",
+      "title": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+      "tool": "gitleaks",
+      "rule_id": "generic-api-key",
+      "cwe": [],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "src/main/resources/application-example.yml",
+        "start_line": 76,
+        "end_line": 76,
+        "snippet_ref": "/private/tmp/secscan-verify/a483b3b1/repo/src/main/resources/application-example.yml:generic-api-key:76"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "gitleaks"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [],
+      "disposition": "actionable",
+      "tier": null,
+      "id": "44d6884c37aa",
+      "dedup_key": "secret|src/main/resources/application-example.yml|76|generic-api-key"
+    },
+    {
+      "category": "secret",
+      "severity": "high",
+      "title": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+      "tool": "gitleaks",
+      "rule_id": "generic-api-key",
+      "cwe": [],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "src/main/resources/application-loadtest.yml",
+        "start_line": 118,
+        "end_line": 118,
+        "snippet_ref": "/private/tmp/secscan-verify/a483b3b1/repo/src/main/resources/application-loadtest.yml:generic-api-key:118"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "gitleaks"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [],
+      "disposition": "actionable",
+      "tier": null,
+      "id": "46f56fbd51f4",
+      "dedup_key": "secret|src/main/resources/application-loadtest.yml|118|generic-api-key"
+    },
+    {
+      "category": "secret",
+      "severity": "high",
+      "title": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+      "tool": "gitleaks",
+      "rule_id": "generic-api-key",
+      "cwe": [],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "src/test/java/com/messagegate/auth/AuthServiceTest.java",
+        "start_line": 630,
+        "end_line": 630,
+        "snippet_ref": "/private/tmp/secscan-verify/a483b3b1/repo/src/test/java/com/messagegate/auth/AuthServiceTest.java:generic-api-key:630"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "gitleaks"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [],
+      "disposition": "actionable",
+      "tier": null,
+      "id": "a345308dff24",
+      "dedup_key": "secret|src/test/java/com/messagegate/auth/AuthServiceTest.java|630|generic-api-key"
+    },
+    {
+      "category": "secret",
+      "severity": "high",
+      "title": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+      "tool": "gitleaks",
+      "rule_id": "generic-api-key",
+      "cwe": [],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "src/test/resources/application-test.yml",
+        "start_line": 132,
+        "end_line": 132,
+        "snippet_ref": "/private/tmp/secscan-verify/a483b3b1/repo/src/test/resources/application-test.yml:generic-api-key:132"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "gitleaks"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [],
+      "disposition": "actionable",
+      "tier": null,
+      "id": "59ae8507845e",
+      "dedup_key": "secret|src/test/resources/application-test.yml|132|generic-api-key"
+    },
+    {
+      "category": "secret",
+      "severity": "high",
+      "title": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+      "tool": "gitleaks",
+      "rule_id": "generic-api-key",
+      "cwe": [],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "src/test/resources/application-test.yml",
+        "start_line": 84,
+        "end_line": 84,
+        "snippet_ref": "/private/tmp/secscan-verify/a483b3b1/repo/src/test/resources/application-test.yml:generic-api-key:84"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "gitleaks"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [],
+      "disposition": "actionable",
+      "tier": null,
+      "id": "b6629e49c8ba",
+      "dedup_key": "secret|src/test/resources/application-test.yml|84|generic-api-key"
+    }
+  ]
+}

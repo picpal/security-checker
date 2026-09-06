@@ -8,12 +8,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from .adapters.base import OK, RawResult
-from .compliance import enrich_compliance
+from .disposition import decide
 from .exclude import DEFAULT_EXCLUDES, exclude_findings, filter_gitignored
-from .models import Finding
+from .models import Finding, ScannerStatus
 from .normalize import normalize_each, to_findings
 from .normalize.merge import merge_consensus
 from .orchestrator import scan as orchestrate
+from .output.order import sort_findings
 from .reachability.engine import Budget, enrich_reachability
 from .secret.verify import verify_secrets_in_findings
 from .suppress.engine import apply_suppressions
@@ -49,6 +50,7 @@ class ScanResult:
     suppressed_count: int = 0
     invalidated: list[str] = field(default_factory=list)
     excluded_count: int = 0  # 기본제외+gitignore 로 걸러진 finding 수
+    scanner_status: list[ScannerStatus] = field(default_factory=list)
 
 
 def run_scan(
@@ -74,6 +76,11 @@ def run_scan(
     trace: TraceSink | None = None,
 ) -> ScanResult:
     raws = orchestrate(adapters, target, max_workers=max_workers)
+    # M1(최종 리뷰) — orchestrate 는 as_completed 도착 순서(스레드 완료 순서, 비결정적)로 raws 를
+    # 낸다. normalize_each 의 dict 삽입 순서 → merge_consensus 의 "첫 finding = base" 가 그 순서를
+    # 그대로 물려받아 tool(`"+".join(tools)`)·consensus.tools 순서가 실행마다 달라질 수 있었다.
+    # 여기서 도구 이름으로 정렬해 이후 모든 단계(trace 포함)가 결정적 순서를 본다.
+    raws = sorted(raws, key=lambda r: r.tool)
     if trace is not None:
         for r in raws:
             trace.record_raw(r.tool, r.status, len(r.payload or ""))
@@ -97,11 +104,6 @@ def run_scan(
     excluded_count = before - len(findings)
     if trace is not None:
         trace.record("exclude", findings)
-
-    # 컴플라이언스 매핑: CWE → KISA/PCI (결정적·무비용 — 항상 적용).
-    enrich_compliance(findings)
-    if trace is not None:
-        trace.record("compliance", findings)
 
     ran, reason = False, "off"
     if profile.reachability and reachability_provider is not None:
@@ -134,10 +136,17 @@ def run_scan(
         findings, invalidated = s_out.findings, s_out.invalidated
         if trace is not None:
             trace.record("suppress", findings)
+    # 판정 H(spec §7.4): 억제 다음, 출력 앞. compliance 도 여기서 채운다.
+    findings = decide(findings)
+    if trace is not None:
+        trace.record("disposition", findings)
+    findings = sort_findings(findings)
     suppressed_count = sum(1 for f in findings if f.suppression is not None)
 
     partial = [r for r in raws if r.status != OK]
     if trace is not None:
         trace.record("final", findings)
+    status = sorted((ScannerStatus(r.tool, r.status, r.version, r.duration_s, r.error) for r in raws),
+                    key=lambda s: s.tool)
     return ScanResult(findings, raws, ran, reason, partial, secret_policy,
-                      verified_count, suppressed_count, invalidated, excluded_count)
+                      verified_count, suppressed_count, invalidated, excluded_count, status)

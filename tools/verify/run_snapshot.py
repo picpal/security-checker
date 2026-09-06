@@ -34,6 +34,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--out", required=True)
     p.add_argument("--no-reachability", action="store_true")
     p.add_argument("--allow-large", action="store_true")
+    p.add_argument("--xlsx", action="store_true")
     return p
 
 
@@ -66,7 +67,8 @@ def main(argv: list[str] | None = None) -> int:
         "children_max_rss_bytes": rss, "tool_versions": tool_versions(),
         "isolated": {"gradle_user_home": os.environ["GRADLE_USER_HOME"], "secret_policy": "never"},
     }
-    written = write_evidence(args.out, result=result, trace=sink, meta=meta)
+    written = write_evidence(args.out, result=result, trace=sink, meta=meta, xlsx=args.xlsx, repo_root=repo_dir,
+                             target=repo_dir)
     print(json.dumps({"written": [str(p) for p in written], "findings": len(result.findings),
                       "partial": [r.tool for r in result.partial_failures], "elapsed_s": meta["elapsed_s"]},
                      ensure_ascii=False, indent=2))

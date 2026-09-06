@@ -55,3 +55,36 @@ def test_finding_from_dict_ignores_derived_fields():
     d = finding_to_dict(_sast())
     d["id"] = "zzz"; d["dedup_key"] = "zzz"; d["unknown_future_field"] = 1
     assert finding_from_dict(d) == _sast()
+
+
+from dataclasses import fields, is_dataclass, replace
+
+from secscan.models import Cvss, Occurrence
+from secscan.output.json_io import _NESTED
+
+
+def test_round_trip_with_occurrences_cvss_disposition():
+    f = _sca()
+    f = replace(
+        f,
+        occurrences=(Occurrence("trivy", "pom.xml", "org.apache.commons:commons-text", "1.9"),
+                     Occurrence("trivy", "build.gradle", "org.apache.commons:commons-text", "1.9")),
+        advisory=replace(f.advisory,
+                         cvss=(Cvss("nvd", "3.1", 9.8, "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"),
+                               Cvss("ghsa", "4.0", 8.7, None)),
+                         published="2022-10-13T00:00:00Z"),
+        disposition="demoted", tier=None,
+    )
+    back = from_json(to_json([f]))
+    assert back == [f]
+    assert back[0].advisory.cvss[0].score == 9.8
+    assert back[0].occurrences[1].target == "build.gradle"
+    assert back[0].disposition == "demoted"
+
+
+def test_nested_registry_covers_every_dataclass_field():
+    """플랜 1 파킹(Task 4): 모델에 중첩 dataclass 필드가 늘면 _NESTED 누락이 곧 lossless 위반이다."""
+    import secscan.models as m
+    dc_names = {n for n, obj in vars(m).items() if isinstance(obj, type) and is_dataclass(obj)}
+    expect = {f.name for f in fields(Finding) if any(n in str(f.type) for n in dc_names)}
+    assert set(_NESTED) == expect

@@ -5,9 +5,11 @@
 """
 
 import json
+from dataclasses import replace
 from pathlib import Path
 
 from secscan.adapters.base import FAILED, OK, RawResult
+from secscan.models import Cvss, Occurrence
 from secscan.normalize import to_findings
 from secscan.normalize.merge import merge_consensus
 from secscan.normalize.osv import parse_osv
@@ -150,3 +152,39 @@ def test_to_findings_skips_failed_results():
 
 def test_to_findings_ignores_unknown_tool():
     assert to_findings([RawResult("mystery", OK, payload="{}")]) == []
+
+
+_TRIVY_GOLDEN = (Path(__file__).parent / "golden" / "trivy-vuln-maven-app.json").read_text()
+
+
+def test_trivy_parses_all_cvss_sources_and_published():
+    f = parse_trivy(_TRIVY_GOLDEN)[0]  # 골든 첫 항목: ghsa V3 6.5 · redhat V3 3.7
+    assert {(c.source, c.version, c.score) for c in f.advisory.cvss} == {("ghsa", "3.1", 6.5), ("redhat", "3.1", 3.7)}
+    assert all(c.vector.startswith("CVSS:3.1/") for c in f.advisory.cvss)
+    assert f.advisory.published == "2025-07-11T15:15:24.347Z"
+
+
+def test_trivy_records_occurrence_with_target():
+    f = parse_trivy(_TRIVY_GOLDEN)[0]
+    assert f.occurrences == (Occurrence("trivy", "pom.xml", f.component.package, f.component.version),)
+
+
+def test_trivy_cvss_v2_and_v40_versions():
+    payload = json.dumps({"Results": [{"Target": "t", "Vulnerabilities": [{
+        "VulnerabilityID": "CVE-9", "PkgName": "a:b", "InstalledVersion": "1", "Severity": "HIGH",
+        "CVSS": {"nvd": {"V2Score": 5.0, "V2Vector": "AV:N/AC:L/Au:N/C:P/I:N/A:N", "V3Score": 7.5,
+                         "V3Vector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N"},
+                 "ghsa": {"V40Score": 2.9, "V40Vector": "CVSS:4.0/AV:N/AC:H"}}}]}]})
+    f = parse_trivy(payload)[0]
+    assert [(c.source, c.version) for c in f.advisory.cvss] == [("ghsa", "4.0"), ("nvd", "2.0"), ("nvd", "3.0")]
+
+
+def test_merge_unions_occurrences_and_cvss_keeps_published():
+    a = parse_trivy(_TRIVY_GOLDEN)[0]
+    b = replace(a, occurrences=(Occurrence("trivy", "build.gradle", a.component.package, a.component.version),),
+                advisory=replace(a.advisory, cvss=(Cvss("nvd", "3.1", 7.5, "CVSS:3.1/x"),), published=None))
+    m = merge_consensus([a, b])
+    assert len(m) == 1
+    assert {o.target for o in m[0].occurrences} == {"pom.xml", "build.gradle"}
+    assert {c.source for c in m[0].advisory.cvss} == {"ghsa", "redhat", "nvd"}
+    assert m[0].advisory.published == "2025-07-11T15:15:24.347Z"

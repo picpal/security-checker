@@ -62,3 +62,45 @@ def test_runs_spotbugs_when_classes_present(tmp_path):
 
 def test_parse_spotbugs_sarif_empty():
     assert parse_spotbugs_sarif('{"runs":[{"results":[]}]}') == []
+
+
+import os
+import stat
+import subprocess
+from pathlib import Path
+
+from secscan.adapters.spotbugs import _default_build
+
+
+FIX = Path("fixtures/deep-gradlew-app")
+
+
+def test_default_build_prefers_gradlew_when_present(tmp_path, monkeypatch):
+    (tmp_path / "build.gradle").write_text("plugins { id 'java' }\n")
+    w = tmp_path / "gradlew"; w.write_text("#!/bin/sh\nexit 0\n"); w.chmod(w.stat().st_mode | stat.S_IXUSR)
+    seen = {}
+    def fake_run(argv, **kw):
+        seen["argv"] = argv
+        class R: returncode = 0
+        return R()
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    assert _default_build(tmp_path) is True
+    assert seen["argv"] == [str(w), "compileJava", "-q"]
+
+
+def test_default_build_falls_back_to_system_gradle_without_wrapper(tmp_path, monkeypatch):
+    (tmp_path / "build.gradle").write_text("plugins { id 'java' }\n")
+    seen = {}
+    def fake_run(argv, **kw):
+        seen["argv"] = argv
+        class R: returncode = 1
+        return R()
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    assert _default_build(tmp_path) is False and seen["argv"][0] == "gradle"
+
+
+def test_gradlew_fixture_build_failure_is_isolated_as_skipped():
+    """gradlew 전용 프로젝트에서 빌드가 실패하면 deep 만 SKIPPED, 예외 없음(원칙 5). 실제 stub gradlew 를 실행한다."""
+    assert os.access(FIX / "gradlew", os.X_OK)
+    r = SpotBugsAdapter().run(FIX)
+    assert r.status == SKIPPED and "빌드 실패" in r.error

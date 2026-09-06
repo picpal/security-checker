@@ -11,8 +11,8 @@ import json
 from dataclasses import fields, is_dataclass
 
 from ..models import (
-    Advisory, Compliance, Component, Consensus, Finding, KisaWeakness, Location,
-    Reachability, Suppression,
+    Advisory, Compliance, Component, Consensus, Cvss, Finding, KisaWeakness, Location,
+    Occurrence, Reachability, Suppression,
 )
 
 CONTEXT = "secscan-findings/v1"
@@ -21,9 +21,10 @@ CONTEXT = "secscan-findings/v1"
 _NESTED: dict[str, object] = {
     "component": Component, "advisory": Advisory, "location": Location,
     "reachability": Reachability, "consensus": Consensus, "suppression": Suppression,
-    "compliance": Compliance,
+    "compliance": Compliance, "occurrences": (Occurrence, "seq"),
 }
-_COMPLIANCE_SEQ = {"kisa": KisaWeakness}
+# (부모 dataclass, 필드명) → 원소 dataclass. 중첩 안의 tuple[dataclass] 복원용.
+_SEQ: dict[tuple[type, str], type] = {(Compliance, "kisa"): KisaWeakness, (Advisory, "cvss"): Cvss}
 
 
 def _plain(obj):
@@ -42,12 +43,19 @@ def _build(cls, data):
         if f.name not in data:
             continue
         v = data[f.name]
-        if cls is Compliance and f.name in _COMPLIANCE_SEQ:
-            v = tuple(_build(_COMPLIANCE_SEQ[f.name], x) for x in (v or []))
+        seq_cls = _SEQ.get((cls, f.name))
+        if seq_cls is not None:
+            v = tuple(_build(seq_cls, x) for x in (v or []))
         elif isinstance(v, list):
             v = tuple(v)
         kwargs[f.name] = v
     return cls(**kwargs)
+
+
+def _build_field(spec, v):
+    if isinstance(spec, tuple):  # (cls, "seq")
+        return tuple(_build(spec[0], x) for x in (v or []))
+    return _build(spec, v)
 
 
 def finding_to_dict(f: Finding) -> dict:
@@ -64,7 +72,7 @@ def finding_from_dict(d: dict) -> Finding:
         if name not in known:
             continue  # id/dedup_key(파생)·미래 필드 무시
         if name in _NESTED:
-            v = _build(_NESTED[name], v)
+            v = _build_field(_NESTED[name], v)
         elif isinstance(v, list):
             v = tuple(v)
         kwargs[name] = v

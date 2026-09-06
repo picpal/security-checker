@@ -31,7 +31,9 @@ def _default_build(target) -> bool:
                                cwd=str(t), capture_output=True, text=True, timeout=600)
             return r.returncode == 0
         if (t / "build.gradle").exists() or (t / "build.gradle.kts").exists():
-            r = subprocess.run(["gradle", "compileJava", "-q"],
+            wrapper = t / "gradlew"
+            gradle = [str(wrapper)] if wrapper.exists() and os.access(wrapper, os.X_OK) else ["gradle"]
+            r = subprocess.run(gradle + ["compileJava", "-q"],
                                cwd=str(t), capture_output=True, text=True, timeout=600)
             return r.returncode == 0
     except Exception:
