@@ -84,9 +84,19 @@ def add_report_parser(sub) -> None:
     rp.add_argument("--bom", help="cdxgen BOM(bom.cdx.json). 없으면 의존 경로 열은 'BOM 없음'")
     rp.add_argument("--interpretations", help="Claude 가 쓴 interpretations.json. 검증 통과분만 병합")
     rp.add_argument("--out", default="out", help="출력 디렉토리")
+    rp.add_argument("--check-result", help="LLM 결과 반환(json 또는 4_결과반환 시트를 담은 xlsx)")
+    rp.add_argument("--rescan", help="수정 뒤 재스캔한 findings.json")
 
 
 def cmd_report(args) -> int:
+    if args.check_result:
+        if not args.rescan:
+            print("secscan report: --check-result 에는 --rescan 이 필요합니다")
+            return 2
+        from .result_check import check, has_mismatch, load_result, render, rescan_ids
+        results = check(load_result(args.check_result), rescan_ids(args.rescan))
+        print(render(results))
+        return 2 if has_mismatch(results) else 0
     if not args.findings:
         print("secscan report: --findings 가 필요합니다")
         return 2

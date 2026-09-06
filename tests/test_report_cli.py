@@ -100,3 +100,11 @@ def test_main_report_with_interpretations_flag(tmp_path):
     ip = tmp_path / "i.json"; ip.write_text(json.dumps({"@context": "secscan-interpretations/v1", "items": {}}), encoding="utf-8")
     rc = cli.main(["report", "--findings", str(FIX), "--interpretations", str(ip), "--out", str(tmp_path)])
     assert rc == 0 and (tmp_path / "report-request.json").exists()
+
+
+def test_main_report_check_result_exit_codes(tmp_path):
+    r = tmp_path / "r.json"
+    r.write_text(json.dumps([{"id": "0442ba114c70", "status": "fixed"}, {"id": "356e4bbab00c", "status": "needs_confirmation", "reason": "q"}]), encoding="utf-8")
+    assert cli.main(["report", "--check-result", str(r), "--rescan", str(FIX)]) == 2  # 0442… 가 재스캔에 존재 → 불일치
+    r.write_text(json.dumps([{"id": "ffffffffffff", "status": "fixed"}]), encoding="utf-8")
+    assert cli.main(["report", "--check-result", str(r), "--rescan", str(FIX)]) == 0
