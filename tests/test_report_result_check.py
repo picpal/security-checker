@@ -4,8 +4,11 @@ from pathlib import Path
 
 import pytest
 
+from secscan.output.json_io import from_json
 from secscan.report.models import ResultRow
-from secscan.report.result_check import RESULT_CONTEXT, check, has_mismatch, load_result, render
+from secscan.report.result_check import RESULT_CONTEXT, check, has_mismatch, load_result, render, rescan_ids
+
+FIX = Path("fixtures/report/work-note-findings.json")
 
 
 def test_verdict_table():
@@ -39,3 +42,35 @@ def test_load_result_xlsx_skips_guard_rows(tmp_path):
     ws.append(["a", "fixed", "build.gradle", "id 부재", "", "abc"])
     p = tmp_path / "r.xlsx"; wb.save(p)
     assert load_result(p) == [ResultRow("a", "fixed", "build.gradle", "id 부재", "", "abc")]
+
+
+def test_rescan_ids_relativizes_absolute_paths_to_meta_target(tmp_path):
+    """FR-1(Critical): --check-result 의 ID 공간 불일치. 재스캔 findings.json 은 절대경로일 수
+    있고, 보고서·request·결과반환 의 ID 는 --target 상대화 공간이다(spec §12(f)). rescan_ids 가
+    상대화하지 않으면 SAST/secret 의 id(경로 포함 dedup_key)가 전부 달라져 fixed 주장이 거짓으로
+    '일치' 판정된다."""
+    text = FIX.read_text(encoding="utf-8")
+    doc = json.loads(text)
+    for item in doc["findings"]:
+        loc = item.get("location")
+        if loc and loc.get("file"):
+            loc["file"] = "/repo/work-note/" + loc["file"]
+        if item.get("source"):
+            item["source"] = "/repo/work-note/" + item["source"]
+    doc["meta"]["target"] = "/repo/work-note"
+    p = tmp_path / "abs-findings.json"
+    p.write_text(json.dumps(doc, ensure_ascii=False), encoding="utf-8")
+
+    fixture_ids = {f.id for f in from_json(text)}
+    assert rescan_ids(p) == fixture_ids  # meta.target 기본으로 상대화 후 대조
+
+    # 상대화 없이 절대경로 그대로 읽으면(구현 버그 재현) id 집합이 달라진다 — SAST/secret 11건.
+    abs_ids = {f.id for f in from_json(p.read_text(encoding="utf-8"))}
+    assert abs_ids != fixture_ids
+
+    from secscan import cli
+
+    r = tmp_path / "r.json"
+    r.write_text(json.dumps([{"id": "356e4bbab00c", "status": "fixed"}]), encoding="utf-8")
+    assert cli.main(["report", "--check-result", str(r), "--rescan", str(p)]) == 2  # meta.target 기본
+    assert cli.main(["report", "--check-result", str(r), "--rescan", str(p), "--target", "/repo/work-note"]) == 2  # --target 명시

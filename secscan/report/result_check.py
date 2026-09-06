@@ -6,6 +6,7 @@ from pathlib import Path
 
 from ..output.json_io import from_json
 from .models import RESULT_STATUSES, ResultRow
+from .paths import relativize
 from .workbook import SHEET_RESULT
 
 RESULT_CONTEXT = "secscan-report-result/v1"
@@ -37,14 +38,22 @@ def load_result(path) -> list[ResultRow]:
     return [_row(d) for d in items]
 
 
-def rescan_ids(findings_path) -> set[str]:
-    return {f.id for f in from_json(Path(findings_path).read_text(encoding="utf-8"))}
+def rescan_ids(findings_path, target: str | None = None) -> set[str]:
+    """재스캔 findings.json 을 --target(없으면 meta.target) 기준으로 상대화한 뒤 id 집합을 낸다.
+
+    보고서·report-request.json·4_결과반환 의 ID 는 상대화 공간이므로, 여기서 같은 공간으로
+    맞추지 않으면 fixed 주장이 전부 거짓으로 '일치' 판정된다(spec §12(f))."""
+    text = Path(findings_path).read_text(encoding="utf-8")
+    findings = from_json(text)
+    meta_target = json.loads(text).get("meta", {}).get("target")
+    findings = relativize(findings, target if target is not None else meta_target)
+    return {f.id for f in findings}
 
 
-def check(rows: list[ResultRow], present: set[str]) -> list[dict]:
+def check(rows: list[ResultRow], present_ids: set[str]) -> list[dict]:
     out = []
     for r in rows:
-        is_present = r.id in present
+        is_present = r.id in present_ids
         if r.status not in RESULT_STATUSES:
             verdict = "불일치(status 값 오류)"
         elif r.status == "fixed":

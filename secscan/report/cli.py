@@ -2,10 +2,9 @@
 from __future__ import annotations
 
 import json
-from dataclasses import replace
 from pathlib import Path
 
-from ..models import Finding, Location
+from ..models import Finding
 from ..output.json_io import from_json
 from ..output.xlsx import Sheet
 from .deppath import DepGraph, deppaths_for
@@ -13,22 +12,8 @@ from .derive import derive_all
 from .interpret import build_request, load_interpretations
 from .kb import entry_for
 from .models import Interpretation
+from .paths import relativize
 from .workbook import build_report_sheets, write_report
-
-
-def _rel(p: str, target: str | None) -> str:
-    if not p or not target:
-        return p
-    prefix = str(Path(target)) .rstrip("/") + "/"
-    return p[len(prefix):] if p.startswith(prefix) else p
-
-
-def relativize(findings: list[Finding], target: str | None) -> list[Finding]:
-    out = []
-    for f in findings:
-        loc = replace(f.location, file=_rel(f.location.file, target)) if f.location else None
-        out.append(replace(f, location=loc, source=_rel(f.source, target)))
-    return out
 
 
 def build_report_with_request(findings: list[Finding], meta: dict, *, target: str | None = None,
@@ -94,7 +79,7 @@ def cmd_report(args) -> int:
             print("secscan report: --check-result 에는 --rescan 이 필요합니다")
             return 2
         from .result_check import check, has_mismatch, load_result, render, rescan_ids
-        results = check(load_result(args.check_result), rescan_ids(args.rescan))
+        results = check(load_result(args.check_result), rescan_ids(args.rescan, target=args.target))
         print(render(results))
         return 2 if has_mismatch(results) else 0
     if not args.findings:
