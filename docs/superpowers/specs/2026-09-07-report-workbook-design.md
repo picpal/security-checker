@@ -247,6 +247,8 @@ report.md 를 같은 지식베이스로 개편 · Semgrep 레지스트리 룰 �
     관측해 등록 대기로 남긴다(§10 백로그).
 (d) 강등 SCA 중 evidence(도달성 근거) 가 없는 항목도 확인 질문 대상이다 — "도달 불가"가
     안전 보증이 아니라는 §3 원칙에 따라, 근거가 약한 강등일수록 사람 확인이 더 필요하다.
+(e) §5.5 의 셀 채우기 색·틀고정 D2 는 구현하지 않았다 — 시트 원시형(Sheet=값만)과
+    output/xlsx.py 무변경 제약 때문. 사실/추정 구분은 열 분리로만 한다.
 (f) 보고서·request·결과반환의 finding ID 는 --target 상대화 공간 기준이다. --check-result 는
     재스캔 findings.json 을 같은 target 으로 상대화한 뒤 대조한다(meta.target 기본, --target
     우선).

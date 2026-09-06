@@ -178,12 +178,28 @@ crypto 안티패턴 → **커스텀 룰(D)** (3종: MyBatis `${}`/하드코딩/z
   금지, spec §7 "억제 자동화" 대응 — grep 으로 확인 가능, 회귀 시 이 불변식이 깨진 것).
 - **백로그**: report.md 를 같은 지식베이스로 개편 · Semgrep 레지스트리 룰 설명 대량 등록
   자동화(작성 시점 생성 도구) · HTML 단일 파일 보고서 · 결과 반환을 PR 본문으로 변환.
-- **이번 사이클 이연 Minor(최종 리뷰 대상, 검사 약화·값 변동 없음)**: (1) `workbook.py` 의
-  `_cwe`/`_std` 폴백 `"-"` 이 `sanitize_cell` 을 거치며 `"'-"` 로 바뀜 · (2) 0_요약
-  `duration_s == 0` 일 때 단위 `"s"` 미표기 · (3) `report/cli.py` 미사용 import(`Location`)
-  ·공백 오타 · (4) `deppath.py` 다중 버전 동률일 때 선택 기준이 문자열 정렬(결정적이나 의미
-  없음) · (5) `interpret.py` 의 `bad_cite` `..` 검사가 인용 문자열 첫 `:` 앞부분만 봄 · (6)
-  `build_report` 의 구버전 인자 호환 분기 중복 · (7) `result_check.py` 가 `load_workbook` 를
-  닫지 않음, `check()` 인자명이 직관적이지 않음 · (8) `test_report_derive.py` 의 미사용 import
-  `REVIEW` · (9) Task 2 커밋 메시지의 "12건" 은 계수 오기(실제 `rules.json` 은 10건, 이 절
-  "등록 대기 룰" 항목과 spec 정오표 (c) 참조).
+- **최종 리뷰 fix 웨이브(2026-09-07)**: FR-1(Critical, `--check-result` ID 공간 불일치 —
+  `paths.py` 분리 + 재스캔 상대화) · FR-2(scan 의 report 실패가 exit code 를 삼키던 문제 —
+  try/except 격리) · FR-3(check-result 가 못 읽은 입력에 exit 0 을 내던 문제 — 스키마/0행/시트
+  부재 exit 2) · FR-4(불변식 테스트 2개 신설) · FR-5(폴백 `"-"` → `"해당없음"`) · FR-6
+  (`build_report` 호환 래퍼 제거) · FR-7(이 절의 측정 문서에 재생성 스크립트 포함)을 반영했다
+  (`.superpowers/sdd/2026-09-07-report-workbook/final-fix-report.md`). 아래 이연 목록은 그
+  반영 이후 잔여분이다.
+- **이연 Minor(검사 약화·값 변동 없음)**: (1) 0_요약 `duration_s == 0` 일 때 단위 `"s"` 미표기 ·
+  (2) `paths.py::_rel` 의 공백 오타(`str(Path(target)) .rstrip(...)`, FR-1 로 `report/cli.py`
+  에서 이설) · (3) `deppath.py` 다중 버전 동률일 때 선택 기준이 문자열 정렬(결정적이나 의미
+  없음) · (4) `interpret.py` 의 `bad_cite` `..` 검사가 인용 문자열 첫 `:` 앞부분만 봄 · (5)
+  `result_check.py` 가 `load_workbook` 를 닫지 않음 · (6) `test_report_derive.py` 의 미사용
+  import `REVIEW` · (7) Task 2 커밋 메시지의 "12건" 은 계수 오기(실제 `rules.json` 은 10건,
+  "등록 대기 룰" 항목과 spec 정오표 (c) 참조) · (8) `count_in_guess`(interpretations 거부
+  사유)가 `--check-result` 쪽에는 대응되는 검증이 없음 · (9) `--out` 이 check 모드에서 무시됨
+  (인자는 받되 사용 안 함) · (10) `workbook.py` 가 `output/xlsx.py` 의 private
+  `_openpyxl_available` 를 import · (11) 0_요약 `duration_s` 가 `None` 일 때(0 이 아니라
+  누락) 숫자 없이 단위 `"s"` 만 남는 표시 · (12) report.xlsx 재생성 시 바이트 동일성(산출물
+  결정성)을 직접 확인하는 테스트 부재 · (13) `interpret.py::FORBIDDEN` 금칙어 5개는 얇은
+  방어 — 그 단어를 피하면서 판정을 단정하는 `guess` 는 통과한다(spec §5.4 설계 선택, 결함
+  아님) · (14) `derive.py` 의 `done` 치환은 `{id}`·`{package}` 만 지원하고 `{target}` 은
+  지원하지 않음(현재 `rules.json` 에는 안 쓰여 실피해 없음) · (15) `kb.py::validate_rules`
+  (커스텀 룰 메타데이터 검증)가 테스트에서만 호출되고 report 파이프라인 런타임에서는 호출되지
+  않음 · (16) 담당 `자동 수정(LLM)` 경로가 work-note 픽스처에는 0건(MyBatis 픽스처 추가가
+  커버 후보).
