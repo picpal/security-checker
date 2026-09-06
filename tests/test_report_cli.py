@@ -58,3 +58,37 @@ def test_report_with_bom_fills_dependency_path_column(tmp_path):
 def test_main_report_accepts_bom_flag(tmp_path):
     rc = cli.main(["report", "--findings", str(FIX), "--bom", "fixtures/report/work-note-bom.cdx.json", "--out", str(tmp_path)])
     assert rc == 0
+
+
+def test_bundle_writes_request_and_merges_interpretations(tmp_path):
+    fs, meta = _load()
+    from secscan.report.interpret import RESPONSE_CONTEXT
+    resp = {"@context": RESPONSE_CONTEXT, "items": {
+        "356e4bbab00c": {"guess": "상수 PASSWORD 가 KNOWN_KEYS 집합에 들어감.", "check": "88행 리터럴 값 확인.",
+                          "cites": ["backend/src/main/java/com/worknote/admin/BreakGlassFile.java:87-89"]},
+        "108d8ee4651c": {"guess": "예시값으로 보임.", "check": "실계정 여부 확인.", "cites": []}}}
+    ip = tmp_path / "interpretations.json"; ip.write_text(json.dumps(resp, ensure_ascii=False), encoding="utf-8")
+    paths, _ = write_report_bundle(fs, meta, tmp_path, interpretations=ip, prefer_xlsx=False)
+    req = json.loads((tmp_path / "report-request.json").read_text(encoding="utf-8"))
+    assert req["@context"] == "secscan-report-request/v1" and len(req["items"]) == 15
+    assert (tmp_path / "report-request.json") in paths
+    import csv
+    rows = list(csv.reader((tmp_path / "report-xlsx" / "2_확인질문.csv").open(encoding="utf-8")))
+    row = next(r for r in rows if r[1] == "356e4bbab00c")
+    assert row[5].startswith("상수 PASSWORD") and "87-89" in row[7]
+    summary = {r[0]: r for r in csv.reader((tmp_path / "report-xlsx" / "0_요약.csv").open(encoding="utf-8"))}
+    assert summary["해석 상태"][1] == "ok" and "108d8ee4651c: no_cite" in summary["해석 상태"][2]
+
+
+def test_bundle_without_interpretations_marks_absent(tmp_path):
+    fs, meta = _load()
+    write_report_bundle(fs, meta, tmp_path, prefer_xlsx=False)
+    import csv
+    summary = {r[0]: r for r in csv.reader((tmp_path / "report-xlsx" / "0_요약.csv").open(encoding="utf-8"))}
+    assert summary["해석 상태"][1] == "absent"
+
+
+def test_main_report_with_interpretations_flag(tmp_path):
+    ip = tmp_path / "i.json"; ip.write_text(json.dumps({"@context": "secscan-interpretations/v1", "items": {}}), encoding="utf-8")
+    rc = cli.main(["report", "--findings", str(FIX), "--interpretations", str(ip), "--out", str(tmp_path)])
+    assert rc == 0 and (tmp_path / "report-request.json").exists()
