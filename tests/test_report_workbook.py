@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 
 from secscan.output.json_io import from_json
+from secscan.report.deppath import DepGraph, deppaths_for
 from secscan.report.derive import derive_all
 from secscan.report.kb import entry_for
 from secscan.report.models import Interpretation
@@ -14,7 +15,7 @@ GOLDEN = Path("tests/golden/report-work-note-sheets.json")
 FS = from_json(FIX.read_text(encoding="utf-8"))
 META = json.loads(FIX.read_text(encoding="utf-8"))["meta"]
 KBS = {f.id: entry_for(f) for f in FS}
-DER = derive_all(FS, KBS)
+DER = derive_all(FS, KBS, deppaths_for(FS, DepGraph.from_path("fixtures/report/work-note-bom.cdx.json")))
 
 
 def _sheets(interps=None, interp_meta=None):
@@ -89,7 +90,8 @@ def test_no_secret_values_and_all_cells_sanitized():
 
 def test_deterministic_regardless_of_input_order():
     rev = list(reversed(FS))
-    assert build_report_sheets(rev, META, {f.id: KBS[f.id] for f in rev}, derive_all(rev, KBS)) == _sheets()
+    dp = deppaths_for(FS, DepGraph.from_path("fixtures/report/work-note-bom.cdx.json"))
+    assert build_report_sheets(rev, META, {f.id: KBS[f.id] for f in rev}, derive_all(rev, KBS, dp)) == _sheets()
 
 
 def test_matches_golden():

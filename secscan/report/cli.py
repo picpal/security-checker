@@ -8,6 +8,7 @@ from pathlib import Path
 from ..models import Finding, Location
 from ..output.json_io import from_json
 from ..output.xlsx import Sheet
+from .deppath import DepGraph, deppaths_for
 from .derive import derive_all
 from .kb import entry_for
 from .models import Interpretation
@@ -30,20 +31,24 @@ def relativize(findings: list[Finding], target: str | None) -> list[Finding]:
 
 
 def build_report(findings: list[Finding], meta: dict, *, target: str | None = None, deppaths: dict[str, str] | None = None,
-                 interps: dict[str, Interpretation] | None = None, interp_meta: dict | None = None) -> dict[str, Sheet]:
+                 bom: str | Path | None = None, interps: dict[str, Interpretation] | None = None,
+                 interp_meta: dict | None = None) -> dict[str, Sheet]:
     target = target or meta.get("target")
     fs = relativize(findings, target)
     kbs = {f.id: entry_for(f) for f in fs}
     # relativize 로 id 가 바뀔 수 있다(dedup_key 에 경로 포함) — deppaths/interps 는 새 id 기준으로 넘겨야 한다.
+    if deppaths is None and bom is not None:
+        deppaths = deppaths_for(fs, DepGraph.from_path(bom))
     derived = derive_all(fs, kbs, deppaths)
     meta = {**meta, "target": target or meta.get("target", "")}
     return build_report_sheets(fs, meta, kbs, derived, interps, interp_meta)
 
 
 def write_report_bundle(findings: list[Finding], meta: dict, out_dir, *, target: str | None = None,
-                        deppaths: dict[str, str] | None = None, interps: dict[str, Interpretation] | None = None,
+                        deppaths: dict[str, str] | None = None, bom: str | Path | None = None,
+                        interps: dict[str, Interpretation] | None = None,
                         interp_meta: dict | None = None, prefer_xlsx: bool | None = None) -> tuple[list[Path], str | None]:
-    sheets = build_report(findings, meta, target=target, deppaths=deppaths, interps=interps, interp_meta=interp_meta)
+    sheets = build_report(findings, meta, target=target, deppaths=deppaths, bom=bom, interps=interps, interp_meta=interp_meta)
     return write_report(sheets, out_dir, created=str(meta.get("run_date", "")), prefer_xlsx=prefer_xlsx)
 
 
@@ -51,6 +56,7 @@ def add_report_parser(sub) -> None:
     rp = sub.add_parser("report", help="사람·LLM 겸용 보고서 워크북 생성")
     rp.add_argument("--findings", help="scan 이 낸 findings.json 경로")
     rp.add_argument("--target", help="경로 상대화 기준(기본: findings.json meta.target)")
+    rp.add_argument("--bom", help="cdxgen BOM(bom.cdx.json). 없으면 의존 경로 열은 'BOM 없음'")
     rp.add_argument("--out", default="out", help="출력 디렉토리")
 
 
@@ -62,7 +68,7 @@ def cmd_report(args) -> int:
     findings, meta = from_json(text), json.loads(text).get("meta", {})
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    paths, warn = write_report_bundle(findings, meta, out, target=args.target)
+    paths, warn = write_report_bundle(findings, meta, out, target=args.target, bom=args.bom)
     if warn:
         print(f"⚠️ {warn}")
     print("출력: " + " · ".join(str(p) for p in paths))

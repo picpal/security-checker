@@ -238,7 +238,8 @@ def _cmd_scan(args) -> int:
         print(f"⚠️ {wb_warn}")
 
     from .report.cli import write_report_bundle
-    rp_paths, rp_warn = write_report_bundle(result.findings, wb_meta, out, target=str(args.target))
+    from .sbom import bom_cache_path
+    rp_paths, rp_warn = write_report_bundle(result.findings, wb_meta, out, target=str(args.target), bom=bom_cache_path(args.target))
     if rp_warn:
         print(f"⚠️ {rp_warn}")
 
