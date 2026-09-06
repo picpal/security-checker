@@ -1,0 +1,881 @@
+{
+  "@context": "secscan-findings/v1",
+  "meta": {
+    "target": "work-note",
+    "profile": "standard",
+    "scanner_status": [
+      {
+        "tool": "gitleaks",
+        "status": "ok",
+        "tool_version": null,
+        "duration_s": 2.643,
+        "message": ""
+      },
+      {
+        "tool": "semgrep",
+        "status": "ok",
+        "tool_version": null,
+        "duration_s": 7.811,
+        "message": ""
+      },
+      {
+        "tool": "trivy",
+        "status": "ok",
+        "tool_version": null,
+        "duration_s": 32.737,
+        "message": ""
+      }
+    ],
+    "reachability": {
+      "ran": true,
+      "reason": "ok"
+    },
+    "secret_policy": "off",
+    "excluded_count": 23
+  },
+  "findings": [
+    {
+      "category": "sast",
+      "severity": "high",
+      "title": "하드코딩된 자격증명입니다(CWE-798/259). 환경변수·시크릿 매니저·설정 외부화로 옮기고, 이미 노출된 값은 회수(revoke)·교체하세요.",
+      "tool": "semgrep",
+      "rule_id": "secscan.rules.hardcoded-credential",
+      "cwe": [
+        "CWE-798",
+        "CWE-259"
+      ],
+      "owasp": [
+        "A07:2021 - Identification and Authentication Failures"
+      ],
+      "confidence": "high",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "backend/src/main/java/com/worknote/admin/BreakGlassFile.java",
+        "start_line": 88,
+        "end_line": 88,
+        "snippet_ref": "requires login"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "semgrep"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "SF-06",
+            "category": "보안기능",
+            "name": "하드코드된 중요정보"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — access control"
+        ]
+      },
+      "occurrences": [],
+      "disposition": "actionable",
+      "tier": "actionable",
+      "id": "b0b763f0de63",
+      "dedup_key": "sast|backend/src/main/java/com/worknote/admin/BreakGlassFile.java|88|secscan.rules.hardcoded-credential"
+    },
+    {
+      "category": "sast",
+      "severity": "medium",
+      "title": "Detection of dangerouslySetInnerHTML from non-constant definition. This can inadvertently expose users to cross-site scripting (XSS) attacks if this comes from user-provided input. If you have to use ",
+      "tool": "semgrep",
+      "rule_id": "typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml",
+      "cwe": [
+        "CWE-79"
+      ],
+      "owasp": [
+        "A07:2017 - Cross-Site Scripting (XSS)",
+        "A03:2021 - Injection",
+        "A05:2025 - Injection"
+      ],
+      "confidence": "medium",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "docs/design-handoff/prototype/icons.jsx",
+        "start_line": 76,
+        "end_line": 76,
+        "snippet_ref": "requires login"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "semgrep"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "IV-04",
+            "category": "입력데이터 검증 및 표현",
+            "name": "크로스사이트 스크립트(XSS)"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — injection"
+        ]
+      },
+      "occurrences": [],
+      "disposition": "actionable",
+      "tier": "actionable",
+      "id": "8e3e358b24ee",
+      "dedup_key": "sast|docs/design-handoff/prototype/icons.jsx|76|typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml"
+    },
+    {
+      "category": "sast",
+      "severity": "medium",
+      "title": "The target origin of the window.postMessage() API is set to \"*\". This could allow for information disclosure due to the possibility of any origin allowed to receive the message.",
+      "tool": "semgrep",
+      "rule_id": "javascript.browser.security.wildcard-postmessage-configuration.wildcard-postmessage-configuration",
+      "cwe": [
+        "CWE-345"
+      ],
+      "owasp": [
+        "A08:2021 - Software and Data Integrity Failures",
+        "A08:2025 - Software or Data Integrity Failures"
+      ],
+      "confidence": "medium",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "docs/design-handoff/prototype/tweaks-panel.jsx",
+        "start_line": 182,
+        "end_line": 182,
+        "snippet_ref": "requires login"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "semgrep"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [],
+      "disposition": "actionable",
+      "tier": "actionable",
+      "id": "ced44862c53d",
+      "dedup_key": "sast|docs/design-handoff/prototype/tweaks-panel.jsx|182|javascript.browser.security.wildcard-postmessage-configuration.wildcard-postmessage-configuration"
+    },
+    {
+      "category": "sast",
+      "severity": "medium",
+      "title": "The target origin of the window.postMessage() API is set to \"*\". This could allow for information disclosure due to the possibility of any origin allowed to receive the message.",
+      "tool": "semgrep",
+      "rule_id": "javascript.browser.security.wildcard-postmessage-configuration.wildcard-postmessage-configuration",
+      "cwe": [
+        "CWE-345"
+      ],
+      "owasp": [
+        "A08:2021 - Software and Data Integrity Failures",
+        "A08:2025 - Software or Data Integrity Failures"
+      ],
+      "confidence": "medium",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "docs/design-handoff/prototype/tweaks-panel.jsx",
+        "start_line": 236,
+        "end_line": 236,
+        "snippet_ref": "requires login"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "semgrep"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [],
+      "disposition": "actionable",
+      "tier": "actionable",
+      "id": "385b8652392c",
+      "dedup_key": "sast|docs/design-handoff/prototype/tweaks-panel.jsx|236|javascript.browser.security.wildcard-postmessage-configuration.wildcard-postmessage-configuration"
+    },
+    {
+      "category": "sast",
+      "severity": "medium",
+      "title": "The target origin of the window.postMessage() API is set to \"*\". This could allow for information disclosure due to the possibility of any origin allowed to receive the message.",
+      "tool": "semgrep",
+      "rule_id": "javascript.browser.security.wildcard-postmessage-configuration.wildcard-postmessage-configuration",
+      "cwe": [
+        "CWE-345"
+      ],
+      "owasp": [
+        "A08:2021 - Software and Data Integrity Failures",
+        "A08:2025 - Software or Data Integrity Failures"
+      ],
+      "confidence": "medium",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "docs/design-handoff/prototype/tweaks-panel.jsx",
+        "start_line": 242,
+        "end_line": 242,
+        "snippet_ref": "requires login"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "semgrep"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [],
+      "disposition": "actionable",
+      "tier": "actionable",
+      "id": "d029149509e1",
+      "dedup_key": "sast|docs/design-handoff/prototype/tweaks-panel.jsx|242|javascript.browser.security.wildcard-postmessage-configuration.wildcard-postmessage-configuration"
+    },
+    {
+      "category": "sast",
+      "severity": "medium",
+      "title": "Detection of dangerouslySetInnerHTML from non-constant definition. This can inadvertently expose users to cross-site scripting (XSS) attacks if this comes from user-provided input. If you have to use ",
+      "tool": "semgrep",
+      "rule_id": "typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml",
+      "cwe": [
+        "CWE-79"
+      ],
+      "owasp": [
+        "A07:2017 - Cross-Site Scripting (XSS)",
+        "A03:2021 - Injection",
+        "A05:2025 - Injection"
+      ],
+      "confidence": "medium",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "frontend/src/components/RedmineImportPanel.tsx",
+        "start_line": 238,
+        "end_line": 238,
+        "snippet_ref": "requires login"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "semgrep"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "IV-04",
+            "category": "입력데이터 검증 및 표현",
+            "name": "크로스사이트 스크립트(XSS)"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — injection"
+        ]
+      },
+      "occurrences": [],
+      "disposition": "actionable",
+      "tier": "actionable",
+      "id": "bcbd1740cb50",
+      "dedup_key": "sast|frontend/src/components/RedmineImportPanel.tsx|238|typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml"
+    },
+    {
+      "category": "sast",
+      "severity": "medium",
+      "title": "Detection of dangerouslySetInnerHTML from non-constant definition. This can inadvertently expose users to cross-site scripting (XSS) attacks if this comes from user-provided input. If you have to use ",
+      "tool": "semgrep",
+      "rule_id": "typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml",
+      "cwe": [
+        "CWE-79"
+      ],
+      "owasp": [
+        "A07:2017 - Cross-Site Scripting (XSS)",
+        "A03:2021 - Injection",
+        "A05:2025 - Injection"
+      ],
+      "confidence": "medium",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "frontend/src/components/RedmineImportPanel.tsx",
+        "start_line": 239,
+        "end_line": 239,
+        "snippet_ref": "requires login"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "semgrep"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": {
+        "kisa": [
+          {
+            "code": "IV-04",
+            "category": "입력데이터 검증 및 표현",
+            "name": "크로스사이트 스크립트(XSS)"
+          }
+        ],
+        "pci": [
+          "PCI-DSS 6.2.4 — injection"
+        ]
+      },
+      "occurrences": [],
+      "disposition": "actionable",
+      "tier": "actionable",
+      "id": "e2426e977b43",
+      "dedup_key": "sast|frontend/src/components/RedmineImportPanel.tsx|239|typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml"
+    },
+    {
+      "category": "sast",
+      "severity": "unknown",
+      "title": "Missing or incorrect blockExoticSubdeps. Set `blockExoticSubdeps: true` to transitive dependencies from being installed from untrusted sources. Added in: v10.26.0 Reference: https://pnpm.io/settings#b",
+      "tool": "semgrep",
+      "rule_id": "package_managers.pnpm.pnpm-block-exotic-sub-dependencies.pnpm-block-exotic-sub-dependencies",
+      "cwe": [
+        "CWE-829"
+      ],
+      "owasp": [
+        "A08:2021 - Software and Data Integrity Failures"
+      ],
+      "confidence": "high",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "frontend/pnpm-workspace.yaml",
+        "start_line": 1,
+        "end_line": 1,
+        "snippet_ref": "requires login"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "semgrep"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [],
+      "disposition": "review",
+      "tier": "review",
+      "id": "f11b8c160601",
+      "dedup_key": "sast|frontend/pnpm-workspace.yaml|1|package_managers.pnpm.pnpm-block-exotic-sub-dependencies.pnpm-block-exotic-sub-dependencies"
+    },
+    {
+      "category": "sast",
+      "severity": "unknown",
+      "title": "This pnpm workspace configuration does not set a minimum release age. Newly published packages can be malicious or unstable. Add `minimumReleaseAge: 10080` (minutes) to wait at least seven days before",
+      "tool": "semgrep",
+      "rule_id": "package_managers.pnpm.pnpm-missing-minimum-release-age.pnpm-minimum-release-age",
+      "cwe": [
+        "CWE-829"
+      ],
+      "owasp": [
+        "A08:2021 - Software and Data Integrity Failures"
+      ],
+      "confidence": "high",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "frontend/pnpm-workspace.yaml",
+        "start_line": 1,
+        "end_line": 1,
+        "snippet_ref": "requires login"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "semgrep"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [],
+      "disposition": "review",
+      "tier": "review",
+      "id": "7f6b212ab39a",
+      "dedup_key": "sast|frontend/pnpm-workspace.yaml|1|package_managers.pnpm.pnpm-missing-minimum-release-age.pnpm-minimum-release-age"
+    },
+    {
+      "category": "sast",
+      "severity": "unknown",
+      "title": "Missing or incorrect trustPolicy. Set `trustPolicy: no-downgrade` to prevent malicious package updates from downgrading security settings. Added in: v10.21.0 Reference: https://pnpm.io/settings#trustp",
+      "tool": "semgrep",
+      "rule_id": "package_managers.pnpm.pnpm-trust-policy.pnpm-trust-policy",
+      "cwe": [
+        "CWE-829"
+      ],
+      "owasp": [
+        "A08:2021 - Software and Data Integrity Failures"
+      ],
+      "confidence": "high",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "frontend/pnpm-workspace.yaml",
+        "start_line": 1,
+        "end_line": 1,
+        "snippet_ref": "requires login"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "semgrep"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [],
+      "disposition": "review",
+      "tier": "review",
+      "id": "0cc0ae3d5b2f",
+      "dedup_key": "sast|frontend/pnpm-workspace.yaml|1|package_managers.pnpm.pnpm-trust-policy.pnpm-trust-policy"
+    },
+    {
+      "category": "sca",
+      "severity": "critical",
+      "title": "Apache Tomcat: Apache Tomcat: Security constraint bypass due to improper access control",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-65182",
+      "cwe": [
+        "CWE-284",
+        "CWE-863"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.apache.tomcat.embed:tomcat-embed-core",
+        "version": "10.1.55"
+      },
+      "advisory": {
+        "id": "CVE-2026-65182",
+        "aliases": [
+          "CVE-2026-65182"
+        ],
+        "fixed_versions": [
+          "11.0.25",
+          "10.1.58",
+          "9.0.121"
+        ],
+        "cvss": [
+          {
+            "source": "bitnami",
+            "version": "3.1",
+            "score": 9.1,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N"
+          },
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 9.1,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 8.2,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:L/A:N"
+          }
+        ],
+        "published": "2026-08-25T22:17:04.9Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-65182"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.apache.tomcat.embed:tomcat-embed-core",
+          "version": "10.1.55"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "0442ba114c70",
+      "dedup_key": "sca|maven|org.apache.tomcat.embed:tomcat-embed-core|10.1.55|CVE-2026-65182"
+    },
+    {
+      "category": "sca",
+      "severity": "critical",
+      "title": "tomcat: Apache Tomcat: Authentication bypass via limited replay attack in DIGEST authenticator",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-65905",
+      "cwe": [
+        "CWE-294"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.apache.tomcat.embed:tomcat-embed-core",
+        "version": "10.1.55"
+      },
+      "advisory": {
+        "id": "CVE-2026-65905",
+        "aliases": [
+          "CVE-2026-65905"
+        ],
+        "fixed_versions": [
+          "11.0.25",
+          "10.1.58",
+          "9.0.121"
+        ],
+        "cvss": [
+          {
+            "source": "bitnami",
+            "version": "3.1",
+            "score": 9.8,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+          },
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 9.8,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 4.8,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:L/A:N"
+          }
+        ],
+        "published": "2026-08-25T22:17:05.303Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-65905"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.apache.tomcat.embed:tomcat-embed-core",
+          "version": "10.1.55"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "20f2b757fb2c",
+      "dedup_key": "sca|maven|org.apache.tomcat.embed:tomcat-embed-core|10.1.55|CVE-2026-65905"
+    },
+    {
+      "category": "sca",
+      "severity": "critical",
+      "title": "org.apache.tomcat/tomcat: Apache Tomcat: Unauthorized resource access via FORM authentication bypass",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-68525",
+      "cwe": [
+        "CWE-863"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.apache.tomcat.embed:tomcat-embed-core",
+        "version": "10.1.55"
+      },
+      "advisory": {
+        "id": "CVE-2026-68525",
+        "aliases": [
+          "CVE-2026-68525"
+        ],
+        "fixed_versions": [
+          "11.0.25",
+          "10.1.58",
+          "9.0.121"
+        ],
+        "cvss": [
+          {
+            "source": "bitnami",
+            "version": "3.1",
+            "score": 9.1,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N"
+          },
+          {
+            "source": "ghsa",
+            "version": "3.1",
+            "score": 9.1,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 6.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N"
+          }
+        ],
+        "published": "2026-08-25T22:17:05.7Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-68525"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.apache.tomcat.embed:tomcat-embed-core",
+          "version": "10.1.55"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "e0d713155712",
+      "dedup_key": "sca|maven|org.apache.tomcat.embed:tomcat-embed-core|10.1.55|CVE-2026-68525"
+    },
+    {
+      "category": "sca",
+      "severity": "medium",
+      "title": "org.apache.logging.log4j/log4j-api: Apache Log4j API: Malformed JSON output due to improper encoding of floating-point values",
+      "tool": "trivy",
+      "rule_id": "CVE-2026-49844",
+      "cwe": [
+        "CWE-116"
+      ],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": {
+        "ecosystem": "maven",
+        "package": "org.apache.logging.log4j:log4j-api",
+        "version": "2.24.3"
+      },
+      "advisory": {
+        "id": "CVE-2026-49844",
+        "aliases": [
+          "CVE-2026-49844"
+        ],
+        "fixed_versions": [
+          "2.25.5",
+          "2.26.1"
+        ],
+        "cvss": [
+          {
+            "source": "ghsa",
+            "version": "4.0",
+            "score": 6.3,
+            "vector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:N/VI:N/VA:N/SC:N/SI:L/SA:N"
+          },
+          {
+            "source": "nvd",
+            "version": "3.1",
+            "score": 5.9,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:N"
+          },
+          {
+            "source": "redhat",
+            "version": "3.1",
+            "score": 5.9,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:N"
+          }
+        ],
+        "published": "2026-07-10T22:16:42.54Z"
+      },
+      "location": null,
+      "source": "Java",
+      "reachability": {
+        "status": "unreachable",
+        "evidence": null,
+        "source": "dep-scan"
+      },
+      "consensus": {
+        "tools": [
+          "trivy"
+        ],
+        "score": 1
+      },
+      "references": [
+        "https://avd.aquasec.com/nvd/cve-2026-49844"
+      ],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [
+        {
+          "tool": "trivy",
+          "target": "Java",
+          "package": "org.apache.logging.log4j:log4j-api",
+          "version": "2.24.3"
+        }
+      ],
+      "disposition": "demoted",
+      "tier": null,
+      "id": "cae6cff5ca45",
+      "dedup_key": "sca|maven|org.apache.logging.log4j:log4j-api|2.24.3|CVE-2026-49844"
+    },
+    {
+      "category": "secret",
+      "severity": "high",
+      "title": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+      "tool": "gitleaks",
+      "rule_id": "generic-api-key",
+      "cwe": [],
+      "owasp": [],
+      "confidence": "unknown",
+      "component": null,
+      "advisory": null,
+      "location": {
+        "file": "docs/qa-e2e-scenarios.md",
+        "start_line": 43,
+        "end_line": 43,
+        "snippet_ref": "docs/qa-e2e-scenarios.md:generic-api-key:43"
+      },
+      "source": "",
+      "reachability": {
+        "status": "unknown",
+        "evidence": null,
+        "source": null
+      },
+      "consensus": {
+        "tools": [
+          "gitleaks"
+        ],
+        "score": 1
+      },
+      "references": [],
+      "verified": null,
+      "suppression": null,
+      "compliance": null,
+      "occurrences": [],
+      "disposition": "actionable",
+      "tier": null,
+      "id": "74ae0dc40804",
+      "dedup_key": "secret|docs/qa-e2e-scenarios.md|43|generic-api-key"
+    }
+  ]
+}

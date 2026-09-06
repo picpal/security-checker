@@ -1,0 +1,5002 @@
+{
+ "bomFormat": "CycloneDX",
+ "specVersion": "1.7",
+ "version": 1,
+ "metadata": {
+  "timestamp": "2026-09-06T14:14:33Z",
+  "tools": {
+   "components": [
+    {
+     "type": "application",
+     "group": "org.gradle",
+     "name": "gradle",
+     "version": "8.14",
+     "purl": "pkg:maven/org.gradle/gradle@8.14?type=bin",
+     "bom-ref": "pkg:maven/org.gradle/gradle@8.14?type=bin",
+     "externalReferences": [
+      {
+       "type": "distribution",
+       "url": "https://services.gradle.org/distributions/gradle-8.14-bin.zip"
+      }
+     ],
+     "isExternal": true
+    },
+    {
+     "group": "@cyclonedx",
+     "name": "cdxgen",
+     "version": "12.7.0",
+     "purl": "pkg:npm/%40cyclonedx/cdxgen@12.7.0",
+     "type": "application",
+     "bom-ref": "pkg:npm/@cyclonedx/cdxgen@12.7.0",
+     "publisher": "OWASP Foundation",
+     "authors": [
+      {
+       "name": "OWASP Foundation"
+      }
+     ]
+    }
+   ]
+  },
+  "authors": [
+   {
+    "name": "OWASP Foundation"
+   }
+  ],
+  "lifecycles": [
+   {
+    "phase": "build"
+   }
+  ],
+  "component": {
+   "name": "worknote",
+   "type": "application",
+   "group": "com.worknote",
+   "version": "0.1.0",
+   "properties": [
+    {
+     "name": "GradleModule",
+     "value": "worknote"
+    },
+    {
+     "name": "buildFile",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend/build.gradle"
+    },
+    {
+     "name": "projectDir",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    },
+    {
+     "name": "rootDir",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "purl": "pkg:maven/com.worknote/worknote@0.1.0?type=jar",
+   "bom-ref": "pkg:maven/com.worknote/worknote@0.1.0?type=jar"
+  },
+  "properties": [
+   {
+    "name": "cdx:bom:componentTypes",
+    "value": "maven"
+   },
+   {
+    "name": "cdx:bom:componentNamespaces",
+    "value": "ch.qos.logback\\ncom.beust\\ncom.fasterxml\\ncom.fasterxml.jackson\\ncom.fasterxml.jackson.core\\ncom.fasterxml.jackson.dataformat\\ncom.fasterxml.jackson.datatype\\ncom.fasterxml.jackson.module\\ncom.github.jai-imageio\\ncom.google.zxing\\ncom.jayway.jsonpath\\ncom.vaadin.external.google\\ncom.zaxxer\\nio.micrometer\\njakarta.activation\\njakarta.annotation\\njakarta.validation\\njakarta.xml.bind\\nnet.bytebuddy\\nnet.minidev\\norg.apache.logging.log4j\\norg.apache.tomcat.embed\\norg.apiguardian\\norg.assertj\\norg.awaitility\\norg.eclipse.angus\\norg.flywaydb\\norg.hamcrest\\norg.hibernate.validator\\norg.jboss.logging\\norg.junit\\norg.junit.jupiter\\norg.junit.platform\\norg.mockito\\norg.mybatis\\norg.mybatis.spring.boot\\norg.objenesis\\norg.opentest4j\\norg.ow2.asm\\norg.skyscreamer\\norg.slf4j\\norg.springframework\\norg.springframework.boot\\norg.xerial\\norg.xmlunit\\norg.yaml"
+   }
+  ]
+ },
+ "components": [
+  {
+   "publisher": "VMware, Inc.",
+   "group": "org.springframework.boot",
+   "name": "spring-boot-starter-web",
+   "version": "3.5.16",
+   "description": "Starter for building web, including RESTful, applications using Spring MVC. Uses Tomcat as the default embedded container",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "64ed509c59fb81442d28a42381f6b7b1"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "5c30cb2a0a69e25a8fc402d22e171dbca7b49278"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "3272f145a6edd94896c60fba7d2a05b525c78f8efd0172e7bffb6c3b9857762e"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "103011b6730132395cffbb50a155521406ccd7276399e4d17db38d7711afec502f3ab587d8fad84951c39756f98f96122e83e24ef231a009c648c4b82c820aab"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.springframework.boot/spring-boot-starter-web@3.5.16?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.springframework.boot/spring-boot-starter-web@3.5.16?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework",
+    "mvc",
+    "tomcat"
+   ]
+  },
+  {
+   "publisher": "VMware, Inc.",
+   "group": "org.springframework.boot",
+   "name": "spring-boot-starter",
+   "version": "3.5.16",
+   "description": "Core starter, including auto-configuration support, logging and YAML",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "a9bedef81badcc7696680d69aadef61e"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "d38b3f624f867a7d1e7f72a7adb193f6d4111114"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "649da4576c83a4f814222dcff067cd774eeeb1119e790390eaeab8e9955d0d44"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "2756ae0b0740d4785e32533df7cafd7053201fbf0cc3d36d416f73a82cae72f6fc332d28b9ae2d54e0c51b0a3ae4d9dadd0834966851ff212a0fa98b831f4932"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.springframework.boot/spring-boot-starter@3.5.16?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.springframework.boot/spring-boot-starter@3.5.16?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework",
+    "logging"
+   ]
+  },
+  {
+   "publisher": "VMware, Inc.",
+   "group": "org.springframework.boot",
+   "name": "spring-boot",
+   "version": "3.5.16",
+   "description": "Spring Boot",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "7a7ad5afd579e7a5b871dd29bf3ff406"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "8e75e8d0d3cfbca088774df8d30b45bbd21e5d99"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "2d5b16632402b840b0425ed52610071890bf8cb24c6c49af343bbde574123265"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "613ba6a39397ec8aed97a88c79576cf3e1babe10921063b4c0ff5ce96df5e2a1f78a0af314df99ea2d4ed1cb9861bb147cd04a5660d4e255e2cd7a08966ad97c"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.springframework.boot/spring-boot@3.5.16?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.springframework.boot/spring-boot@3.5.16?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework"
+   ]
+  },
+  {
+   "publisher": "Spring IO",
+   "group": "org.springframework",
+   "name": "spring-core",
+   "version": "6.2.19",
+   "description": "Spring Core",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "4afe3968028c2b743dbff2d79013e144"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "691459d4644894dae8e5c2d9550a4cfb8302f62f"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "52146689e71a911c92bac26677d73c692512a739893a57710cc233591756bff6"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "3c0dbe0d1aa2ccfc0239c00bb25a1fd3e06504531e80839669ccdf6b862293b96d22962c6412bf1dc4486193a2777b24521b17f26366bfbd48912646ba5cab6f"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.springframework/spring-core@6.2.19?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.springframework/spring-core@6.2.19?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework"
+   ]
+  },
+  {
+   "publisher": "Spring IO",
+   "group": "org.springframework",
+   "name": "spring-jcl",
+   "version": "6.2.19",
+   "description": "Spring Commons Logging Bridge",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "cd5278839172f3b30b1e90bc70d9b864"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "39b9c7d631961f3649511b08ef167420b086184b"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "9994478bcea1423b8892d4eb0db942c94da0090167c3c684050c1eaef04491d0"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "ff060a226efa41a9bb6f9c37c13361bb4f28ee7b26fec67bcbf49a666ae4f002ed88e9477775ee6fb7e04dafd28d5aab0b1dc6cee57701ed241e5d8d5e2d9b50"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.springframework/spring-jcl@6.2.19?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.springframework/spring-jcl@6.2.19?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework",
+    "logging"
+   ]
+  },
+  {
+   "publisher": "Spring IO",
+   "group": "org.springframework",
+   "name": "spring-context",
+   "version": "6.2.19",
+   "description": "Spring Context",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "77c848b32f387021e0b690be9cd24de8"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "e218e4c4ecad1e821905628b2c4ce8561d937baa"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "ead4b645f94a7f665f00093eaafde634e97b34524294de653b51e43e0b3fc4a4"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "559b195fc4cacc12b690ec67108e4b76210640c2e842b763e5c7e52d7efdeef7342020c98b9c9613c4348c5f5001a5332a613974b82f8f43f8d0dc27ec7c6042"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.springframework/spring-context@6.2.19?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.springframework/spring-context@6.2.19?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework"
+   ]
+  },
+  {
+   "publisher": "Spring IO",
+   "group": "org.springframework",
+   "name": "spring-aop",
+   "version": "6.2.19",
+   "description": "Spring AOP",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "36ab0f0a76202a0f8cd077fd323372a5"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "86a538bb7b2be38a0afc4ef049784def10a86c62"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "a11b93539d80b02caf76171db2da96df39abebbfef49a2fadd6dda0779f2e20b"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "6037fd96f2b0547f4ab1cf3cdb1634e0e9fb05ff6d79c2d2571fdac799202b34f867d38763b1659d47ffb706bdb93504512ec220f9fe459092b64e5766578fb5"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.springframework/spring-aop@6.2.19?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.springframework/spring-aop@6.2.19?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework"
+   ]
+  },
+  {
+   "publisher": "Spring IO",
+   "group": "org.springframework",
+   "name": "spring-beans",
+   "version": "6.2.19",
+   "description": "Spring Beans",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "ae0cf6f1e373577d322e17c350d0fb15"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "6d6b4774db3b036df46be6332d93b09d70e5c147"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "846dc8f30a639a36eb551ee99a30469be4d11bd285ca9daf164d98321571b404"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "4dd1a3962d1f48245bad2255504fc3520d122bb0e4a5a833fac410213c9c8b55f5336ad6a8d22c4df6b469c61c63a94d61034dcd3e1180f13fc6ce629955dcfd"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.springframework/spring-beans@6.2.19?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.springframework/spring-beans@6.2.19?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework"
+   ]
+  },
+  {
+   "publisher": "Spring IO",
+   "group": "org.springframework",
+   "name": "spring-expression",
+   "version": "6.2.19",
+   "description": "Spring Expression Language (SpEL)",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "233e2f7ced4637cad68a9449844e9a6b"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "c7202d23797fa778c5ed55e502ac1a9f0d34012a"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "d710a44417d890353895b341a722d7d08199e2b7da52f0a11c0e92571e1d6e19"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "7a902e55ace9266fdd6155966026ac7223f90e548c5e9e804b08b698108fa636d6958dbf1a02f2e446eed5863d827602093cf5edda6cebb0db1123fe53389a64"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.springframework/spring-expression@6.2.19?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.springframework/spring-expression@6.2.19?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework"
+   ]
+  },
+  {
+   "group": "io.micrometer",
+   "name": "micrometer-observation",
+   "version": "1.15.12",
+   "description": "Module containing Observation related code",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "b6ea6ebf93debb874d7c10f3ae79a471"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "1d96fcaec8d2516236dfcb9914108e14bfd02238"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "54483e68ed44af1bb0c36d1df2235d36f233e459d52f5a3be3e69813827a6300"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "14eb9c3c2eedb0807ae6c61eaa1585ae0479e81943e9a7f948ccf0c736fc7e8ca59660b3a39976957b61a809406d41d680b2950d9a84b43a9ab310f067fcad7b"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/io.micrometer/micrometer-observation@1.15.12?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/io.micrometer/micrometer-observation@1.15.12?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "group": "io.micrometer",
+   "name": "micrometer-commons",
+   "version": "1.15.12",
+   "description": "Module containing common code",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "8172f342d797138ec7a1a20e0332568c"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "eb539638d48571fa6ce4ea3eb8417cab37a63438"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "4b779cf7acb0534bb1f8e964f25200037ecb3944368f859a630fa637d6d5d7c0"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "c1927afd483808c1a1437867e74728c6de51cca8ee4dffa17181c7465be04657a35784e1be4f1b44691a07f7d963eda05b75d7df2f75e2754b93b4c45a9be94c"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/io.micrometer/micrometer-commons@1.15.12?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/io.micrometer/micrometer-commons@1.15.12?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "publisher": "VMware, Inc.",
+   "group": "org.springframework.boot",
+   "name": "spring-boot-autoconfigure",
+   "version": "3.5.16",
+   "description": "Spring Boot AutoConfigure",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "456df6ce6ce9901dc7239a2ccd7b5eee"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "87db09240595b49b530b230252311836abd21df1"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "0198331231e9bf872a135741d59c6d1f9e9007ff207a1ca910179c550bb12bfc"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "05f328de56d104aa2a9f7aedc1c994ca5505a74c2cfa2f9e1fcba873a262950834ea4f66e0ec186c7102da381565a43773ece6e8f9d27413b54f8e514b39d78d"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.springframework.boot/spring-boot-autoconfigure@3.5.16?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.springframework.boot/spring-boot-autoconfigure@3.5.16?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework"
+   ]
+  },
+  {
+   "publisher": "VMware, Inc.",
+   "group": "org.springframework.boot",
+   "name": "spring-boot-starter-logging",
+   "version": "3.5.16",
+   "description": "Starter for logging using Logback. Default logging starter",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "f7403bc79d5914196bfd62efd4a4115e"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "18df7a243be45f11ee346cdd4d7b84d377917a2e"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "f761d56f6693a47e6cccca8e9202c716ab954ccdf7440e1fccc0cb50c661eeb8"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "220759ef096ce216b72d6813b09e10f56d3a2c45cb0a3e51623d283c658466e10e2dfb93a026a72450aa6f56be8a19b870c05c7ac97d00e198e6a73f225086e1"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.springframework.boot/spring-boot-starter-logging@3.5.16?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.springframework.boot/spring-boot-starter-logging@3.5.16?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework",
+    "logging"
+   ]
+  },
+  {
+   "group": "ch.qos.logback",
+   "name": "logback-classic",
+   "version": "1.5.34",
+   "description": "logback-classic module",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "eeec5f5930eaaaa84b192f59161d79c0"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "e598899bad5824511cd3019299254230468e1fa2"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "b65e05076a5c1aadb659b4fe4bc5fee31cb26cd70390292eb03e4a7a24cff10f"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "19e6d03e299c17915656f69a8807a17dffa09366c24608b1ee2aacf3aa766ff5f86b6676a956496243457f8fcdb6a4008a656374adea7348aa447de8a1794cf8"
+    }
+   ],
+   "purl": "pkg:maven/ch.qos.logback/logback-classic@1.5.34?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/ch.qos.logback/logback-classic@1.5.34?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "group": "ch.qos.logback",
+   "name": "logback-core",
+   "version": "1.5.34",
+   "description": "logback-core module",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "ef459237a22ab546dd001ff612dce80d"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "378692f76c337b3325c15bffb89e013dc1f897b4"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "42eda264c0c650c2bec59e66151a88b708a8663dc1b49d788202d53e78b8caae"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "6f3bc905ed6c4830863606acc5030338d6f09d791e1de8b7c1fc30a053bfda16ac61b5d7a2deb64416dde1f0dd08246434ef3009ce4a7a5519fca16544c19403"
+    }
+   ],
+   "purl": "pkg:maven/ch.qos.logback/logback-core@1.5.34?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/ch.qos.logback/logback-core@1.5.34?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "group": "org.slf4j",
+   "name": "slf4j-api",
+   "version": "2.0.18",
+   "description": "The slf4j API",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "fe2837bd49bfb76657419002fed20ca9"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "78a9e7a37cd6360e0b818e86341b24123d28d4df"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "44508fd1576500688c790b190acdd16fec4f8c79a3e0b900afd70503cf055f55"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "539288fa0c96cea750d11293dbed4c562630587aa7cd88bbf76ad04390d1c40636506da48faa6453090c7e9baa6b690b9fbded55a7e2b4a91547eeea011f971a"
+    }
+   ],
+   "purl": "pkg:maven/org.slf4j/slf4j-api@2.0.18?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.slf4j/slf4j-api@2.0.18?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework",
+    "slf4j"
+   ]
+  },
+  {
+   "group": "org.apache.logging.log4j",
+   "name": "log4j-to-slf4j",
+   "version": "2.24.3",
+   "description": "Forwards the Log4j API calls to SLF4J.\n(Refer to the `log4j-slf4j[2]-impl` artifacts for forwarding SLF4J to the Log4j API.)",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "1f4b63f9c41f2f5179aa10b35d76e805"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "da1143e2a2531ee1c2d90baa98eb50a28a39d5a7"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "c7f2b0c612a4eb05b1587d1c880eb4cf5f4f53850676a8ede8da2b8fabb4f73f"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "8ca27fa34d4a8a6e57c9f578c85769a685659d34dd00a855d65f22ebc936155eac1c76aa4bf4f439e302e9a202f9c0856df01e543259bd9d2675ab59c20b6f9b"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.apache.logging.log4j/log4j-to-slf4j@2.24.3?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.apache.logging.log4j/log4j-to-slf4j@2.24.3?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "api",
+    "framework",
+    "slf4j"
+   ]
+  },
+  {
+   "group": "org.apache.logging.log4j",
+   "name": "log4j-api",
+   "version": "2.24.3",
+   "description": "The logging API of the Log4j project.\nLibrary and application code can log through this API.\nIt contains a simple built-in implementation (`SimpleLogger`) for trivial use cases.\nProduction applications are recommended to use Log4j API in combination with a fully-fledged implementation, such as Log4j Core.",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "d89516699543c5c21be87ee1760695f3"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "b02c125db8b6d295adf72ae6e71af5d83bce2370"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "5b4a0a0cd0e751ded431c162442bdbdd53328d1f8bb2bae5fc1bbeee0f66d80f"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "d936ac37b3d7ca2e4370ef122629c5ceb0bef60a6c08a3bd8bb278204dbed84bb888aaa307c58e80e4e9d645b73792433f52adcccd30378fbac99b1d271042f7"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.apache.logging.log4j/log4j-api@2.24.3?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.apache.logging.log4j/log4j-api@2.24.3?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "api",
+    "framework",
+    "log",
+    "logging"
+   ]
+  },
+  {
+   "group": "org.slf4j",
+   "name": "jul-to-slf4j",
+   "version": "2.0.18",
+   "description": "JUL to SLF4J bridge",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "f339bf7648049b2105e180cab6c45c9d"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "79739c98001d5c9d078d087d5a348ec9e474ec8f"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "cbb7d1aaaa9e871eb1a06594abd911bf97027152976edf1edc315be75239204e"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "fd6019636513f7b121d0321f0897667713e7d9a0d21f6d15c3b55d2bc804687c1d264ad3d79aa227e9712169e4d6b4d05d5d8746399e900c933ce330f1850569"
+    }
+   ],
+   "purl": "pkg:maven/org.slf4j/jul-to-slf4j@2.0.18?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.slf4j/jul-to-slf4j@2.0.18?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework",
+    "slf4j"
+   ]
+  },
+  {
+   "group": "jakarta.annotation",
+   "name": "jakarta.annotation-api",
+   "version": "2.1.1",
+   "description": "Jakarta Annotations API",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "5dac2f68e8288d0add4dc92cb161711d"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "48b9bda22b091b1f48b13af03fe36db3be6e1ae3"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "5f65fdaf424eee2b55e1d882ba9bb376be93fb09b37b808be6e22e8851c909fe"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "eabe8b855b735663684052ec4cc357cc737936fa57cebf144eb09f70b3b6c600db7fa6f1c93a4f36c5994b1b37dad2dfcec87a41448872e69552accfd7f52af6"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "EPL-2.0",
+      "url": "https://opensource.org/licenses/EPL-2.0"
+     }
+    },
+    {
+     "license": {
+      "id": "GPL-2.0-with-classpath-exception",
+      "url": "https://opensource.org/licenses/GPL-2.0-with-classpath-exception"
+     }
+    }
+   ],
+   "purl": "pkg:maven/jakarta.annotation/jakarta.annotation-api@2.1.1?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/jakarta.annotation/jakarta.annotation-api@2.1.1?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "group": "org.yaml",
+   "name": "snakeyaml",
+   "version": "2.4",
+   "description": "YAML 1.1 parser and emitter for Java",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "29410ee3a987e3bff7b847933c591972"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "e0666b825b796f85521f02360e77f4c92c5a7a07"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "ef779af5d29a9dde8cc70ce0341f5c6f7735e23edff9685ceaa9d35359b7bb7f"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "1573717e2c47868515cbed5265a6f77ebec23a0b5c6376ac18b9f5c2335beb65d4c68d2073d50143d59a60141980be8db1e493a85d7c78106cdb94a52e8361d2"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.yaml/snakeyaml@2.4?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/org.yaml/snakeyaml@2.4?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "publisher": "VMware, Inc.",
+   "group": "org.springframework.boot",
+   "name": "spring-boot-starter-json",
+   "version": "3.5.16",
+   "description": "Starter for reading and writing json",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "1335561c4d84c3c854d234a0dc772763"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "5840614f0a4371809023d7409b5ee132f686e55a"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "be8340bdd87d5e76bfec5b3b256bb923c841464793e5a8e2f7e8ced37e6eb434"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "882dd09e32c26305e9243529a8733eb527fd79bb73679f295cd18f1f8044cd6c015909eea7dab45af0b82d5d16ac03eb9953829e5f776523c9ec89dd618580b2"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.springframework.boot/spring-boot-starter-json@3.5.16?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.springframework.boot/spring-boot-starter-json@3.5.16?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework"
+   ]
+  },
+  {
+   "publisher": "Spring IO",
+   "group": "org.springframework",
+   "name": "spring-web",
+   "version": "6.2.19",
+   "description": "Spring Web",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "1d5ca2b445acea292d5787536c069a36"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "f1dc7b238611aeaf9e256a230aa089057cf0e5b3"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "ca88e364ecebee61163e2260e8a20584138eca74e28a050d6a2ef6302bad2f2d"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "7e12914fa2c2df7136295e045a1a83ed472510cc7eb9d3abc408c4cd3b7265473f54b9e37cafd36e417148a750fe046537cade69fa5fcf792ed739bb384e4610"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.springframework/spring-web@6.2.19?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.springframework/spring-web@6.2.19?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework"
+   ]
+  },
+  {
+   "group": "com.fasterxml.jackson.core",
+   "name": "jackson-databind",
+   "version": "2.21.5",
+   "description": "General data-binding functionality for Jackson: works on core streaming API",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "f1cdb6f418d6d587c64d5dc44a2a24fc"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "84924990b468233a28214ae2c505a9ec24cd6ea6"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "507418c0fafd38b2b2cfb704521630da613a8e4cc8381195a6f418017883e2c0"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "d21422d843f48a5386a0c46ed8113e12c961adeb7e9af95b61757985c279e9b2ffab0a5df28766d0ff0522780d72b1ff91d30dbee1202453e5936068cf645531"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.21.5?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.21.5?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "group": "com.fasterxml.jackson.core",
+   "name": "jackson-annotations",
+   "version": "2.21",
+   "description": "Core annotations used for value types, used by Jackson data binding package.",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "e0d0c3e7300954f73e43c67d933aaea4"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "b1bc1868bf02dc0bd6c7836257a036a331005309"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "53ca085f4a150f703f49e1aabd935bd03b43e1ea3d55d135438292af22cef56b"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "d832a99867acc2d5afb2596da760c50e6a6b54c1bbc8e6c4186f267a16e1d55c7a916ef8b034ad6b277c41e3342b91dcdc2e3dcea8bdccfe89e7c147894591be"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/com.fasterxml.jackson.core/jackson-annotations@2.21?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/com.fasterxml.jackson.core/jackson-annotations@2.21?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "group": "com.fasterxml.jackson.core",
+   "name": "jackson-core",
+   "version": "2.21.5",
+   "description": "Core Jackson processing abstractions (aka Streaming API), implementation for JSON",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "76c6cb978edc2c67b79a89a4f7224c28"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "7ec0c8bf8402fa998f64b2009632d6566a42ceb7"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "b64b5874162b503a0e58a8f7758266e8dd9f91bf49e3a59ae0b5f47589a231b7"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "e38be02a800765e5841c321e972e83149634bee42de1fcb177a115f1e21fde828f9db1a5862e741f2bd440550517a365b75ee8f7640ff72bcaa73f356b10dc70"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/com.fasterxml.jackson.core/jackson-core@2.21.5?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/com.fasterxml.jackson.core/jackson-core@2.21.5?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "publisher": "FasterXML",
+   "group": "com.fasterxml.jackson",
+   "name": "jackson-bom",
+   "version": "2.21.5",
+   "description": "Bill of Materials pom for getting full, complete set of compatible versions\nof Jackson components maintained by FasterXML.com",
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/com.fasterxml.jackson/jackson-bom@2.21.5?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/com.fasterxml.jackson/jackson-bom@2.21.5?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "group": "com.fasterxml.jackson.dataformat",
+   "name": "jackson-dataformat-toml",
+   "version": "2.21.5",
+   "description": "Support for reading and writing TOML-encoded data via Jackson abstractions.",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "594d1d3111555c0c52517405853e19c0"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "9a9c02e36266103ed083e2d5515caae3d0175f3f"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "0f8c9ed23977762b9c33376682112f5e9aeffbb58d2795a74c9a800596f70fce"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "0c32ee95eacead5d93d7713b5a457cc2e0a2e7693c6a95e0dfc4f60500863f7768d0e1982afaba2c56fe0d9c577741da201b8697ea8f1fc3cd66df462a666028"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/com.fasterxml.jackson.dataformat/jackson-dataformat-toml@2.21.5?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/com.fasterxml.jackson.dataformat/jackson-dataformat-toml@2.21.5?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "group": "com.fasterxml.jackson.datatype",
+   "name": "jackson-datatype-jdk8",
+   "version": "2.21.5",
+   "description": "Add-on module for Jackson (https://github.com/FasterXML/jackson) to support\nJDK 8 data types.",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "95a29d8abb866b9a7e27eee6177b2b08"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "d60c40c71e9ef58cbd34817b476c455e7f64213c"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "c8b1a0d14ffb3f8f8a1f182856c8803a3ee1d7c1aeb68dfee08f22d934ce108f"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "118c178d0fe8efb67801c54af42f76ee1abf7e243fb1ee72074b306c1229521de979c73d676cf8ecb3970276513612b5c507d5ffa7be5ffe36b49ed3378eb810"
+    }
+   ],
+   "purl": "pkg:maven/com.fasterxml.jackson.datatype/jackson-datatype-jdk8@2.21.5?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/com.fasterxml.jackson.datatype/jackson-datatype-jdk8@2.21.5?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "group": "com.fasterxml.jackson.datatype",
+   "name": "jackson-datatype-jsr310",
+   "version": "2.21.5",
+   "description": "Add-on module to support JSR-310 (Java 8 Date & Time API) data types.",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "6a1cfd9d7dace618bd512ad3647ebae6"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "2f8d061404266c0edbdd5674131ed689b6d84491"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "e941f9718d16a649614cb06711de06da34722afff9cee0b7725fc5318638304c"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "1704cfbcd21d6b5a51b86e4f4c7ac5c30383f01ad49e108b14850e8b248f964bd2aaa209f5e63b2f14b907d43eba91dbade9cff1983648717d126f4dbfede382"
+    }
+   ],
+   "purl": "pkg:maven/com.fasterxml.jackson.datatype/jackson-datatype-jsr310@2.21.5?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/com.fasterxml.jackson.datatype/jackson-datatype-jsr310@2.21.5?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "group": "com.fasterxml.jackson.module",
+   "name": "jackson-module-parameter-names",
+   "version": "2.21.5",
+   "description": "Add-on module for Jackson (https://github.com/FasterXML/jackson) to support\nintrospection of method/constructor parameter names, without having to add explicit property name annotation.",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "1b84d8fcbb43e7f7de1dac3fa74ac23b"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "36f759185ef80d1fea0635c099355aff6dda01de"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "87da1f76d23865f87df740658e96e906fd429e5df3a8f949551955d6dbb5129c"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "af26d909972ec55060061794319a5be24726c07c45972603acbab340716496fe767f07956fb2597af1fd24512c21c92aff02e043394f9c73d69a46d11df10b57"
+    }
+   ],
+   "purl": "pkg:maven/com.fasterxml.jackson.module/jackson-module-parameter-names@2.21.5?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/com.fasterxml.jackson.module/jackson-module-parameter-names@2.21.5?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "publisher": "VMware, Inc.",
+   "group": "org.springframework.boot",
+   "name": "spring-boot-starter-tomcat",
+   "version": "3.5.16",
+   "description": "Starter for using Tomcat as the embedded servlet container. Default servlet container starter used by spring-boot-starter-web",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "a387774e6aaf92adc4bb90aa48b62085"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "e76d97eb7710f95feaa82c9cf2fa74cc78acc64d"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "c3bc33205b0a46faab33dcdf743958e845ee94e1f7961bbe0e0f8ce881db747b"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "549fdfcba1f499aa825ca32735e6bbee3bad21ff4c8ba2f641e6dce27f21addc0d1063e164b594c5214b9cfbf2e50d474a761c3397cb0cb36c6cbd366bb4ad25"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.springframework.boot/spring-boot-starter-tomcat@3.5.16?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.springframework.boot/spring-boot-starter-tomcat@3.5.16?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework",
+    "tomcat"
+   ]
+  },
+  {
+   "group": "org.apache.tomcat.embed",
+   "name": "tomcat-embed-core",
+   "version": "10.1.55",
+   "description": "Core Tomcat implementation",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "b56211060ef226699d7c6746444c94e9"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "740c1000c60766b3a4d99903434fd1a1d67ec229"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "82473f841824095e03f2c938c18707e44e388e34fb1735b2b338bb4f22fd54f0"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "10a14f075ec4d7c5f84b00fd13b2150ebe1d0a8bc6a6e963286807689700d3fbfd03c8eb63aa2da28baeb7586fcbf325de40036e331e3b08863d6e2d72827d6e"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core@10.1.55?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core@10.1.55?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework",
+    "tomcat"
+   ]
+  },
+  {
+   "group": "org.apache.tomcat.embed",
+   "name": "tomcat-embed-el",
+   "version": "10.1.55",
+   "description": "Core Tomcat implementation",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "3aa05b1e98fe6122d642e890db5f599c"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "202f2de13bd61be720cf302f28d63eda558d29f3"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "a527fe51c6f9428c5116f78fe28588e55357b4492309b51fb0453372da16fa5f"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "3cbe300142776c79fd81589a908f791cae908d87010b1040a49f305e8e230d8db8cf4a662ff3124de429a5afe570b52bbee89cb8ca32add6d4b7b26d527d706c"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-el@10.1.55?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-el@10.1.55?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework",
+    "tomcat"
+   ]
+  },
+  {
+   "group": "org.apache.tomcat.embed",
+   "name": "tomcat-embed-websocket",
+   "version": "10.1.55",
+   "description": "Core Tomcat implementation",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "82bf59988201166d80a060a5e00a1fa9"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "b07cf802e82f358903a07f70757a4bcbe4fece20"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "81800431395fe2ef317fc14075ed49faaa64679a3458ee8791159111a1aa1b37"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "33313566ea0197dcdcd8b6f912a6d17e161e41427752e6da0f3650aa29d89161c0a0da499bc045cd88e1ec51ef23d89f41102001a078e6e8665a1345aa6b5251"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-websocket@10.1.55?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-websocket@10.1.55?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework",
+    "tomcat"
+   ]
+  },
+  {
+   "publisher": "Spring IO",
+   "group": "org.springframework",
+   "name": "spring-webmvc",
+   "version": "6.2.19",
+   "description": "Spring Web MVC",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "df1758cf3891705ec3bb290bf75f740e"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "836c68c8797106000e44153686b1cfa1a806a998"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "134f42320cedd31f54f683d2ca9936a4e015c011fb1882a31fa7213e2d8c7e94"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "0e79d3e4f81e99b71e7aa2e9d0ef2beab985fdcf4c199a311430be36f08e23f8ef81dd18eb46e6b127aac5252cf626b5af24c71d37e33c3aa42e129b527df822"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.springframework/spring-webmvc@6.2.19?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.springframework/spring-webmvc@6.2.19?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework",
+    "web"
+   ]
+  },
+  {
+   "publisher": "VMware, Inc.",
+   "group": "org.springframework.boot",
+   "name": "spring-boot-starter-validation",
+   "version": "3.5.16",
+   "description": "Starter for using Java Bean Validation with Hibernate Validator",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "570a3e9a9987625ab0e49183c6f02e8b"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "2c13f87aa38891b53730de7d5dc0993c812707e0"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "62e810a8fd4d540daed0217a653cac97f52c876f3ee82fd947a9ad7fdd811661"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "c8232b608834e0d9fbba1208f626c7955f87863e654027e2649f30f16fd84b0851505caf565b85ce75327f276b463d68085412e8ce91219cf6fefd966f7712cb"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.springframework.boot/spring-boot-starter-validation@3.5.16?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.springframework.boot/spring-boot-starter-validation@3.5.16?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework",
+    "hibernate",
+    "validation"
+   ]
+  },
+  {
+   "group": "org.hibernate.validator",
+   "name": "hibernate-validator",
+   "version": "8.0.3.Final",
+   "description": "Hibernate's Jakarta Bean Validation reference implementation.",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "7ac58d555febd45b769cee89ad1a8836"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "4425f554297a1c5ba03a3f30e559a9fd91048cf8"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "2ad24670fd08e21d3f43d3105d5326bd5ef6b01e819c5cd103823866b954517e"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "4eaf92ce39d952321bb6956fc80b91c4a5d6f747db08580c3b56b8088061f580b616aee02695da3a1f336cf4261f97d95ee66a9e650e4a88a8993297078db7be"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.hibernate.validator/hibernate-validator@8.0.3.Final?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.hibernate.validator/hibernate-validator@8.0.3.Final?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework",
+    "validation"
+   ]
+  },
+  {
+   "group": "jakarta.validation",
+   "name": "jakarta.validation-api",
+   "version": "3.0.2",
+   "description": "Jakarta Bean Validation API",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "3a1ee6efca3e41e3320599790f54c5eb"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "92b6631659ba35ca09e44874d3eb936edfeee532"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "291c25e6910cc6a7ebd96d4c6baebf6d7c37676c5482c2d96146e901b62c1fc9"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "8ff9a450e13dad49ac8268ab8c591e045e5056f9459efa09fbb3561b5c879526b344e2648602bf65d387620064cf0c3a00e1243c6422c85a21b53dbab8749a40"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/jakarta.validation/jakarta.validation-api@3.0.2?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/jakarta.validation/jakarta.validation-api@3.0.2?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "validation"
+   ]
+  },
+  {
+   "group": "org.jboss.logging",
+   "name": "jboss-logging",
+   "version": "3.6.3.Final",
+   "description": "The JBoss Logging Framework",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "b4cf5872f18b3e80e18769d51c7ae9b2"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "1cc9f976725720bb4a66f80af3e3aa6b9890d969"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "7c12ee575508f81e22b1db9334b969d0ec54ef0fd1dcba24eeab1a44235fc366"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "5b4e0213185d79b407352020e550ab0baba879fa465670b592f3671a53ae0128ce9d2d1fd67c2263bd625cd5549ec449521d200054c8bed9e0c0d1b6004a0287"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.jboss.logging/jboss-logging@3.6.3.Final?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.jboss.logging/jboss-logging@3.6.3.Final?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework",
+    "logging"
+   ]
+  },
+  {
+   "publisher": "fasterxml.com",
+   "group": "com.fasterxml",
+   "name": "classmate",
+   "version": "1.7.3",
+   "description": "Library for introspecting types with full generic information\nincluding resolving of field and method types.",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "d1a4a85ab782827adfa82772e3b5f483"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "f61c7e7b81e9249b0f6a05914eff9d54fb09f4a0"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "75fbda45456f123fb6e2028a6189442d8d0730b357adce4c0a6d7e789f70669b"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "413201e582960b83e881a48640f6abe1d0b613bafd274f01a9660071ed43e373f93499dd15623488136a66deff9a9b18a31dfe382aa2bcb0822f55f7dc23c48c"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/com.fasterxml/classmate@1.7.3?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/com.fasterxml/classmate@1.7.3?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "group": "org.mybatis.spring.boot",
+   "name": "mybatis-spring-boot-starter",
+   "version": "3.0.4",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "759980a3e0d7a81c3697f7356d5ccb62"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "2a56c4aa1f81aaef9abb0105f72702a737517d9a"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "c4ad5690dd58ad94bbb385dace45e7dafe7c4252f3849ffca8be0819cbfdc590"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "2db96f85ebc9d77f9eebfcc6cc6dcb0dbdde6daed5e5568e752138a716ccf175d7d5698cbd1ec1518ba88ac847f0899d5c7c2eb0e6e1d9ab170aba8b37627731"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.mybatis.spring.boot/mybatis-spring-boot-starter@3.0.4?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.mybatis.spring.boot/mybatis-spring-boot-starter@3.0.4?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework"
+   ]
+  },
+  {
+   "publisher": "VMware, Inc.",
+   "group": "org.springframework.boot",
+   "name": "spring-boot-starter-jdbc",
+   "version": "3.5.16",
+   "description": "Starter for using JDBC with the HikariCP connection pool",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "1cd3a4a1f8c9524b87e1596cae1ec0e2"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "ceb21619aa86e5b6ec2d8b8f0a18d9267aef8752"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "04bd742f970fb6048a1c33a859e19f468fb7fa00787d6ddcf820f9ee1fbee41d"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "ea3421f2548dd44174cd97e80c6ff045f90f4cba19909033d2fab636dd117e6bb44698bbfbfcd3d1e702b05966dc03baf659017cb324e3a1ea2fa494a17c6d40"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.springframework.boot/spring-boot-starter-jdbc@3.5.16?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.springframework.boot/spring-boot-starter-jdbc@3.5.16?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework",
+    "jdbc"
+   ]
+  },
+  {
+   "publisher": "Zaxxer.com",
+   "group": "com.zaxxer",
+   "name": "HikariCP",
+   "version": "6.3.3",
+   "description": "Ultimate JDBC Connection Pool",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "a5c7bb14f24a598a87118c9f73641466"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "7c5aec1e47a97ff40977e0193018865304ea9585"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "709f378c05756280939ce50fc1b1f1a53bb8e1899dc1b249f21f12703640b48b"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "3492605dca124c4fb7a06111e6b1a92408c796d7f4fc3991395c27f060bb45a10edc5f3dacf1563ba7f982fd2589a140fef6f6fe97d0df666a9e56d3dbe10527"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/com.zaxxer/HikariCP@6.3.3?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/com.zaxxer/HikariCP@6.3.3?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "jdbc"
+   ]
+  },
+  {
+   "publisher": "Spring IO",
+   "group": "org.springframework",
+   "name": "spring-jdbc",
+   "version": "6.2.19",
+   "description": "Spring JDBC",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "05da1adb03141a0e3c93861f6ab10a98"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "d7b6ea705a71dbbb4499437dd54b9217ce6c251a"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "c81fd8aca952aac243d9327af12596c2058012c9d3784f1313477a6d2cc56306"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "b66fab4f95eea0ebfa5f849d6ad3c58d2f433c4b37bddbb8f8cf247659eeaf89de1d0c3b6e12fa92f045997b1296ffac03f6a98c77362c6311c42bc77026cf07"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.springframework/spring-jdbc@6.2.19?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.springframework/spring-jdbc@6.2.19?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework"
+   ]
+  },
+  {
+   "publisher": "Spring IO",
+   "group": "org.springframework",
+   "name": "spring-tx",
+   "version": "6.2.19",
+   "description": "Spring Transaction",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "0a3ba16888dc23fdd52ba7b36bc01835"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "0aa1a170d935a3c39176d27a2353c34c2861b7dc"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "34a1b6f5d87ef4cca6849e1bc70a0f965eec6476737b3cae73ff2561a266ef73"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "d60530b1870b8c31e85eb3bf91f92e2ac038df0e884e1204eb176925bb3c21d872990fcac985246c8e90eddccdf1adb384b74e19a1db57ca6473fdc7ce247563"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.springframework/spring-tx@6.2.19?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.springframework/spring-tx@6.2.19?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework"
+   ]
+  },
+  {
+   "group": "org.mybatis.spring.boot",
+   "name": "mybatis-spring-boot-autoconfigure",
+   "version": "3.0.4",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "9987b40ef7acebed60290c30c801ea5e"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "027c887cbd92c780e7d8baaf30d9dc5b5d5f0c03"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "b4aab3e93ac4f5082d8060198d2e4c35be25d76dbb2f3e556e35b8f1b6056924"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "58524113d2f2d434a2358523d5dcc53063b4a8aeee587168a8a9a558e177f46810f1b269b47b344e3d7a41b575e2bf21789a4b6043b5da860ae4d378b33d3de6"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.mybatis.spring.boot/mybatis-spring-boot-autoconfigure@3.0.4?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.mybatis.spring.boot/mybatis-spring-boot-autoconfigure@3.0.4?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework"
+   ]
+  },
+  {
+   "group": "org.mybatis",
+   "name": "mybatis",
+   "version": "3.5.17",
+   "description": "The MyBatis SQL mapper framework makes it easier to use a relational database with object-oriented\napplications. MyBatis couples objects with stored procedures or SQL statements using a XML descriptor or\nannotations. Simplicity is the biggest advantage of the MyBatis data mapper over object relational mapping\ntools.",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "6fdc2bcd037487630e9197385ab099fd"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "b210805d7d67ab8c564efebbeae5ed648c5bc925"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "1e46102d971f1e3ef1d5b808b2059bb4211b6d088d07814958d5297da2fd6589"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "4ff6959b2bebfd77e3d22471b38f54e7c6e0ef7a7340b899ca4f3babfd223f34560b57192bc83f639a8899e696614331e44b7bc7b90580b898e75a10b7ea6ce5"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.mybatis/mybatis@3.5.17?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.mybatis/mybatis@3.5.17?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "database",
+    "framework",
+    "sql",
+    "xml"
+   ]
+  },
+  {
+   "group": "org.mybatis",
+   "name": "mybatis-spring",
+   "version": "3.0.4",
+   "description": "An easy-to-use Spring bridge for MyBatis sql mapping framework.",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "adb6d883f5c2eba7218b48d8d7e11691"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "8a1250161c6b5c15103c1f51d6a1ad8307af4418"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "e21d766c8e505a3762b0220e36f81d6be53eddbed55bb2a8c06dbff4cbdc6f6e"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "5246fa9bcaee9db6ee1a3bff53f39a33b8bffb31c8e602b674b1d65fc6b11c526ef0c460b10de4a865d29c98db935d2bad6a719c6ee4d89683807252644174c0"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.mybatis/mybatis-spring@3.0.4?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.mybatis/mybatis-spring@3.0.4?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework",
+    "sql"
+   ]
+  },
+  {
+   "group": "org.flywaydb",
+   "name": "flyway-core",
+   "version": "11.7.2",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "4c980ae9d24be75b9522f8f4ed0b60bc"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "2e40f0465ab29c807a38aae56b4e636451a9ff99"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "ff01fab3bcfd79e9345df191ecf82cbe1f9f65a757266158bd691564b1c1282c"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "d5e9a0703a31a25298eaaa4cf7aa238393c0f8d9b2bdaa65a3fc1e3d95355a20e7c911479ef818f01caaf842bddf2dbb0a409e99e497d7682d53efd6aa666b48"
+    }
+   ],
+   "purl": "pkg:maven/org.flywaydb/flyway-core@11.7.2?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/org.flywaydb/flyway-core@11.7.2?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "group": "org.xerial",
+   "name": "sqlite-jdbc",
+   "version": "3.46.0.0",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "e711fe45b2095575aa7fc25866549e61"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "aa79a7b3fd17b70ca7cb4cc894d5c8488c60aabe"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "e697df15be3f95219d80773c5f1002030e33e932adda186c1c86fd51df6691a9"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "bfc7c9090bd333ea3f6064e7637bdf955745718247ffdc9c925829b992c0d67af8f6f438b4558b5cd9b34521937961fc1b9c92bafd33f36da6de122901e96ac4"
+    }
+   ],
+   "purl": "pkg:maven/org.xerial/sqlite-jdbc@3.46.0.0?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/org.xerial/sqlite-jdbc@3.46.0.0?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "group": "com.google.zxing",
+   "name": "core",
+   "version": "3.5.3",
+   "description": "Core barcode encoding/decoding library",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "b5269d7bf1eea1d064240c342829b117"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "ca1349214a356cd7958651b2d5a0e1f3811a9c4b"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "8d8064c1636fdaef7189dd9055c7d59950a8940a12f2293956446ec3c109fd82"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "0b5f04f1c17c2686a709bfbd217a3bcd8c9e143139305986b062a6cfc4050d0de43debbc8a0cea15dfc0f8c009b62b0c99207228c17530ef05a465cf9d68b959"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/com.google.zxing/core@3.5.3?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/com.google.zxing/core@3.5.3?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "group": "com.google.zxing",
+   "name": "javase",
+   "version": "3.5.3",
+   "description": "Java SE-specific extensions to core ZXing library",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "1a5b45e1a7235398bdccfbc94a287d0c"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "55d93bb3ffee425a7be56cd6ff572fb64ac84593"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "d65795b789efac8a2156cb2a4b648d20e58bfe03613165bb5dce6870ecef798e"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "7ecc507c21ab0a5e24558ae13c6ea956b2837bc4b7ec0dedc00e60db5f80bd7bb0b6320685b1bb9fca71745bb2c2117fd855cb3aa1292c2884c03fdc3c785192"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/com.google.zxing/javase@3.5.3?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/com.google.zxing/javase@3.5.3?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "group": "com.beust",
+   "name": "jcommander",
+   "version": "1.82",
+   "description": "Command line parsing library for Java",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "c350dc0db8aa038e6bbaf0050720d69c"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "0a7c5fef184d238065de38f81bbc6ee50cca2e21"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "deeac157c8de6822878d85d0c7bc8467a19cc8484d37788f7804f039dde280b1"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "72c9beb5d282ecdebadbd595c4f05710599328e48432dc196a261d8973ec767d52038e5bd26e7c0b78b85b4455687d59f9d0a367221e848e39c72f2f583baf26"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/com.beust/jcommander@1.82?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/com.beust/jcommander@1.82?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "publisher": "VMware, Inc.",
+   "group": "org.springframework.boot",
+   "name": "spring-boot-starter-mail",
+   "version": "3.5.16",
+   "description": "Starter for using Java Mail and Spring Framework's email sending support",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "00102cd4b5db5bc70a6dd417df48ddbe"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "89cc7915fc726ed9983fb69c693cb46bd4f9217f"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "4f3d31d02863202bc29a913be5a3ad44f343326de3b30385681b8691c55d0cd8"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "336b84957866ca099414a0d9f545247121fd04c2fdccff2e38e9347007bd4037470318eecaa03657908acf652acf2176442920d18c276cea28f116401cc0a7fa"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.springframework.boot/spring-boot-starter-mail@3.5.16?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.springframework.boot/spring-boot-starter-mail@3.5.16?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework",
+    "mail"
+   ]
+  },
+  {
+   "publisher": "Spring IO",
+   "group": "org.springframework",
+   "name": "spring-context-support",
+   "version": "6.2.19",
+   "description": "Spring Context Support",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "d96523c4131d86c29edb2e634722b269"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "a3c10a96896252b025988cf4832bfbf896cfd26d"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "f99b9158ca52c8c2309663ae112f2c7ae10b1696b2350f401ee771a22722f7cc"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "0d683e3b26c2ef2ea57d8879031f98fcbd3abd5ce7d00e819390dd3bb8a01178c9c685f9af1b319f5b8ef7f6df819b515e7567b54a1fdd5c5ef6bce4bd84f2a0"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.springframework/spring-context-support@6.2.19?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.springframework/spring-context-support@6.2.19?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework"
+   ]
+  },
+  {
+   "group": "org.eclipse.angus",
+   "name": "jakarta.mail",
+   "version": "2.0.5",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "e8c6f8be18f13d23bf9f45019b58ffd2"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "68ce3f8ddb70d375e2ae4d820ba64da0ed56a940"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "f48001755a4a591bb1b602965337fcf316d794c43783052f88ede05130539358"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "d1f9cbb7eabdebe3fd9eb1976a85d9f9db36b1e831acabcac9bba15ab6e4258350ed10673301e70b17d6d7e64d37c598398dbd389544d438148d7eecbcc3b2ef"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "GPL-2.0-only",
+      "url": "https://opensource.org/licenses/GPL-2.0-only"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.eclipse.angus/jakarta.mail@2.0.5?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/org.eclipse.angus/jakarta.mail@2.0.5?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "group": "jakarta.activation",
+   "name": "jakarta.activation-api",
+   "version": "2.1.4",
+   "description": "${project.name} ${spec.version} Specification",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "bc1602eee7bc61a0b86f14bbbb0cc794"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "9e5c2a0d75dde71a0bedc4dbdbe47b78a5dc50f8"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "c9db52100ce6c8aac95cc39075f95720d2e561b11f8051b81c121ad4effd7004"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "cd078772acb5ebf1f90f7c737f372b7e86a5ce31b995ed759526a9eee73fd89f97e506f9a208ba3b73e757cb78830b829733411cf7989680aea2272abba7323b"
+    }
+   ],
+   "licenses": [
+    {
+     "expression": "EDL 1.0"
+    }
+   ],
+   "purl": "pkg:maven/jakarta.activation/jakarta.activation-api@2.1.4?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/jakarta.activation/jakarta.activation-api@2.1.4?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "compileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "publisher": "jai-imageio GitHub group",
+   "group": "com.github.jai-imageio",
+   "name": "jai-imageio-core",
+   "version": "1.4.0",
+   "description": "Java Advanced Imaging Image I/O Tools API core, but without the classes\ninvolved with javax.media.jai dependencies, JPEG2000 or\ncodecLibJIIO, meaning that this library can be distributed under the\nmodified BSD license and should be GPL compatible.",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "6978d733bfb55c0a82639f724fe5f3bb"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "fb6d79b929556362a241b2f65a04e538062f0077"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "8ad3c68e9efffb10ac87ff8bc589adf64b04a729c5194c079efd0643607fd72a"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "5fb01617717fdc6db514fe6da2b253c3d925326190a8ba101941f29bff6e3c147e6216c501ca66b4d4051d213b1c05fadb3707563782bfcc5674357338786c01"
+    }
+   ],
+   "licenses": [
+    {
+     "expression": "BSD 3-clause License w/nuclear disclaimer"
+    }
+   ],
+   "purl": "pkg:maven/com.github.jai-imageio/jai-imageio-core@1.4.0?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/com.github.jai-imageio/jai-imageio-core@1.4.0?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "developmentOnly"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "api",
+    "tools"
+   ]
+  },
+  {
+   "group": "org.eclipse.angus",
+   "name": "angus-activation",
+   "version": "2.0.3",
+   "description": "${project.name} Implementation",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "ad20392145690b36b4f950fe31a31a2a"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "7f80607ea5014fef0b1779e6c33d63a88a45a563"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "a6bd35c538cf90fff941ad6258c40c08fca0b5c9c3f536c657114f27ce0527a7"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "efb987b781f665589b2a524d86826ffcf37eaf105b2f823be124fded85bd118098c0749b5d268373d00b1d3b8bf0f89f86670444f9990b91948704a7052376e1"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "0BSD",
+      "url": "https://opensource.org/licenses/0BSD"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.eclipse.angus/angus-activation@2.0.3?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/org.eclipse.angus/angus-activation@2.0.3?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "developmentOnly"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "publisher": "VMware, Inc.",
+   "group": "org.springframework.boot",
+   "name": "spring-boot-starter-test",
+   "version": "3.5.16",
+   "description": "Starter for testing Spring Boot applications with libraries including JUnit Jupiter, Hamcrest and Mockito",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "471ceb7786491032144f9bdc3f1f24b5"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "8e42ec906ab5f761f36f022e9e5a2d55808a697c"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "b71dbd8ff355aa339166ba47ff5c6c31c65ba6985f31480d6d312ee204b0f860"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "9b737b7a2f4cde22c959ae55266496ea483374745832aefac984f5b71a0d5a6b95685ac6d2bcdd364b488f5239a36e428f5a8e888f8bdad84a491dd5fd843e1d"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.springframework.boot/spring-boot-starter-test@3.5.16?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.springframework.boot/spring-boot-starter-test@3.5.16?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework"
+   ]
+  },
+  {
+   "publisher": "VMware, Inc.",
+   "group": "org.springframework.boot",
+   "name": "spring-boot-test",
+   "version": "3.5.16",
+   "description": "Spring Boot Test",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "02339cceee01c3d416e78352a73cf89f"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "8ba199b3589d5ebb305630e77e722d3d625a00b8"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "391c6e3aebd499c727016f4c27c9fbf0d35ca0216686bc1be779752b5c5ae9f3"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "13be52ca9ca3d589bfd94822ba0cf70846f185e17066763ae51695005d83a85021f05735bceba9de26c1fe76f1a4c058f412f82d072d1ce24f59c19a2ace663e"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.springframework.boot/spring-boot-test@3.5.16?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.springframework.boot/spring-boot-test@3.5.16?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework"
+   ]
+  },
+  {
+   "publisher": "Spring IO",
+   "group": "org.springframework",
+   "name": "spring-test",
+   "version": "6.2.19",
+   "description": "Spring TestContext Framework",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "0d0aed4e9048230535ae71baee833ee3"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "e49cfc2dab98a634bdc3e24db8e021c5125d3ffd"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "f1cb8549021f50630b4152291fdcde56786421b8448a5ab8bef9befe2ac86b37"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "ba6cf9363e6f287095153a258a98ddc15418932eb60618ecba6e3d809fa8a85ccd4381b10951b6bf3000059be637f3304b4f8cbfe44ce4c4630746fbbc27af3d"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.springframework/spring-test@6.2.19?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.springframework/spring-test@6.2.19?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework"
+   ]
+  },
+  {
+   "publisher": "VMware, Inc.",
+   "group": "org.springframework.boot",
+   "name": "spring-boot-test-autoconfigure",
+   "version": "3.5.16",
+   "description": "Spring Boot Test AutoConfigure",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "fdce8f04d0e2567175c15c7c5ef21d84"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "f7877149c076384bc8238fbdce27104ef565ab7b"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "ed451d7789f8b7c39d363e0673561218ac72927ef375979ef99ddff3b387db1f"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "6e5705332e8caf204af32122c4f6852cecf880a6fa3868c43db493b59b9a3560dafd283bb2cce9531e107a9519f290115aa64d2b75ee9ef2e286406ab7d05bd1"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.springframework.boot/spring-boot-test-autoconfigure@3.5.16?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.springframework.boot/spring-boot-test-autoconfigure@3.5.16?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework",
+    "test"
+   ]
+  },
+  {
+   "group": "com.jayway.jsonpath",
+   "name": "json-path",
+   "version": "2.9.0",
+   "description": "A library to query and verify JSON",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "e89678d2e4ff45e4f39a97ccd0223719"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "37fe2217f577b0b68b18e62c4d17a8858ecf9b69"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "11a9ee6f88bb31f1450108d1cf6441377dec84aca075eb6bb2343be157575bea"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "9a9dbb2cd36662c8049419ed891290602baeca2549eb7df62122cb20c91e66bc8c2c0e5e13199c4a70bf0b6e62ea4c2601f84e4c79d2af25ff1704481c86740a"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/com.jayway.jsonpath/json-path@2.9.0?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/com.jayway.jsonpath/json-path@2.9.0?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "group": "jakarta.xml.bind",
+   "name": "jakarta.xml.bind-api",
+   "version": "4.0.5",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "935053b2c792f34c7ea3a238ea96f3ac"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "161811f36cad3c65991502e80317f2f6703361df"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "5e489b6c874c4119e003ff1403db523ee3a8959ec499f3de29e77245efccf216"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "3f3e522bd716ab6842ba2eed8bd44fc7d859ca5a3798e5adf2447eabde1c5d3b74b6f58d217d6cd772cbb034e4f003d9f9e10fafa15f4e108ea802548d1e5044"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "0BSD",
+      "url": "https://opensource.org/licenses/0BSD"
+     }
+    }
+   ],
+   "purl": "pkg:maven/jakarta.xml.bind/jakarta.xml.bind-api@4.0.5?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/jakarta.xml.bind/jakarta.xml.bind-api@4.0.5?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "publisher": "Chemouni Uriel",
+   "group": "net.minidev",
+   "name": "json-smart",
+   "version": "2.5.2",
+   "description": "JSON (JavaScript Object Notation) is a lightweight data-interchange format. It is easy for humans to read and write. It is easy for machines to parse and generate. It is based on a subset of the JavaScript Programming Language, Standard ECMA-262 3rd Edition - December 1999. JSON is a text format that is completely language independent but uses conventions that are familiar to programmers of the C-family of languages, including C, C++, C#, Java, JavaScript, Perl, Python, and many others. These properties make JSON an ideal data-interchange language.",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "e3ad34c55c0d2627255f79f4411c6bdd"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "95d166b18f95907be0f46cdb9e1c0695eed03387"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "4fbdedb0105cedc7f766b95c297d2e88fb6a560da48f3bbaa0cc538ea8b7bf71"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "087931c6f254c7e54ff75b6e94983d062b62b68356a988a5ed276819bcb4fafbad2f0bbc363e16c8daa09ed8189241f08eff6e8e5f5f3ddc770b541d96fc8e2d"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/net.minidev/json-smart@2.5.2?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/net.minidev/json-smart@2.5.2?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "json",
+    "parse"
+   ]
+  },
+  {
+   "publisher": "Chemouni Uriel",
+   "group": "net.minidev",
+   "name": "accessors-smart",
+   "version": "2.5.2",
+   "description": "Java reflect give poor performance on getter setter an constructor calls, accessors-smart use ASM to speed up those calls.",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "24191e0bb215c72902e89f46dde839e1"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "ce16fd235cfee48e67eda33e684423bba09f7d07"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "9b8a7bc43861d6156c021166d941fb7dddbe4463e2fa5ee88077e4b01452a836"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "3bbd29761622714ac61dbe02b8351188573f819bdabfb4025196a3f1561bfe52cc308af9208184f7339c66988e7f8ad323c5cd7b0fa8463321b6bb03e4a9181e"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/net.minidev/accessors-smart@2.5.2?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/net.minidev/accessors-smart@2.5.2?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "performance"
+   ]
+  },
+  {
+   "publisher": "OW2",
+   "group": "org.ow2.asm",
+   "name": "asm",
+   "version": "9.7.1",
+   "description": "ASM, a very small and fast Java bytecode manipulation framework",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "e2cdd32d198ad31427d298eee9d39d8d"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "f0ed132a49244b042cd0e15702ab9f2ce3cc8436"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "8cadd43ac5eb6d09de05faecca38b917a040bb9139c7edeb4cc81c740b713281"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "4767b01603dad5c79cc1e2b5f3722f72b1059d928f184f446ba11badeb1b381b3a3a9a801cc43d25d396df950b09d19597c73173c411b1da890de808b94f1f50"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "BSD-3-Clause",
+      "url": "https://opensource.org/licenses/BSD-3-Clause"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.ow2.asm/asm@9.7.1?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.ow2.asm/asm@9.7.1?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "bytecode",
+    "framework"
+   ]
+  },
+  {
+   "group": "org.assertj",
+   "name": "assertj-core",
+   "version": "3.27.7",
+   "description": "Rich and fluent assertions for testing in Java",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "9c893dc59af35a8beceb4166ad0602dc"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "2f4f64f054c9d618d4b1d89e7611559f5e2cfff7"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "c4a445426c3c2861666863b842cc4ec7bbb1c4226fefd370b6d2fe83d6c4ff0f"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "adde16df9fd0b61d9b8cf4c28740b93a58d411300043258c594612d59e76321a42406f7847f5643baad8bddf08fb8b6ac6d6554c36739e8b1fa6ce35456f9d19"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.assertj/assertj-core@3.27.7?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/org.assertj/assertj-core@3.27.7?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "group": "net.bytebuddy",
+   "name": "byte-buddy",
+   "version": "1.17.8",
+   "description": "Byte Buddy is a Java library for creating Java classes at run time.\r\nThis artifact is a build of Byte Buddy with all ASM dependencies repackaged into its own name space.",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "ac7292226046cb7206b349e21affecfe"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "af5735f63d00ca47a9375fae5c7471a36331c6ed"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "2b5ddc8c1f4234bdb7cb45338a8e10a13e0e3ca473e91d5d821d681127ea8ba1"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "dd7f3f6aaf3dbf9df763e558706c82ad05add934d57e4872603da20fe8ba29647411b2456ec33c5cf07cf9d11e53f41aedbcb0ea4ca140c42ca632891cd826bf"
+    }
+   ],
+   "purl": "pkg:maven/net.bytebuddy/byte-buddy@1.17.8?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/net.bytebuddy/byte-buddy@1.17.8?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "group": "org.awaitility",
+   "name": "awaitility",
+   "version": "4.2.2",
+   "description": "A Java DSL for synchronizing asynchronous operations",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "04ec00a85d39fffdfed9e5df1120adf4"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "7336242073ebf83fe034e42b46a403c5501b63c9"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "e831fee30ed401e2208f1bd5a0ef9add538d9cb1103c0e43216691b647bde9c6"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "955f3a66ca975d7cedad4705b7c3685e6aff9fe13d3d1200a31c386fe6b598469330dc5af3be060a28e8cb0a0d80be684c2f2bf5bf24fa9669f6cd000b88919b"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.awaitility/awaitility@4.2.2?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/org.awaitility/awaitility@4.2.2?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "group": "org.hamcrest",
+   "name": "hamcrest",
+   "version": "3.0",
+   "description": "Core API and libraries of hamcrest matcher framework.",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "781023c38b054e9cf1c818c77895e1eb"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "8fd9b78a8e6a6510a078a9e30e9e86a6035cfaf7"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "5d66b6a4a680755cb6ed7cb104fa7835ef644667586ff0737adeb977c39ecdbc"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "c09968882d8467d43576444b3fab868e175f0826e1d6e2015d1efec8934cdd5ffce8f285a7fc072306711ee0645dea92783a97a9e1dd8206e5e1de5de1ea8e7f"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "BSD-3-Clause",
+      "url": "https://opensource.org/licenses/BSD-3-Clause"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.hamcrest/hamcrest@3.0?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.hamcrest/hamcrest@3.0?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "api",
+    "framework"
+   ]
+  },
+  {
+   "group": "org.junit.jupiter",
+   "name": "junit-jupiter",
+   "version": "5.12.2",
+   "description": "Module \"junit-jupiter\" of JUnit 5.",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "66889cd0593aa507e0c67a020f71bf58"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "64d3ec64ae06517bc14b7faaaec7c996b0d05bea"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "3854b3ad434906b827fec474aa0d8da8b56e9e56d5fc7f2e20fc3f12ec4be894"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "890afbe6d9486341aaf44f85b3c672797404fd84c09c11c78d8b196f04e70716b9c3a622b16de89018174f3dec331a93a5b60a1711ef677d016bec93cabb3158"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "EPL-2.0",
+      "url": "https://opensource.org/licenses/EPL-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.junit.jupiter/junit-jupiter@5.12.2?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/org.junit.jupiter/junit-jupiter@5.12.2?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "test"
+   ]
+  },
+  {
+   "group": "org.junit",
+   "name": "junit-bom",
+   "version": "5.12.2",
+   "description": "This Bill of Materials POM can be used to ease dependency management when referencing multiple JUnit artifacts using Gradle or Maven.",
+   "scope": "optional",
+   "licenses": [
+    {
+     "license": {
+      "id": "EPL-2.0",
+      "url": "https://opensource.org/licenses/EPL-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.junit/junit-bom@5.12.2?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/org.junit/junit-bom@5.12.2?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "test"
+   ]
+  },
+  {
+   "group": "org.junit.jupiter",
+   "name": "junit-jupiter-api",
+   "version": "5.12.2",
+   "description": "Module \"junit-jupiter-api\" of JUnit 5.",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "402d4a6ff77b83558384ff3c31d6cb7b"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "6de3a3256c5d90f4a439edcb6c2e8dc5180907b0"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "0b9ca728e4bcd9adc57f29deb9556ff9ed5e08b4e8843b875aba4e4e3e04f092"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "cfc017675fd2fb8b54974845fd1d68e2c42534e59a03dde5b0f58ef4e77b22c0793d66f1a4446467caf6b7ce6ad533636ede078507ecbcedfa78ad8d8a831993"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "EPL-2.0",
+      "url": "https://opensource.org/licenses/EPL-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.junit.jupiter/junit-jupiter-api@5.12.2?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/org.junit.jupiter/junit-jupiter-api@5.12.2?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "test"
+   ]
+  },
+  {
+   "group": "org.junit.jupiter",
+   "name": "junit-jupiter-params",
+   "version": "5.12.2",
+   "description": "Module \"junit-jupiter-params\" of JUnit 5.",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "9a48afce7bd438cfd5ee5d8c39454ad8"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "ff1434a66d1fb84c2c709cde2e2d56d5c8f4fad3"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "b219ffa949b90a71aa3b6c2b606456b82bca0b2089b7459c8ff461156ff59b0f"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "d2ce4d3bd3d44f0cd8e49aaa6dcfb6a322995a9fc616f733c27290e952adc045897ede39f636392971057d51f14c29e6dc72421b0a78bd026ffbe5d1de191578"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "EPL-2.0",
+      "url": "https://opensource.org/licenses/EPL-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.junit.jupiter/junit-jupiter-params@5.12.2?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/org.junit.jupiter/junit-jupiter-params@5.12.2?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "test"
+   ]
+  },
+  {
+   "group": "org.junit.platform",
+   "name": "junit-platform-commons",
+   "version": "1.12.2",
+   "description": "Module \"junit-platform-commons\" of JUnit 5.",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "ee5021f0b2cc09d82fdf4d4c9075cd4e"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "b89e88a89ee009937374a4c96912e007b34c8e35"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "e683a01e85dfabea520c056ac6015a6162756e602ec653c0da85e233f0afbc18"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "633fc69494adde3750ae5003097bbeea1b7d4b68a079f11dac53733ce00eb7e00d1cd5276879ce88a5b1e6889f100b07b422c1f9e575485e86c3cccc8b06dbfa"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "EPL-2.0",
+      "url": "https://opensource.org/licenses/EPL-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.junit.platform/junit-platform-commons@1.12.2?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/org.junit.platform/junit-platform-commons@1.12.2?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "test"
+   ]
+  },
+  {
+   "group": "org.opentest4j",
+   "name": "opentest4j",
+   "version": "1.3.0",
+   "description": "Open Test Alliance for the JVM",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "03c404f727531f3fd3b4c73997899327"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "152ea56b3a72f655d4fd677fc0ef2596c3dd5e6e"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "48e2df636cab6563ced64dcdff8abb2355627cb236ef0bf37598682ddf742f1b"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "78fc698a7871bb50305e3657893c10500595f043348d875f57bc39ca4a6a51eda3967b7c8c8a7ec3e8f85f2171bca4aa98823e912e416e87e81c6ba5b70a37c3"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.opentest4j/opentest4j@1.3.0?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/org.opentest4j/opentest4j@1.3.0?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "test"
+   ]
+  },
+  {
+   "group": "org.apiguardian",
+   "name": "apiguardian-api",
+   "version": "1.1.2",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "8c7de3f82037fa4a2e8be2a2f13092af"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "a231e0d844d2721b0fa1b238006d15c6ded6842a"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "b509448ac506d607319f182537f0b35d71007582ec741832a1f111e5b5b70b38"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "d7ccd0e7019f1a997de39d66dc0ad4efe150428fdd7f4c743c93884f1602a3e90135ad34baea96d5b6d925ad6c0c8487c8e78304f0a089a12383d4a62e2c9a61"
+    }
+   ],
+   "purl": "pkg:maven/org.apiguardian/apiguardian-api@1.1.2?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/org.apiguardian/apiguardian-api@1.1.2?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "group": "org.mockito",
+   "name": "mockito-core",
+   "version": "5.17.0",
+   "description": "Mockito mock objects library core API and implementation",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "9c93b9bc6866e867e662969fe2413e84"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "f5fe5a2f94eb65f4f83ca0607bfe13ec0d9c6f3b"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "dff59ad8c61b026ef86cc113f94f2301eb06caaf81dec30c78a96a1a65595c5e"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "58801fa7021dd48aa8bb784766ecbdf5afb88df0a5f462800d7f0eb97b31324f20d1f6e08e8ad6c3fc73be8a341701b848a7c48a71c4403ad73502366ada82cd"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.mockito/mockito-core@5.17.0?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/org.mockito/mockito-core@5.17.0?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "api",
+    "mock"
+   ]
+  },
+  {
+   "group": "net.bytebuddy",
+   "name": "byte-buddy-agent",
+   "version": "1.17.8",
+   "description": "The Byte Buddy agent offers convenience for attaching an agent to the local or a remote VM.",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "c6a66a1f26a382fa4727a74a7f197ed5"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "f09415827a71be7ed621c7bd02550678f28bc81c"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "5b17113e66e77ca6f8af07ff367c216df964a980f0e9f11e3b1aa793253aa64f"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "b940d7f666d267caa918b0d0af0ac2937d0ed17980d4d10fdf7a67022788ed16fbcca1f7bf11e4de434defba3e57ac0364a9b9499a2afca33bd099e9a2ac954d"
+    }
+   ],
+   "purl": "pkg:maven/net.bytebuddy/byte-buddy-agent@1.17.8?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/net.bytebuddy/byte-buddy-agent@1.17.8?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  },
+  {
+   "group": "org.mockito",
+   "name": "mockito-junit-jupiter",
+   "version": "5.17.0",
+   "description": "Mockito JUnit 5 support",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "ae634f25cb77302c4b40f9375ba7791e"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "4399e19e3fb5b55230027583323e4c883d5da07d"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "5c5442f8aaaa8f03df03e4862a0d69205d1b41f5edbf7d5aa7a2486a61de49b7"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "843c021f571cb64a04b0d53058246a2060e834710a85c2935cb591afe6a154795dbb17b7cb2257ef5271a2de2870b85a924678f98d0a90550a5cc7afc53a506a"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.mockito/mockito-junit-jupiter@5.17.0?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/org.mockito/mockito-junit-jupiter@5.17.0?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "test"
+   ]
+  },
+  {
+   "group": "org.skyscreamer",
+   "name": "jsonassert",
+   "version": "1.5.3",
+   "description": "Write JSON unit tests in less code. Great for testing REST interfaces.",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "aee6947b4d626e3e37c21c7ac7652ae6"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "aaa43e0823d2a0e106e8754d6a9c4ab24e05e9bc"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "719095c07d4203961320da593441d8b3b643c18eb1d81aa98ea933bb7eb351ba"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "63506721e8e902d21a013ba2e32e964a4eecb91584b58e911465382f5a0bf16af202daad01ca7ea16e2f0c489869cf41008b8669d81130c78b245da7aae41928"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.skyscreamer/jsonassert@1.5.3?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/org.skyscreamer/jsonassert@1.5.3?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "json",
+    "rest"
+   ]
+  },
+  {
+   "group": "com.vaadin.external.google",
+   "name": "android-json",
+   "version": "0.0.20131108.vaadin1",
+   "description": "JSON (JavaScript Object Notation) is a lightweight data-interchange format.\nThis is the org.json compatible Android implementation extracted from the Android SDK",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "10612241a9cc269501a7a2b8a984b949"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "fa26d351fe62a6a17f5cda1287c1c6110dec413f"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "dfb7bae2f404cfe0b72b4d23944698cb716b7665171812a0a4d0f5926c0fac79"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "c4a06a0a3ce7bdbee702c06944265c050a4c8d2fbd21c248936e2edfdab63acea30f2cf3568d3c21a559940d939985a8b10d30aff972a3e8cbeb392c0b02da3a"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/com.vaadin.external.google/android-json@0.0.20131108.vaadin1?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/com.vaadin.external.google/android-json@0.0.20131108.vaadin1?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework"
+   ]
+  },
+  {
+   "group": "org.xmlunit",
+   "name": "xmlunit-core",
+   "version": "2.10.4",
+   "description": "XMLUnit for Java",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "f675e71e0cc27f92176dfee932f55dc7"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "eff1eddcdb52fdeaa7e28ca68301db49361d8bec"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "208e0cee82aedd9183937e4b9ae44b83884179f724a706bef5795477acfcca91"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "1a62d443101e55360b28a1aa0444a421cb4e9d7403cd8f2c6b9702920ec89609866edbbb3b0a01eb036dce972dd226782fd3d4c4d0e7f27f888ac92348377a0f"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.xmlunit/xmlunit-core@2.10.4?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/org.xmlunit/xmlunit-core@2.10.4?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "test"
+   ]
+  },
+  {
+   "group": "org.mybatis.spring.boot",
+   "name": "mybatis-spring-boot-starter-test",
+   "version": "3.0.4",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "5de7c5270d6447cd541e0b499dae4ea8"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "6a64d2921f7a84bd118403bcbce15af94b395698"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "4ed5e013fa8e9de140824ab6108fce170ae24125b5d084214f32e2179c1967fc"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "b14a3eaf1ed731f68140d8aa741cf3811b2bfcab92af2fb97ef97546c9599ca97458715ad978b6112f80f96bda1a1f0418cc653e29a4720b3234cede36fcc325"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.mybatis.spring.boot/mybatis-spring-boot-starter-test@3.0.4?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.mybatis.spring.boot/mybatis-spring-boot-starter-test@3.0.4?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework"
+   ]
+  },
+  {
+   "group": "org.mybatis.spring.boot",
+   "name": "mybatis-spring-boot-test-autoconfigure",
+   "version": "3.0.4",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "e0eacea49f69de48c367db466cd76450"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "ed16c1bc0a8979a87452345e77b012cde6ae4ebd"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "9c348d57694d6625ae30c27352af448f8a3d9b51c07357dceeca967400c5406b"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "329536d335265936519470b8864e722b4014b748f5c67aa6971f3cf0481c5205c9b88c7dd105cdb6512868553ba7fcbf8fc19e9801d7483d86de5a510927db44"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.mybatis.spring.boot/mybatis-spring-boot-test-autoconfigure@3.0.4?type=jar",
+   "type": "framework",
+   "bom-ref": "pkg:maven/org.mybatis.spring.boot/mybatis-spring-boot-test-autoconfigure@3.0.4?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testCompileClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "framework"
+   ]
+  },
+  {
+   "group": "org.junit.jupiter",
+   "name": "junit-jupiter-engine",
+   "version": "5.12.2",
+   "description": "Module \"junit-jupiter-engine\" of JUnit 5.",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "71c710ffe677f9983c6969eb10cd442f"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "b8df7575b8cd3a94dbe27b481d1cd52c57864559"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "f576c06b8accde9985063b8bc80526cb980eec24dee0b7221fc8ddd7ace65800"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "430e070046494943b14f4b8337112c1f3c932e20218729c1b023a0ef7d7e8909ef314b841957d5002b42f4e0b07fa0408a0db7a83f89d625c55b5598400b4573"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "EPL-2.0",
+      "url": "https://opensource.org/licenses/EPL-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.junit.jupiter/junit-jupiter-engine@5.12.2?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/org.junit.jupiter/junit-jupiter-engine@5.12.2?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testRuntimeClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "test"
+   ]
+  },
+  {
+   "group": "org.junit.platform",
+   "name": "junit-platform-engine",
+   "version": "1.12.2",
+   "description": "Module \"junit-platform-engine\" of JUnit 5.",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "a28e43677b7d9519f5e87490356994f8"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "8519ece93f91b8115705d36be2c36d49808935cd"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "cef0efcb5bd2e05e2b808d38bab5c655089c0c3001527376e74cb606a7911ec8"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "e240f0a2ac871683fb327d27cf75e1a3887df1316b7a828ff2a17bd496e4fb48ca44b9d49c8bf1164683f155410fddf623a3beaae61608e4af76342eae484edc"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "EPL-2.0",
+      "url": "https://opensource.org/licenses/EPL-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.junit.platform/junit-platform-engine@1.12.2?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/org.junit.platform/junit-platform-engine@1.12.2?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testRuntimeClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "test"
+   ]
+  },
+  {
+   "group": "org.junit.platform",
+   "name": "junit-platform-launcher",
+   "version": "1.12.2",
+   "description": "Module \"junit-platform-launcher\" of JUnit 5.",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "1851004a3ecb36b58a65c270f03ec855"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "79d49ad13017c67a8bf76e10ba5ac8937d811772"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "dccf2c1fa0a977c53ad094ad859bfdddd524d97594b76307ad787de71985757f"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "f2f926a59d2d00c4093625112dfa79e66a6045d3419b510a247bbeb6025d3b3ce03c7d5bb487eb76e4f300f5d85411ba8453d106391d911bf8ce18747b70981f"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "EPL-2.0",
+      "url": "https://opensource.org/licenses/EPL-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.junit.platform/junit-platform-launcher@1.12.2?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/org.junit.platform/junit-platform-launcher@1.12.2?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testRuntimeClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ],
+   "tags": [
+    "test"
+   ]
+  },
+  {
+   "group": "org.objenesis",
+   "name": "objenesis",
+   "version": "3.3",
+   "description": "A library for instantiating Java objects",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "MD5",
+     "content": "ab0e0b2ab81affdd7f38bcc60fd85571"
+    },
+    {
+     "alg": "SHA-1",
+     "content": "1049c09f1de4331e8193e579448d0916d75b7631"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "02dfd0b0439a5591e35b708ed2f5474eb0948f53abf74637e959b8e4ef69bfeb"
+    },
+    {
+     "alg": "SHA-512",
+     "content": "1fa990d15bd179f07ffbc460d580a6fd0562e45dee8bd4a9405917536b78f45c0d6f644b67f85d781c758aa56eff90aef23eedcc9bd7f5ff887a67b716083e61"
+    }
+   ],
+   "licenses": [
+    {
+     "license": {
+      "id": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:maven/org.objenesis/objenesis@3.3?type=jar",
+   "type": "library",
+   "bom-ref": "pkg:maven/org.objenesis/objenesis@3.3?type=jar",
+   "properties": [
+    {
+     "name": "GradleProfileName",
+     "value": "testRuntimeClasspath"
+    },
+    {
+     "name": "cdx:gradle:GradleRootPath",
+     "value": "/Users/picpal/Desktop/workspace/work-note/backend"
+    }
+   ]
+  }
+ ],
+ "dependencies": [
+  {
+   "ref": "pkg:maven/com.worknote/worknote@0.1.0?type=jar",
+   "dependsOn": [
+    "pkg:maven/com.google.zxing/core@3.5.3?type=jar",
+    "pkg:maven/com.google.zxing/javase@3.5.3?type=jar",
+    "pkg:maven/org.flywaydb/flyway-core@11.7.2?type=jar",
+    "pkg:maven/org.mybatis.spring.boot/mybatis-spring-boot-starter-test@3.0.4?type=jar",
+    "pkg:maven/org.mybatis.spring.boot/mybatis-spring-boot-starter@3.0.4?type=jar",
+    "pkg:maven/org.springframework.boot/spring-boot-starter-mail@3.5.16?type=jar",
+    "pkg:maven/org.springframework.boot/spring-boot-starter-test@3.5.16?type=jar",
+    "pkg:maven/org.springframework.boot/spring-boot-starter-validation@3.5.16?type=jar",
+    "pkg:maven/org.springframework.boot/spring-boot-starter-web@3.5.16?type=jar",
+    "pkg:maven/org.xerial/sqlite-jdbc@3.46.0.0?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.springframework.boot/spring-boot-starter-web@3.5.16?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.springframework.boot/spring-boot-starter-json@3.5.16?type=jar",
+    "pkg:maven/org.springframework.boot/spring-boot-starter-tomcat@3.5.16?type=jar",
+    "pkg:maven/org.springframework.boot/spring-boot-starter@3.5.16?type=jar",
+    "pkg:maven/org.springframework/spring-web@6.2.19?type=jar",
+    "pkg:maven/org.springframework/spring-webmvc@6.2.19?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.springframework.boot/spring-boot-starter@3.5.16?type=jar",
+   "dependsOn": [
+    "pkg:maven/jakarta.annotation/jakarta.annotation-api@2.1.1?type=jar",
+    "pkg:maven/org.springframework.boot/spring-boot-autoconfigure@3.5.16?type=jar",
+    "pkg:maven/org.springframework.boot/spring-boot-starter-logging@3.5.16?type=jar",
+    "pkg:maven/org.springframework.boot/spring-boot@3.5.16?type=jar",
+    "pkg:maven/org.springframework/spring-core@6.2.19?type=jar",
+    "pkg:maven/org.yaml/snakeyaml@2.4?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.springframework.boot/spring-boot@3.5.16?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.springframework/spring-context@6.2.19?type=jar",
+    "pkg:maven/org.springframework/spring-core@6.2.19?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.springframework/spring-core@6.2.19?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.springframework/spring-jcl@6.2.19?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.springframework/spring-jcl@6.2.19?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/org.springframework/spring-context@6.2.19?type=jar",
+   "dependsOn": [
+    "pkg:maven/io.micrometer/micrometer-observation@1.15.12?type=jar",
+    "pkg:maven/org.springframework/spring-aop@6.2.19?type=jar",
+    "pkg:maven/org.springframework/spring-beans@6.2.19?type=jar",
+    "pkg:maven/org.springframework/spring-core@6.2.19?type=jar",
+    "pkg:maven/org.springframework/spring-expression@6.2.19?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.springframework/spring-aop@6.2.19?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.springframework/spring-beans@6.2.19?type=jar",
+    "pkg:maven/org.springframework/spring-core@6.2.19?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.springframework/spring-beans@6.2.19?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.springframework/spring-core@6.2.19?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.springframework/spring-expression@6.2.19?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.springframework/spring-core@6.2.19?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/io.micrometer/micrometer-observation@1.15.12?type=jar",
+   "dependsOn": [
+    "pkg:maven/io.micrometer/micrometer-commons@1.15.12?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/io.micrometer/micrometer-commons@1.15.12?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/org.springframework.boot/spring-boot-autoconfigure@3.5.16?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.springframework.boot/spring-boot@3.5.16?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.springframework.boot/spring-boot-starter-logging@3.5.16?type=jar",
+   "dependsOn": [
+    "pkg:maven/ch.qos.logback/logback-classic@1.5.34?type=jar",
+    "pkg:maven/org.apache.logging.log4j/log4j-to-slf4j@2.24.3?type=jar",
+    "pkg:maven/org.slf4j/jul-to-slf4j@2.0.18?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/ch.qos.logback/logback-classic@1.5.34?type=jar",
+   "dependsOn": [
+    "pkg:maven/ch.qos.logback/logback-core@1.5.34?type=jar",
+    "pkg:maven/org.slf4j/slf4j-api@2.0.18?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/ch.qos.logback/logback-core@1.5.34?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/org.slf4j/slf4j-api@2.0.18?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/org.apache.logging.log4j/log4j-to-slf4j@2.24.3?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.apache.logging.log4j/log4j-api@2.24.3?type=jar",
+    "pkg:maven/org.slf4j/slf4j-api@2.0.18?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.apache.logging.log4j/log4j-api@2.24.3?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/org.slf4j/jul-to-slf4j@2.0.18?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.slf4j/slf4j-api@2.0.18?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/jakarta.annotation/jakarta.annotation-api@2.1.1?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/org.yaml/snakeyaml@2.4?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/org.springframework.boot/spring-boot-starter-json@3.5.16?type=jar",
+   "dependsOn": [
+    "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.21.5?type=jar",
+    "pkg:maven/com.fasterxml.jackson.datatype/jackson-datatype-jdk8@2.21.5?type=jar",
+    "pkg:maven/com.fasterxml.jackson.datatype/jackson-datatype-jsr310@2.21.5?type=jar",
+    "pkg:maven/com.fasterxml.jackson.module/jackson-module-parameter-names@2.21.5?type=jar",
+    "pkg:maven/org.springframework.boot/spring-boot-starter@3.5.16?type=jar",
+    "pkg:maven/org.springframework/spring-web@6.2.19?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.springframework/spring-web@6.2.19?type=jar",
+   "dependsOn": [
+    "pkg:maven/io.micrometer/micrometer-observation@1.15.12?type=jar",
+    "pkg:maven/org.springframework/spring-beans@6.2.19?type=jar",
+    "pkg:maven/org.springframework/spring-core@6.2.19?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.21.5?type=jar",
+   "dependsOn": [
+    "pkg:maven/com.fasterxml.jackson.core/jackson-annotations@2.21?type=jar",
+    "pkg:maven/com.fasterxml.jackson.core/jackson-core@2.21.5?type=jar",
+    "pkg:maven/com.fasterxml.jackson/jackson-bom@2.21.5?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/com.fasterxml.jackson.core/jackson-annotations@2.21?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/com.fasterxml.jackson.core/jackson-core@2.21.5?type=jar",
+   "dependsOn": [
+    "pkg:maven/com.fasterxml.jackson/jackson-bom@2.21.5?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/com.fasterxml.jackson/jackson-bom@2.21.5?type=jar",
+   "dependsOn": [
+    "pkg:maven/com.fasterxml.jackson.core/jackson-annotations@2.21?type=jar",
+    "pkg:maven/com.fasterxml.jackson.core/jackson-core@2.21.5?type=jar",
+    "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.21.5?type=jar",
+    "pkg:maven/com.fasterxml.jackson.dataformat/jackson-dataformat-toml@2.21.5?type=jar",
+    "pkg:maven/com.fasterxml.jackson.datatype/jackson-datatype-jdk8@2.21.5?type=jar",
+    "pkg:maven/com.fasterxml.jackson.datatype/jackson-datatype-jsr310@2.21.5?type=jar",
+    "pkg:maven/com.fasterxml.jackson.module/jackson-module-parameter-names@2.21.5?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/com.fasterxml.jackson.dataformat/jackson-dataformat-toml@2.21.5?type=jar",
+   "dependsOn": [
+    "pkg:maven/com.fasterxml.jackson.core/jackson-core@2.21.5?type=jar",
+    "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.21.5?type=jar",
+    "pkg:maven/com.fasterxml.jackson/jackson-bom@2.21.5?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/com.fasterxml.jackson.datatype/jackson-datatype-jdk8@2.21.5?type=jar",
+   "dependsOn": [
+    "pkg:maven/com.fasterxml.jackson.core/jackson-core@2.21.5?type=jar",
+    "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.21.5?type=jar",
+    "pkg:maven/com.fasterxml.jackson/jackson-bom@2.21.5?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/com.fasterxml.jackson.datatype/jackson-datatype-jsr310@2.21.5?type=jar",
+   "dependsOn": [
+    "pkg:maven/com.fasterxml.jackson.core/jackson-annotations@2.21?type=jar",
+    "pkg:maven/com.fasterxml.jackson.core/jackson-core@2.21.5?type=jar",
+    "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.21.5?type=jar",
+    "pkg:maven/com.fasterxml.jackson/jackson-bom@2.21.5?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/com.fasterxml.jackson.module/jackson-module-parameter-names@2.21.5?type=jar",
+   "dependsOn": [
+    "pkg:maven/com.fasterxml.jackson.core/jackson-core@2.21.5?type=jar",
+    "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.21.5?type=jar",
+    "pkg:maven/com.fasterxml.jackson/jackson-bom@2.21.5?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.springframework.boot/spring-boot-starter-tomcat@3.5.16?type=jar",
+   "dependsOn": [
+    "pkg:maven/jakarta.annotation/jakarta.annotation-api@2.1.1?type=jar",
+    "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core@10.1.55?type=jar",
+    "pkg:maven/org.apache.tomcat.embed/tomcat-embed-el@10.1.55?type=jar",
+    "pkg:maven/org.apache.tomcat.embed/tomcat-embed-websocket@10.1.55?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core@10.1.55?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-el@10.1.55?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-websocket@10.1.55?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core@10.1.55?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.springframework/spring-webmvc@6.2.19?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.springframework/spring-aop@6.2.19?type=jar",
+    "pkg:maven/org.springframework/spring-beans@6.2.19?type=jar",
+    "pkg:maven/org.springframework/spring-context@6.2.19?type=jar",
+    "pkg:maven/org.springframework/spring-core@6.2.19?type=jar",
+    "pkg:maven/org.springframework/spring-expression@6.2.19?type=jar",
+    "pkg:maven/org.springframework/spring-web@6.2.19?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.springframework.boot/spring-boot-starter-validation@3.5.16?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.apache.tomcat.embed/tomcat-embed-el@10.1.55?type=jar",
+    "pkg:maven/org.hibernate.validator/hibernate-validator@8.0.3.Final?type=jar",
+    "pkg:maven/org.springframework.boot/spring-boot-starter@3.5.16?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.hibernate.validator/hibernate-validator@8.0.3.Final?type=jar",
+   "dependsOn": [
+    "pkg:maven/com.fasterxml/classmate@1.7.3?type=jar",
+    "pkg:maven/jakarta.validation/jakarta.validation-api@3.0.2?type=jar",
+    "pkg:maven/org.jboss.logging/jboss-logging@3.6.3.Final?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/jakarta.validation/jakarta.validation-api@3.0.2?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/org.jboss.logging/jboss-logging@3.6.3.Final?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/com.fasterxml/classmate@1.7.3?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/org.mybatis.spring.boot/mybatis-spring-boot-starter@3.0.4?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.mybatis.spring.boot/mybatis-spring-boot-autoconfigure@3.0.4?type=jar",
+    "pkg:maven/org.mybatis/mybatis-spring@3.0.4?type=jar",
+    "pkg:maven/org.mybatis/mybatis@3.5.17?type=jar",
+    "pkg:maven/org.springframework.boot/spring-boot-starter-jdbc@3.5.16?type=jar",
+    "pkg:maven/org.springframework.boot/spring-boot-starter@3.5.16?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.springframework.boot/spring-boot-starter-jdbc@3.5.16?type=jar",
+   "dependsOn": [
+    "pkg:maven/com.zaxxer/HikariCP@6.3.3?type=jar",
+    "pkg:maven/org.springframework.boot/spring-boot-starter@3.5.16?type=jar",
+    "pkg:maven/org.springframework/spring-jdbc@6.2.19?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/com.zaxxer/HikariCP@6.3.3?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.slf4j/slf4j-api@2.0.18?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.springframework/spring-jdbc@6.2.19?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.springframework/spring-beans@6.2.19?type=jar",
+    "pkg:maven/org.springframework/spring-core@6.2.19?type=jar",
+    "pkg:maven/org.springframework/spring-tx@6.2.19?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.springframework/spring-tx@6.2.19?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.springframework/spring-beans@6.2.19?type=jar",
+    "pkg:maven/org.springframework/spring-core@6.2.19?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.mybatis.spring.boot/mybatis-spring-boot-autoconfigure@3.0.4?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.springframework.boot/spring-boot-autoconfigure@3.5.16?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.mybatis/mybatis@3.5.17?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/org.mybatis/mybatis-spring@3.0.4?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/org.flywaydb/flyway-core@11.7.2?type=jar",
+   "dependsOn": [
+    "pkg:maven/com.fasterxml.jackson.dataformat/jackson-dataformat-toml@2.21.5?type=jar",
+    "pkg:maven/com.fasterxml.jackson.datatype/jackson-datatype-jsr310@2.21.5?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.xerial/sqlite-jdbc@3.46.0.0?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.slf4j/slf4j-api@2.0.18?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/com.google.zxing/core@3.5.3?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/com.google.zxing/javase@3.5.3?type=jar",
+   "dependsOn": [
+    "pkg:maven/com.beust/jcommander@1.82?type=jar",
+    "pkg:maven/com.github.jai-imageio/jai-imageio-core@1.4.0?type=jar",
+    "pkg:maven/com.google.zxing/core@3.5.3?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/com.beust/jcommander@1.82?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/org.springframework.boot/spring-boot-starter-mail@3.5.16?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.eclipse.angus/jakarta.mail@2.0.5?type=jar",
+    "pkg:maven/org.springframework.boot/spring-boot-starter@3.5.16?type=jar",
+    "pkg:maven/org.springframework/spring-context-support@6.2.19?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.springframework/spring-context-support@6.2.19?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.springframework/spring-beans@6.2.19?type=jar",
+    "pkg:maven/org.springframework/spring-context@6.2.19?type=jar",
+    "pkg:maven/org.springframework/spring-core@6.2.19?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.eclipse.angus/jakarta.mail@2.0.5?type=jar",
+   "dependsOn": [
+    "pkg:maven/jakarta.activation/jakarta.activation-api@2.1.4?type=jar",
+    "pkg:maven/org.eclipse.angus/angus-activation@2.0.3?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/jakarta.activation/jakarta.activation-api@2.1.4?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/com.github.jai-imageio/jai-imageio-core@1.4.0?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/org.eclipse.angus/angus-activation@2.0.3?type=jar",
+   "dependsOn": [
+    "pkg:maven/jakarta.activation/jakarta.activation-api@2.1.4?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.springframework.boot/spring-boot-starter-test@3.5.16?type=jar",
+   "dependsOn": [
+    "pkg:maven/com.jayway.jsonpath/json-path@2.9.0?type=jar",
+    "pkg:maven/jakarta.xml.bind/jakarta.xml.bind-api@4.0.5?type=jar",
+    "pkg:maven/net.minidev/json-smart@2.5.2?type=jar",
+    "pkg:maven/org.assertj/assertj-core@3.27.7?type=jar",
+    "pkg:maven/org.awaitility/awaitility@4.2.2?type=jar",
+    "pkg:maven/org.hamcrest/hamcrest@3.0?type=jar",
+    "pkg:maven/org.junit.jupiter/junit-jupiter@5.12.2?type=jar",
+    "pkg:maven/org.junit.platform/junit-platform-launcher@1.12.2?type=jar",
+    "pkg:maven/org.mockito/mockito-core@5.17.0?type=jar",
+    "pkg:maven/org.mockito/mockito-junit-jupiter@5.17.0?type=jar",
+    "pkg:maven/org.skyscreamer/jsonassert@1.5.3?type=jar",
+    "pkg:maven/org.springframework.boot/spring-boot-starter@3.5.16?type=jar",
+    "pkg:maven/org.springframework.boot/spring-boot-test-autoconfigure@3.5.16?type=jar",
+    "pkg:maven/org.springframework.boot/spring-boot-test@3.5.16?type=jar",
+    "pkg:maven/org.springframework/spring-core@6.2.19?type=jar",
+    "pkg:maven/org.springframework/spring-test@6.2.19?type=jar",
+    "pkg:maven/org.xmlunit/xmlunit-core@2.10.4?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.springframework.boot/spring-boot-test@3.5.16?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.springframework.boot/spring-boot@3.5.16?type=jar",
+    "pkg:maven/org.springframework/spring-test@6.2.19?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.springframework/spring-test@6.2.19?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.springframework/spring-core@6.2.19?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.springframework.boot/spring-boot-test-autoconfigure@3.5.16?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.springframework.boot/spring-boot-autoconfigure@3.5.16?type=jar",
+    "pkg:maven/org.springframework.boot/spring-boot-test@3.5.16?type=jar",
+    "pkg:maven/org.springframework.boot/spring-boot@3.5.16?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/com.jayway.jsonpath/json-path@2.9.0?type=jar",
+   "dependsOn": [
+    "pkg:maven/net.minidev/json-smart@2.5.2?type=jar",
+    "pkg:maven/org.slf4j/slf4j-api@2.0.18?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/jakarta.xml.bind/jakarta.xml.bind-api@4.0.5?type=jar",
+   "dependsOn": [
+    "pkg:maven/jakarta.activation/jakarta.activation-api@2.1.4?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/net.minidev/json-smart@2.5.2?type=jar",
+   "dependsOn": [
+    "pkg:maven/net.minidev/accessors-smart@2.5.2?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/net.minidev/accessors-smart@2.5.2?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.ow2.asm/asm@9.7.1?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.ow2.asm/asm@9.7.1?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/org.assertj/assertj-core@3.27.7?type=jar",
+   "dependsOn": [
+    "pkg:maven/net.bytebuddy/byte-buddy@1.17.8?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/net.bytebuddy/byte-buddy@1.17.8?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/org.awaitility/awaitility@4.2.2?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.hamcrest/hamcrest@3.0?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.hamcrest/hamcrest@3.0?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/org.junit.jupiter/junit-jupiter@5.12.2?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.junit.jupiter/junit-jupiter-api@5.12.2?type=jar",
+    "pkg:maven/org.junit.jupiter/junit-jupiter-engine@5.12.2?type=jar",
+    "pkg:maven/org.junit.jupiter/junit-jupiter-params@5.12.2?type=jar",
+    "pkg:maven/org.junit/junit-bom@5.12.2?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.junit/junit-bom@5.12.2?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.junit.jupiter/junit-jupiter-api@5.12.2?type=jar",
+    "pkg:maven/org.junit.jupiter/junit-jupiter-engine@5.12.2?type=jar",
+    "pkg:maven/org.junit.jupiter/junit-jupiter-params@5.12.2?type=jar",
+    "pkg:maven/org.junit.jupiter/junit-jupiter@5.12.2?type=jar",
+    "pkg:maven/org.junit.platform/junit-platform-commons@1.12.2?type=jar",
+    "pkg:maven/org.junit.platform/junit-platform-engine@1.12.2?type=jar",
+    "pkg:maven/org.junit.platform/junit-platform-launcher@1.12.2?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.junit.jupiter/junit-jupiter-api@5.12.2?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.apiguardian/apiguardian-api@1.1.2?type=jar",
+    "pkg:maven/org.junit.platform/junit-platform-commons@1.12.2?type=jar",
+    "pkg:maven/org.junit/junit-bom@5.12.2?type=jar",
+    "pkg:maven/org.opentest4j/opentest4j@1.3.0?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.junit.jupiter/junit-jupiter-params@5.12.2?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.apiguardian/apiguardian-api@1.1.2?type=jar",
+    "pkg:maven/org.junit.jupiter/junit-jupiter-api@5.12.2?type=jar",
+    "pkg:maven/org.junit/junit-bom@5.12.2?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.junit.platform/junit-platform-commons@1.12.2?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.apiguardian/apiguardian-api@1.1.2?type=jar",
+    "pkg:maven/org.junit/junit-bom@5.12.2?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.opentest4j/opentest4j@1.3.0?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/org.apiguardian/apiguardian-api@1.1.2?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/org.mockito/mockito-core@5.17.0?type=jar",
+   "dependsOn": [
+    "pkg:maven/net.bytebuddy/byte-buddy-agent@1.17.8?type=jar",
+    "pkg:maven/net.bytebuddy/byte-buddy@1.17.8?type=jar",
+    "pkg:maven/org.objenesis/objenesis@3.3?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/net.bytebuddy/byte-buddy-agent@1.17.8?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/org.mockito/mockito-junit-jupiter@5.17.0?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.junit.jupiter/junit-jupiter-api@5.12.2?type=jar",
+    "pkg:maven/org.mockito/mockito-core@5.17.0?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.skyscreamer/jsonassert@1.5.3?type=jar",
+   "dependsOn": [
+    "pkg:maven/com.vaadin.external.google/android-json@0.0.20131108.vaadin1?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/com.vaadin.external.google/android-json@0.0.20131108.vaadin1?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/org.xmlunit/xmlunit-core@2.10.4?type=jar",
+   "dependsOn": []
+  },
+  {
+   "ref": "pkg:maven/org.mybatis.spring.boot/mybatis-spring-boot-starter-test@3.0.4?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.mybatis.spring.boot/mybatis-spring-boot-test-autoconfigure@3.0.4?type=jar",
+    "pkg:maven/org.springframework.boot/spring-boot-starter-test@3.5.16?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.mybatis.spring.boot/mybatis-spring-boot-test-autoconfigure@3.0.4?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.springframework.boot/spring-boot-autoconfigure@3.5.16?type=jar",
+    "pkg:maven/org.springframework.boot/spring-boot-test-autoconfigure@3.5.16?type=jar",
+    "pkg:maven/org.springframework.boot/spring-boot-test@3.5.16?type=jar",
+    "pkg:maven/org.springframework/spring-test@6.2.19?type=jar",
+    "pkg:maven/org.springframework/spring-tx@6.2.19?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.junit.jupiter/junit-jupiter-engine@5.12.2?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.junit.jupiter/junit-jupiter-api@5.12.2?type=jar",
+    "pkg:maven/org.junit.platform/junit-platform-engine@1.12.2?type=jar",
+    "pkg:maven/org.junit/junit-bom@5.12.2?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.junit.platform/junit-platform-engine@1.12.2?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.junit.platform/junit-platform-commons@1.12.2?type=jar",
+    "pkg:maven/org.junit/junit-bom@5.12.2?type=jar",
+    "pkg:maven/org.opentest4j/opentest4j@1.3.0?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.junit.platform/junit-platform-launcher@1.12.2?type=jar",
+   "dependsOn": [
+    "pkg:maven/org.junit.platform/junit-platform-engine@1.12.2?type=jar",
+    "pkg:maven/org.junit/junit-bom@5.12.2?type=jar"
+   ]
+  },
+  {
+   "ref": "pkg:maven/org.objenesis/objenesis@3.3?type=jar",
+   "dependsOn": []
+  }
+ ]
+}
