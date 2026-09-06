@@ -193,6 +193,8 @@ def test_main_scan_writes_outputs(monkeypatch, tmp_path):
     ])
     assert (tmp_path / "report.md").exists()
     assert (tmp_path / "findings.sarif").exists()
+    assert (tmp_path / "report.xlsx").exists() or (tmp_path / "report-xlsx").is_dir()
+    assert json.loads((tmp_path / "findings.json").read_text())["meta"]["run_date"]
     assert rc == 1  # 도달 가능 critical 존재 → actionable
 
 
