@@ -6,7 +6,7 @@ import pytest
 
 from secscan import cli
 from secscan.output.json_io import from_json
-from secscan.report.cli import build_report, write_report_bundle
+from secscan.report.cli import build_report_with_request, write_report_bundle
 from secscan.report.workbook import SHEET_ACTIONS, SHEET_SUMMARY
 
 FIX = Path("fixtures/report/work-note-findings.json")
@@ -24,7 +24,7 @@ def test_build_report_relativizes_absolute_paths_under_target():
     from secscan.models import Location
     f0 = abs_fs[0]
     abs_fs[0] = replace(f0, location=Location("/repo/work-note/" + f0.location.file, f0.location.start_line))
-    s = build_report(abs_fs, meta, target="/repo/work-note")
+    s = build_report_with_request(abs_fs, meta, target="/repo/work-note")[0]
     row = next(r for r in s[SHEET_ACTIONS][1] if r[2] == f0.id)
     assert row[4].startswith(f0.location.file.split("/")[0])  # 접두 제거됨
 
@@ -48,19 +48,20 @@ def test_main_report_requires_findings(capsys):
 
 def test_report_with_bom_fills_dependency_path_column(tmp_path):
     fs, meta = _load()
-    from secscan.report.cli import build_report
-    s = build_report(fs, meta, bom="fixtures/report/work-note-bom.cdx.json")
+    s = build_report_with_request(fs, meta, bom="fixtures/report/work-note-bom.cdx.json")[0]
     rows = {r[2]: r for r in s[SHEET_ACTIONS][1]}
     assert rows["0442ba114c70"][5] == "전이 ← spring-boot-starter-tomcat ← spring-boot-starter-web"
     assert rows["356e4bbab00c"][5] == ""  # SAST 는 의존 경로 없음
-    s2 = build_report(fs, meta, bom="nope.json")
+    s2 = build_report_with_request(fs, meta, bom="nope.json")[0]
     assert {r[2]: r for r in s2[SHEET_ACTIONS][1]}["0442ba114c70"][5] == "BOM 없음"
 
 
-def test_report_with_bom_and_interp_meta_still_fills_dependency_path_column():
+def test_report_with_bom_and_interp_meta_still_fills_dependency_path_column(tmp_path):
     fs, meta = _load()
-    s = build_report(fs, meta, bom="fixtures/report/work-note-bom.cdx.json",
-                     interp_meta={"status": "absent", "rejected": []})
+    # interpretations 경로가 존재하지 않으면 load_interpretations 가 status=absent 로 처리한다
+    # (interpret.py::load_interpretations) — 그 경로에서도 의존 경로 열은 정상적으로 채워진다.
+    s = build_report_with_request(fs, meta, bom="fixtures/report/work-note-bom.cdx.json",
+                                  interpretations=tmp_path / "absent.json")[0]
     rows = {r[2]: r for r in s[SHEET_ACTIONS][1]}
     assert rows["0442ba114c70"][5] == "전이 ← spring-boot-starter-tomcat ← spring-boot-starter-web"
 

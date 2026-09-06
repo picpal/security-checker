@@ -11,7 +11,6 @@ from .deppath import DepGraph, deppaths_for
 from .derive import derive_all
 from .interpret import build_request, load_interpretations
 from .kb import entry_for
-from .models import Interpretation
 from .paths import relativize
 from .workbook import build_report_sheets, write_report
 
@@ -29,24 +28,6 @@ def build_report_with_request(findings: list[Finding], meta: dict, *, target: st
         else load_interpretations(interpretations, request)
     meta = {**meta, "target": target or meta.get("target", "")}
     return build_report_sheets(fs, meta, kbs, derived, interps, interp_meta), request, interp_meta
-
-
-def build_report(findings: list[Finding], meta: dict, *, target: str | None = None, deppaths: dict[str, str] | None = None,
-                 bom: str | Path | None = None, interpretations: str | Path | None = None,
-                 interps: dict[str, Interpretation] | None = None,
-                 interp_meta: dict | None = None) -> dict[str, Sheet]:
-    """호환 래퍼 — Task 5·7 테스트가 쓰는 시그니처. deppaths/interps 를 직접 주면 bom/interpretations 보다 우선."""
-    if deppaths is None and interps is None and interp_meta is None:
-        return build_report_with_request(findings, meta, target=target, bom=bom, interpretations=interpretations)[0]
-    target = target or meta.get("target")
-    fs = relativize(findings, target)
-    kbs = {f.id: entry_for(f) for f in fs}
-    # relativize 로 id 가 바뀔 수 있다(dedup_key 에 경로 포함) — deppaths/interps 는 새 id 기준으로 넘겨야 한다.
-    if deppaths is None and bom is not None:
-        deppaths = deppaths_for(fs, DepGraph.from_path(bom))
-    derived = derive_all(fs, kbs, deppaths)
-    meta = {**meta, "target": target or meta.get("target", "")}
-    return build_report_sheets(fs, meta, kbs, derived, interps, interp_meta)
 
 
 def write_report_bundle(findings: list[Finding], meta: dict, out_dir, *, target: str | None = None,
