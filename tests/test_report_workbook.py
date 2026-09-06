@@ -62,7 +62,7 @@ def test_summary_conclusion_and_counts_and_unregistered_rules():
     assert summary["결론"][0].startswith("총 15건. 즉시 조치 대상 8건(자동 수정 0, 사람 확인 후 8).")
     assert summary["즉시 조치 대상(P1·P2)"][0] == 8 and summary["강등(P4)"][0] == 4 and summary["제외"][0] == 23
     assert summary["스캐너 trivy"][0] == "ok"
-    assert summary["지식베이스 미등록 룰"][0] == "없음"  # 12건 등록으로 work-note 는 전부 커버
+    assert summary["지식베이스 미등록 룰"][0] == "없음"  # 10건 등록으로 work-note 는 전부 커버
 
 
 def test_result_sheet_has_guard_rows_then_one_row_per_finding():

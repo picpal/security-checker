@@ -148,8 +148,8 @@
     "",
     "Secret · 억제 없음 → 조치대상",
     "위험",
-    "'-",
-    "'-",
+    "해당없음",
+    "해당없음",
     "재스캔 findings.json 에 이 ID 부재"
    ],
    [
@@ -187,7 +187,7 @@
     "SAST · 룰 신뢰도 medium → tier actionable → 조치대상",
     "보통",
     "CWE-345",
-    "'-",
+    "해당없음",
     "재스캔 findings.json 에 이 ID 부재('*' 제거) (대표)"
    ],
    [
@@ -206,7 +206,7 @@
     "SAST · 룰 신뢰도 medium → tier actionable → 조치대상",
     "보통",
     "CWE-345",
-    "'-",
+    "해당없음",
     "재스캔 findings.json 에 이 ID 부재('*' 제거) — G-1 대표와 함께 해소"
    ],
    [
@@ -225,7 +225,7 @@
     "SAST · 룰 신뢰도 medium → tier actionable → 조치대상",
     "보통",
     "CWE-345",
-    "'-",
+    "해당없음",
     "재스캔 findings.json 에 이 ID 부재('*' 제거) — G-1 대표와 함께 해소"
    ],
    [
@@ -282,7 +282,7 @@
     "SAST · 룰 신뢰도 high → tier review → 검토후보",
     "미상",
     "CWE-829",
-    "'-",
+    "해당없음",
     "재스캔 findings.json 에 이 ID 부재"
    ],
    [
@@ -301,7 +301,7 @@
     "SAST · 룰 신뢰도 high → tier review → 검토후보",
     "미상",
     "CWE-829",
-    "'-",
+    "해당없음",
     "재스캔 findings.json 에 이 ID 부재"
    ],
    [
@@ -320,7 +320,7 @@
     "SAST · 룰 신뢰도 high → tier review → 검토후보",
     "미상",
     "CWE-829",
-    "'-",
+    "해당없음",
     "재스캔 findings.json 에 이 ID 부재"
    ],
    [
@@ -339,7 +339,7 @@
     "SCA · 도달성 unreachable(dep-scan, evidence 없음) → 강등(낮은 우선순위)",
     "심각",
     "CWE-284, CWE-863",
-    "'-",
+    "해당없음",
     "재스캔 findings.json 에 이 ID 부재 + tomcat-embed-core 설치 버전 ≥ 10.1.58 (대표)"
    ],
    [
@@ -358,7 +358,7 @@
     "SCA · 도달성 unreachable(dep-scan, evidence 없음) → 강등(낮은 우선순위)",
     "심각",
     "CWE-294",
-    "'-",
+    "해당없음",
     "재스캔 findings.json 에 이 ID 부재 + tomcat-embed-core 설치 버전 ≥ 10.1.58 — G-3 대표와 함께 해소"
    ],
    [
@@ -377,7 +377,7 @@
     "SCA · 도달성 unreachable(dep-scan, evidence 없음) → 강등(낮은 우선순위)",
     "심각",
     "CWE-863",
-    "'-",
+    "해당없음",
     "재스캔 findings.json 에 이 ID 부재 + tomcat-embed-core 설치 버전 ≥ 10.1.58 — G-3 대표와 함께 해소"
    ],
    [
@@ -396,7 +396,7 @@
     "SCA · 도달성 unreachable(dep-scan, evidence 없음) → 강등(낮은 우선순위)",
     "보통",
     "CWE-116",
-    "'-",
+    "해당없음",
     "재스캔 findings.json 에 이 ID 부재 + log4j-api 설치 버전 ≥ 2.25.5"
    ]
   ]
@@ -430,7 +430,7 @@
     "108d8ee4651c",
     "docs/qa-e2e-scenarios.md:43",
     "해당 줄의 값이 실제 계정에서 쓰이는 비밀번호인가, 테스트용 예시값인가?",
-    "룰 generic-api-key 발화 · Secret · 억제 없음 → 조치대상 · CWE -",
+    "룰 generic-api-key 발화 · Secret · 억제 없음 → 조치대상 · CWE 해당없음",
     "",
     "",
     "",

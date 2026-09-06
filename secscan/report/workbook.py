@@ -42,13 +42,13 @@ def guard_rows(target: str) -> list[list]:
 
 
 def _cwe(f: Finding) -> str:
-    return ", ".join(f.cwe) or "-"
+    return ", ".join(f.cwe) or "해당없음"
 
 
 def _std(f: Finding) -> str:
     c = f.compliance
     if not c:
-        return "-"
+        return "해당없음"
     k = ", ".join(f"KISA {w.code} {w.name}" for w in c.kisa)
     p = ", ".join(c.pci)
     return " · ".join(x for x in (k, p) if x) or "-"
