@@ -239,12 +239,19 @@ def _cmd_scan(args) -> int:
 
     from .report.cli import write_report_bundle
     from .sbom import bom_cache_path
-    rp_paths, rp_warn = write_report_bundle(result.findings, wb_meta, out, target=str(args.target), bom=bom_cache_path(args.target))
+    try:
+        rp_paths, rp_warn = write_report_bundle(result.findings, wb_meta, out, target=str(args.target), bom=bom_cache_path(args.target))
+    except Exception as e:
+        print(f"⚠️ report 생성 실패(게이트 판정은 유지): {type(e).__name__}: {e}")
+        rp_paths, rp_warn = [], None
     if rp_warn:
         print(f"⚠️ {rp_warn}")
 
     print(render_scan_summary(result))
-    print(f"\n출력: {out / 'report.md'} · {out / 'findings.sarif'} · {out / 'findings.json'} · {wb_paths[0]} · {rp_paths[0]}")
+    outputs = [str(out / "report.md"), str(out / "findings.sarif"), str(out / "findings.json"), str(wb_paths[0])]
+    if rp_paths:
+        outputs.append(str(rp_paths[0]))
+    print("\n출력: " + " · ".join(outputs))
     return 1 if _has_actionable(result.findings) else 0
 
 

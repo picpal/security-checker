@@ -199,6 +199,30 @@ def test_main_scan_writes_outputs(monkeypatch, tmp_path):
     assert rc == 1  # 도달 가능 critical 존재 → actionable
 
 
+def test_main_scan_report_failure_does_not_swallow_exit_code(monkeypatch, tmp_path, capsys):
+    # FR-2: report 생성이 실패해도 게이트 판정(exit code)은 그대로 유지된다 — findings.json 등
+    # 나머지 산출물은 정상 기록(부분 실패는 정상, spec 핵심 원칙 5).
+    findings = [_reach("commons-text", "CVE-2022-42889", "critical", REACHABLE)]
+    monkeypatch.setattr(
+        cli, "run_scan",
+        lambda *a, **k: ScanResult(findings, [], True, "ok", []),
+    )
+    from secscan.report import cli as report_cli  # write_report_bundle 은 _cmd_scan 안에서 이 모듈 이름으로 임포트된다
+
+    def boom(*a, **k):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(report_cli, "write_report_bundle", boom)
+    rc = cli.main([
+        "scan", "--target", "/proj", "--profile", "accurate-sca",
+        "--out", str(tmp_path), "--no-reachability",
+    ])
+    out = capsys.readouterr().out
+    assert rc == 1  # 도달 가능 critical 존재 → actionable(게이트 판정 유지)
+    assert (tmp_path / "findings.json").exists()
+    assert "report 생성 실패" in out
+
+
 def test_main_scan_clean_returns_0(monkeypatch, tmp_path):
     monkeypatch.setattr(cli, "run_scan", lambda *a, **k: ScanResult([], [], False, "off", []))
     rc = cli.main([

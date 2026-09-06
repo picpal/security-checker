@@ -26,7 +26,10 @@ def load_result(path) -> list[ResultRow]:
             from openpyxl import load_workbook
         except ImportError as e:
             raise RuntimeError("xlsx 결과를 읽으려면 openpyxl 이 필요합니다(`pip install secscan[xlsx]`)") from e
-        ws = load_workbook(p, read_only=True)[SHEET_RESULT]
+        wb = load_workbook(p, read_only=True)
+        if SHEET_RESULT not in wb.sheetnames:
+            raise ValueError("4_결과반환 시트가 없습니다")
+        ws = wb[SHEET_RESULT]
         rows = []
         for i, r in enumerate(ws.iter_rows(values_only=True)):
             if i == 0 or not r or r[0] is None or str(r[0]).startswith("#"):
@@ -34,7 +37,14 @@ def load_result(path) -> list[ResultRow]:
             rows.append(_row(dict(zip(_XLSX_COLS, list(r) + [""] * 6))))
         return rows
     data = json.loads(p.read_text(encoding="utf-8"))
-    items = data.get("rows", []) if isinstance(data, dict) else data
+    if isinstance(data, dict):
+        items = data.get("rows")
+    elif isinstance(data, list):
+        items = data
+    else:
+        items = None
+    if not isinstance(items, list):
+        raise ValueError("결과 파일 스키마 불일치: 'rows' 목록이 필요합니다")
     return [_row(d) for d in items]
 
 

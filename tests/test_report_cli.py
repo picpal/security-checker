@@ -2,6 +2,8 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from secscan import cli
 from secscan.output.json_io import from_json
 from secscan.report.cli import build_report, write_report_bundle
@@ -108,3 +110,37 @@ def test_main_report_check_result_exit_codes(tmp_path):
     assert cli.main(["report", "--check-result", str(r), "--rescan", str(FIX)]) == 2  # 0442… 가 재스캔에 존재 → 불일치
     r.write_text(json.dumps([{"id": "ffffffffffff", "status": "fixed"}]), encoding="utf-8")
     assert cli.main(["report", "--check-result", str(r), "--rescan", str(FIX)]) == 0
+
+
+# --- FR-3: check-result 가 못 읽은 입력에 exit 0 을 내면 안 된다(무증거를 통과로 오인) ---
+
+def test_main_report_check_result_wrong_key_schema_exits_2_with_message(tmp_path, capsys):
+    r = tmp_path / "r.json"
+    r.write_text(json.dumps({"items": [{"id": "0442ba114c70", "status": "fixed"}]}), encoding="utf-8")  # "rows" 가 아니라 "items"
+    assert cli.main(["report", "--check-result", str(r), "--rescan", str(FIX)]) == 2
+    assert "결과 파일을 읽을 수 없습니다" in capsys.readouterr().out
+
+
+def test_main_report_check_result_empty_rows_exits_2_with_message(tmp_path, capsys):
+    r = tmp_path / "r.json"
+    r.write_text(json.dumps([]), encoding="utf-8")
+    assert cli.main(["report", "--check-result", str(r), "--rescan", str(FIX)]) == 2
+    assert "결과 행이 0개입니다" in capsys.readouterr().out
+
+
+def test_main_report_check_result_missing_sheet_exits_2_with_message(tmp_path, capsys):
+    pytest.importorskip("openpyxl")
+    from openpyxl import Workbook
+    wb = Workbook()
+    wb.active.title = "다른시트"
+    r = tmp_path / "r.xlsx"
+    wb.save(r)
+    assert cli.main(["report", "--check-result", str(r), "--rescan", str(FIX)]) == 2
+    assert "결과 파일을 읽을 수 없습니다" in capsys.readouterr().out
+
+
+def test_main_report_check_result_broken_json_exits_2_with_message(tmp_path, capsys):
+    r = tmp_path / "r.json"
+    r.write_text("{not valid json", encoding="utf-8")
+    assert cli.main(["report", "--check-result", str(r), "--rescan", str(FIX)]) == 2
+    assert "결과 파일을 읽을 수 없습니다" in capsys.readouterr().out

@@ -79,7 +79,16 @@ def cmd_report(args) -> int:
             print("secscan report: --check-result 에는 --rescan 이 필요합니다")
             return 2
         from .result_check import check, has_mismatch, load_result, render, rescan_ids
-        results = check(load_result(args.check_result), rescan_ids(args.rescan, target=args.target))
+        try:
+            rows = load_result(args.check_result)
+            present_ids = rescan_ids(args.rescan, target=args.target)
+        except (ValueError, RuntimeError, OSError, json.JSONDecodeError) as e:
+            print(f"secscan report: 결과 파일을 읽을 수 없습니다 — {e}")
+            return 2
+        if not rows:
+            print("secscan report: 결과 행이 0개입니다 — 검증할 주장이 없습니다")
+            return 2
+        results = check(rows, present_ids)
         print(render(results))
         return 2 if has_mismatch(results) else 0
     if not args.findings:
