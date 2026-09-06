@@ -57,6 +57,8 @@ def build_report(findings: list[Finding], meta: dict, *, target: str | None = No
     fs = relativize(findings, target)
     kbs = {f.id: entry_for(f) for f in fs}
     # relativize 로 id 가 바뀔 수 있다(dedup_key 에 경로 포함) — deppaths/interps 는 새 id 기준으로 넘겨야 한다.
+    if deppaths is None and bom is not None:
+        deppaths = deppaths_for(fs, DepGraph.from_path(bom))
     derived = derive_all(fs, kbs, deppaths)
     meta = {**meta, "target": target or meta.get("target", "")}
     return build_report_sheets(fs, meta, kbs, derived, interps, interp_meta)

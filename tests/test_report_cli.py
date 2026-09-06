@@ -55,6 +55,14 @@ def test_report_with_bom_fills_dependency_path_column(tmp_path):
     assert {r[2]: r for r in s2[SHEET_ACTIONS][1]}["0442ba114c70"][5] == "BOM 없음"
 
 
+def test_report_with_bom_and_interp_meta_still_fills_dependency_path_column():
+    fs, meta = _load()
+    s = build_report(fs, meta, bom="fixtures/report/work-note-bom.cdx.json",
+                     interp_meta={"status": "absent", "rejected": []})
+    rows = {r[2]: r for r in s[SHEET_ACTIONS][1]}
+    assert rows["0442ba114c70"][5] == "전이 ← spring-boot-starter-tomcat ← spring-boot-starter-web"
+
+
 def test_main_report_accepts_bom_flag(tmp_path):
     rc = cli.main(["report", "--findings", str(FIX), "--bom", "fixtures/report/work-note-bom.cdx.json", "--out", str(tmp_path)])
     assert rc == 0
