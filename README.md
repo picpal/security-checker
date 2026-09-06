@@ -38,6 +38,10 @@ secscan detect --target <프로젝트> --intent full
 
 # 2) 점검 실행 → out/report.md + out/findings.sarif
 secscan scan --target <프로젝트> --profile standard --out out
+
+# 3) 보고서 워크북(사람·LLM 겸용) 단독 실행 / 결과 검증
+secscan report --findings out/findings.json --bom <bom.cdx.json> [--interpretations interpretations.json] --out out   # 사람·LLM 겸용 워크북 report.xlsx
+secscan report --check-result result.json --rescan out2/findings.json   # LLM 결과 반환 검증(불일치 exit 2)
 ```
 
 ### 프로파일
