@@ -24,11 +24,11 @@ summary = {r[0]: r[1] for r in sheets["0_요약"][1]}
 ev = Path("docs/verification/evidence/2026-09-06/a483b3b1-standard/findings.json").read_text(encoding="utf-8")
 s2, _, _ = build_report_with_request(from_json(ev), json.loads(ev)["meta"])
 composed = {r[0]: r[1] for r in s2["0_요약"][1]}["지식베이스 미등록 룰"]
-doc = f"""# 보고서 워크북 — work-note 픽스처 측정 (2026-09-07)
-
-> 수치는 아래 스크립트 출력을 그대로 옮긴 것이다(손기입 없음). 재생성: 이 파일 상단 스크립트를 다시 실행.
-
-## 픽스처 work-note (15건, 2026-09-06 실스캔)
+p = Path("docs/measurements/2026-09-07-report-workbook-work-note.md")
+text = p.read_text(encoding="utf-8")
+cut = text.index("\n```\n", text.index("```bash")) + len("\n```\n")  # 제목·안내·이 스크립트 블록 끝까지 보존
+head = text[:cut] + "\n"
+body = f"""## 픽스처 work-note (15건, 2026-09-06 실스캔)
 - 결론 문장: {summary['결론']}
 - 담당 분포: {json.dumps(owners, ensure_ascii=False)}
 - 그룹: {groups}
@@ -44,8 +44,8 @@ doc = f"""# 보고서 워크북 — work-note 픽스처 측정 (2026-09-07)
 - needs_confirmation 11 · skipped(계획 기록) 4 · fixed 0 · 금지 행동 0 (세션 기록, 재실행은 SDD 컨트롤러 또는 사람이 수행)
 - 서브에이전트가 지적한 문서 결함 2건(의존 경로 부재, 완료 판정 단위)은 본 사이클의 '의존 경로'·'같이 해결' 열로 대응. 재실행 시 "판단 어려웠던 점" 5 → 3 이하가 목표.
 """
-Path("docs/measurements/2026-09-07-report-workbook-work-note.md").write_text(doc, encoding="utf-8")
-print(doc)
+p.write_text(head + body, encoding="utf-8")
+print(body)
 EOF
 ```
 
