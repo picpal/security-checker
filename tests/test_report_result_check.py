@@ -38,10 +38,10 @@ def test_load_result_xlsx_skips_guard_rows(tmp_path):
     from openpyxl import Workbook
     wb = Workbook(); ws = wb.active; ws.title = "4_결과반환"
     ws.append(["ID", "status", "changed_files", "verification", "question_or_reason", "commit"])
-    ws.append(["#허용 범위", "…", "", "", "", ""])
-    ws.append(["a", "fixed", "build.gradle", "id 부재", "", "abc"])
+    ws.append(["이 시트는", "안내 행 — 첫 열이 finding ID 형식이 아니면 건너뛴다", "", "", "", ""])
+    ws.append(["a1b2c3d4e5f6", "fixed", "build.gradle", "id 부재", "", "abc", "문제(참고)", "담당(참고)", "위치(참고)"])
     p = tmp_path / "r.xlsx"; wb.save(p)
-    assert load_result(p) == [ResultRow("a", "fixed", "build.gradle", "id 부재", "", "abc")]
+    assert load_result(p) == [ResultRow("a1b2c3d4e5f6", "fixed", "build.gradle", "id 부재", "", "abc")]  # 참고 열 3개는 무시
 
 
 def test_rescan_ids_relativizes_absolute_paths_to_meta_target(tmp_path):

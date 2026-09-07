@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 from ..output.json_io import from_json
@@ -11,6 +12,7 @@ from .workbook import SHEET_RESULT
 
 RESULT_CONTEXT = "secscan-report-result/v1"
 _FIELDS = ("id", "status", "changed_files", "verification", "reason", "commit")
+_ID_RE = re.compile(r"^[0-9a-f]{12}$")  # 4_결과반환에서 finding 행과 안내 행을 가르는 기준
 _XLSX_COLS = ("id", "status", "changed_files", "verification", "reason", "commit")  # 4_결과반환 열 순서
 
 
@@ -32,7 +34,7 @@ def load_result(path) -> list[ResultRow]:
         ws = wb[SHEET_RESULT]
         rows = []
         for i, r in enumerate(ws.iter_rows(values_only=True)):
-            if i == 0 or not r or r[0] is None or str(r[0]).startswith("#"):
+            if i == 0 or not r or r[0] is None or not _ID_RE.match(str(r[0])):
                 continue
             rows.append(_row(dict(zip(_XLSX_COLS, list(r) + [""] * 6))))
         return rows

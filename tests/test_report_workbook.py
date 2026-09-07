@@ -27,7 +27,7 @@ def test_sheet_names_and_headers():
     assert list(s) == [SHEET_SUMMARY, SHEET_ACTIONS, SHEET_QUESTIONS, SHEET_RULES, SHEET_RESULT]
     assert s[SHEET_ACTIONS][0] == ACTION_HEADER and len(ACTION_HEADER) == 17
     assert s[SHEET_QUESTIONS][0] == QUESTION_HEADER and len(QUESTION_HEADER) == 9
-    assert s[SHEET_RESULT][0] == RESULT_HEADER and len(RESULT_HEADER) == 6
+    assert s[SHEET_RESULT][0] == RESULT_HEADER and len(RESULT_HEADER) == 9
     assert ACTION_HEADER[5] == "의존 경로" and ACTION_HEADER[11] == "같이 해결"
 
 
@@ -67,15 +67,21 @@ def test_summary_conclusion_and_counts_and_unregistered_rules():
 
 def test_result_sheet_has_guard_rows_then_one_row_per_finding():
     rows = _sheets()[SHEET_RESULT][1]
-    assert [r[0] for r in rows[:4]] == ["#허용 범위", "#금지", "#완료 판정", "#status 값"]
-    assert "secscan scan --target work-note" in rows[2][1]
-    assert [r[0] for r in rows[4:]] == [r[2] for r in _sheets()[SHEET_ACTIONS][1]]
-    assert all(r[1:] == ["", "", "", "", ""] for r in rows[4:])
+    labels = [r[0] for r in rows[:6]]
+    assert labels == ["이 시트는", "고쳐도 되는 것", "하지 말 것", "끝났는지 확인하는 법", "처리 결과에 쓸 수 있는 값", "검증은 누가 하나"]
+    assert "secscan scan --target work-note" in rows[3][1]
+    acts = _sheets()[SHEET_ACTIONS][1]
+    assert [r[0] for r in rows[6:]] == [r[2] for r in acts]
+    assert all(r[1:6] == ["", "", "", "", ""] for r in rows[6:])  # 처리 결과~커밋은 LLM 이 채움
+    assert [r[6:] for r in rows[6:]] == [[a[3], a[10], a[4]] for a in acts]  # 문제·담당·위치 참고 열
 
 
 def test_rules_sheet_is_fixed_table():
     header, rows = _sheets()[SHEET_RULES]
-    assert header == ["항목", "규칙 / 뜻"] and [r[0] for r in rows][:3] == ["판정(disposition) 규칙", "우선순위 규칙", "담당 규칙"]
+    assert header == ["구분", "값·용어", "뜻(일반어)", "그래서 어떻게 하나"]
+    groups = [r[0] for r in rows]
+    assert groups[:5] == ["우선순위"] * 5 and {"담당", "판정", "심각도", "조치 유형", "같이 해결", "사실/추정", "주의"} <= set(groups)
+    assert all(len(r) == 4 and all(isinstance(c, str) and c for c in r) for r in rows)
 
 
 def test_no_secret_values_and_all_cells_sanitized():
