@@ -146,3 +146,60 @@ crypto 안티패턴 → **커스텀 룰(D)** (3종: MyBatis `${}`/하드코딩/z
     P1(안전성→재현성→FN 순, spec §9), reconcile `--measurement` 통과) — 백로그 상세는 이 문서
     참조. spec 정오표 (a)("18건") 해소 문구 추가(원문 보존).
 - 최종 브랜치 리뷰(플랜 2) 잔여 Minor — 플랜 3/백로그 후보(검사 약화·값 변동 없음): M2 fidelity.deterministic 은 동일 프로세스 2회 렌더 비교(프로세스 간 비교 아님) · M3 xlsx 계약이 `source` 를 손실로 선언하나 레거시 경로(occurrence 없는 SCA)에서 실림 · M4 spec §7.4 "네 출력 actionable 집합 동일" 을 xlsx 포함 한 테스트로 관통하지 않음(fidelity 생성기가 실측으로 대체) · M5 gate._ratio 가 `a/b` 아닌 fact 에 예외(write_all 은 격리 없음) · M6 레거시 gate-v2/v3 에 "판정 열 손기입" 표시 없음 · M7 플랜 1 대비 비교의 옛 값은 검사 밖(마커 정규식 `:` 배제) · M8 파일 중간·함수 안 import 산재 · M9 테스트의 `Finding(**{**f.__dict__})` 패턴 · M10 CLI 가 워크북을 항상 쓰고 폴백 시 성공 줄이 CSV 한 장만 가리킴 · M12 Summary 시트 행 레이아웃 테스트 미고정. 툴링 갭: 마커 id `:` 미지원(attrition.normalize:*), reconcile-report 인용표 헤더 `|`(플랜 1 N4 계열).
+
+## 보고서 워크북(2026-09-07)
+
+> spec: `docs/superpowers/specs/2026-09-07-report-workbook-design.md`(정오표 §12 포함). 플랜:
+> `.superpowers/sdd/2026-09-07-report-workbook/`(태스크 11 개, R1~R4).
+
+- [x] **R1**(Task 1~5): `secscan/report/{models,kb,derive,workbook,cli}.py` — `Finding` 을
+  `Derived`/`Interpretation`/`ResultRow` 로 감싸는 보고서 모델, 지식베이스(`rules.json` 10건
+  덮어쓰기 > CWE 표·advisory 합성 폴백), 파생 규칙(우선순위 P1~P5·담당 5종·판정 근거·그룹·정렬·
+  확인질문 대상·결론 템플릿), 5 시트 빌더(0_요약·1_조치목록 17열·2_확인질문·3_판정기준·
+  4_결과반환 `#` 지시 4행), `secscan report --findings --out` 커맨드. `scan` 끝에 report.xlsx
+  자동 생성.
+- [x] **R2**(Task 6~7): `deppath.py` — CycloneDX BOM 그래프 BFS 로 SCA 의존 경로(직접/전이
+  `←` 체인 4단 절단/버전 상이/BOM 없음) 산출, `--bom` 배선(scan 은 sbom 캐시 자동 사용), 상대경로
+  통일, 그룹 열(G-n) 확장.
+- [x] **R3**(Task 8~9): `interpret.py` — report-request 생성(코드 스니펫 없음), interpretations
+  파일 검증기(거부 사유 8종 + 부재/오염 처리), `--interpretations` 배선(검증 통과분만
+  2_확인질문 병합, 0_요약 에 해석 상태·거부 사유 기록). `scan`/`report` 가 `report-request.json`
+  을 항상 함께 씀.
+- [x] **R4**(Task 10~11): `result_check.py` — `--check-result <result.json|xlsx> --rescan
+  <findings.json>` 로 LLM 의 `fixed` 주장을 재스캔 결과에 해당 ID 가 더 이상 없는지로만 인정(불일치
+  exit 2, 판정은 재스캔이 하지 LLM 자기 보고를 신뢰하지 않음). 문서(이 태스크): README 사용법
+  2줄, 이 절, CLAUDE.md 상태 줄, spec 정오표 §12, work-note 측정 문서.
+- **등록 대기 룰**: 측정 문서 `docs/measurements/2026-09-07-report-workbook-work-note.md` —
+  work-note 픽스처(15건)와 message-gate 증거(2026-09-06 a483b3b1-standard) 양쪽 다
+  "지식베이스 미등록 룰: 없음"(현재 `rules.json` 10건이 두 데이터셋의 발화 룰을 모두 커버).
+  향후 새 스캐너/룰 추가 시 0_요약 의 "지식베이스 미등록 룰" 행으로 등록 대기를 관측하고
+  `rules.json` 에 등록한다(spec 정오표 (c)).
+- **불변식**: report 패키지 어떤 모듈도 `secscan.suppress` 를 import 하지 않는다(자동 억제
+  금지, spec §7 "억제 자동화" 대응 — grep 으로 확인 가능, 회귀 시 이 불변식이 깨진 것).
+- **백로그**: report.md 를 같은 지식베이스로 개편 · Semgrep 레지스트리 룰 설명 대량 등록
+  자동화(작성 시점 생성 도구) · HTML 단일 파일 보고서 · 결과 반환을 PR 본문으로 변환.
+- **최종 리뷰 fix 웨이브(2026-09-07)**: FR-1(Critical, `--check-result` ID 공간 불일치 —
+  `paths.py` 분리 + 재스캔 상대화) · FR-2(scan 의 report 실패가 exit code 를 삼키던 문제 —
+  try/except 격리) · FR-3(check-result 가 못 읽은 입력에 exit 0 을 내던 문제 — 스키마/0행/시트
+  부재 exit 2) · FR-4(불변식 테스트 2개 신설) · FR-5(폴백 `"-"` → `"해당없음"`) · FR-6
+  (`build_report` 호환 래퍼 제거) · FR-7(이 절의 측정 문서에 재생성 스크립트 포함)을 반영했다
+  (`.superpowers/sdd/2026-09-07-report-workbook/final-fix-report.md`). 아래 이연 목록은 그
+  반영 이후 잔여분이다.
+- **이연 Minor(검사 약화·값 변동 없음)**: (1) 0_요약 `duration_s == 0` 일 때 단위 `"s"` 미표기 ·
+  (2) `paths.py::_rel` 의 공백 오타(`str(Path(target)) .rstrip(...)`, FR-1 로 `report/cli.py`
+  에서 이설) · (3) `deppath.py` 다중 버전 동률일 때 선택 기준이 문자열 정렬(결정적이나 의미
+  없음) · (4) `interpret.py` 의 `bad_cite` `..` 검사가 인용 문자열 첫 `:` 앞부분만 봄 · (5)
+  `result_check.py` 가 `load_workbook` 를 닫지 않음 · (6) `test_report_derive.py` 의 미사용
+  import `REVIEW` · (7) Task 2 커밋 메시지의 "12건" 은 계수 오기(실제 `rules.json` 은 10건,
+  "등록 대기 룰" 항목과 spec 정오표 (c) 참조) · (8) `count_in_guess`(interpretations 거부
+  사유)가 `--check-result` 쪽에는 대응되는 검증이 없음 · (9) `--out` 이 check 모드에서 무시됨
+  (인자는 받되 사용 안 함) · (10) `workbook.py` 가 `output/xlsx.py` 의 private
+  `_openpyxl_available` 를 import · (11) 0_요약 `duration_s` 가 `None` 일 때(0 이 아니라
+  누락) 숫자 없이 단위 `"s"` 만 남는 표시 · (12) report.xlsx 재생성 시 바이트 동일성(산출물
+  결정성)을 직접 확인하는 테스트 부재 · (13) `interpret.py::FORBIDDEN` 금칙어 5개는 얇은
+  방어 — 그 단어를 피하면서 판정을 단정하는 `guess` 는 통과한다(spec §5.4 설계 선택, 결함
+  아님) · (14) `derive.py` 의 `done` 치환은 `{id}`·`{package}` 만 지원하고 `{target}` 은
+  지원하지 않음(현재 `rules.json` 에는 안 쓰여 실피해 없음) · (15) `kb.py::validate_rules`
+  (커스텀 룰 메타데이터 검증)가 테스트에서만 호출되고 report 파이프라인 런타임에서는 호출되지
+  않음 · (16) 담당 `자동 수정(LLM)` 경로가 work-note 픽스처에는 0건(MyBatis 픽스처 추가가
+  커버 후보).

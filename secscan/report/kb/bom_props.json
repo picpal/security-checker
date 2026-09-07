@@ -1,0 +1,16 @@
+{
+  "org.apache.tomcat.embed:": "ext['tomcat.version']",
+  "org.apache.tomcat:": "ext['tomcat.version']",
+  "org.apache.logging.log4j:": "ext['log4j2.version']",
+  "ch.qos.logback:": "ext['logback.version']",
+  "com.fasterxml.jackson": "ext['jackson-bom.version']",
+  "org.springframework:": "ext['spring-framework.version']",
+  "org.springframework.security:": "ext['spring-security.version']",
+  "org.hibernate.orm:": "ext['hibernate.version']",
+  "org.postgresql:": "ext['postgresql.version']",
+  "com.mysql:": "ext['mysql.version']",
+  "org.yaml:snakeyaml": "ext['snakeyaml.version']",
+  "io.netty:": "ext['netty.version']",
+  "org.apache.commons:commons-lang3": "ext['commons-lang3.version']",
+  "org.slf4j:": "ext['slf4j.version']"
+}

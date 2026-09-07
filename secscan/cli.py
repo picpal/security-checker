@@ -225,6 +225,7 @@ def _cmd_scan(args) -> int:
             "scanner_status": [asdict(s) for s in result.scanner_status],
             "reachability": {"ran": result.reachability_ran, "reason": result.reachability_reason},
             "secret_policy": result.secret_policy, "excluded_count": result.excluded_count,
+            "run_date": date.today().isoformat(),
         }), encoding="utf-8")
 
     from .output.xlsx import write_workbook
@@ -236,8 +237,21 @@ def _cmd_scan(args) -> int:
     if wb_warn:
         print(f"⚠️ {wb_warn}")
 
+    from .report.cli import write_report_bundle
+    from .sbom import bom_cache_path
+    try:
+        rp_paths, rp_warn = write_report_bundle(result.findings, wb_meta, out, target=str(args.target), bom=bom_cache_path(args.target))
+    except Exception as e:
+        print(f"⚠️ report 생성 실패(게이트 판정은 유지): {type(e).__name__}: {e}")
+        rp_paths, rp_warn = [], None
+    if rp_warn:
+        print(f"⚠️ {rp_warn}")
+
     print(render_scan_summary(result))
-    print(f"\n출력: {out / 'report.md'} · {out / 'findings.sarif'} · {out / 'findings.json'} · {wb_paths[0]}")
+    outputs = [str(out / "report.md"), str(out / "findings.sarif"), str(out / "findings.json"), str(wb_paths[0])]
+    if rp_paths:
+        outputs.append(str(rp_paths[0]))
+    print("\n출력: " + " · ".join(outputs))
     return 1 if _has_actionable(result.findings) else 0
 
 
@@ -345,6 +359,9 @@ def main(argv: list[str] | None = None) -> int:
     cp.add_argument("--slug", help="특정 클론만 삭제 (미지정 시 전체)")
     cp.add_argument("--list", action="store_true", help="삭제하지 않고 목록만 출력")
 
+    from .report.cli import add_report_parser, cmd_report
+    add_report_parser(sub)
+
     args = parser.parse_args(argv)
     if args.command == "doctor":
         return _cmd_doctor()
@@ -356,6 +373,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_fetch(args)
     if args.command == "clean":
         return _cmd_clean(args)
+    if args.command == "report":
+        return cmd_report(args)
 
     parser.print_help()
     return 2

@@ -1,0 +1,87 @@
+"""`secscan report` — findings.json(+bom, +interpretations) → 5 시트 워크북. LLM 없이 완성된다."""
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from ..models import Finding
+from ..output.json_io import from_json
+from ..output.xlsx import Sheet
+from .deppath import DepGraph, deppaths_for
+from .derive import derive_all
+from .interpret import build_request, load_interpretations
+from .kb import entry_for
+from .paths import relativize
+from .workbook import build_report_sheets, write_report
+
+
+def build_report_with_request(findings: list[Finding], meta: dict, *, target: str | None = None,
+                              bom: str | Path | None = None, interpretations: str | Path | None = None,
+                              findings_path: str = "findings.json") -> tuple[dict[str, Sheet], dict, dict]:
+    target = target or meta.get("target")
+    fs = relativize(findings, target)
+    kbs = {f.id: entry_for(f) for f in fs}
+    deppaths = deppaths_for(fs, DepGraph.from_path(bom)) if bom is not None else None
+    derived = derive_all(fs, kbs, deppaths)
+    request = build_request(fs, derived, kbs, target=str(target or ""), findings_path=findings_path)
+    interps, interp_meta = ({}, {"status": "absent", "rejected": []}) if interpretations is None \
+        else load_interpretations(interpretations, request)
+    meta = {**meta, "target": target or meta.get("target", "")}
+    return build_report_sheets(fs, meta, kbs, derived, interps, interp_meta), request, interp_meta
+
+
+def write_report_bundle(findings: list[Finding], meta: dict, out_dir, *, target: str | None = None,
+                        bom: str | Path | None = None, interpretations: str | Path | None = None,
+                        findings_path: str = "findings.json", prefer_xlsx: bool | None = None) -> tuple[list[Path], str | None]:
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    sheets, request, _ = build_report_with_request(findings, meta, target=target, bom=bom, interpretations=interpretations,
+                                                   findings_path=findings_path)
+    paths, warn = write_report(sheets, out, created=str(meta.get("run_date", "")), prefer_xlsx=prefer_xlsx)
+    rq = out / "report-request.json"
+    rq.write_text(json.dumps(request, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    return paths + [rq], warn
+
+
+def add_report_parser(sub) -> None:
+    rp = sub.add_parser("report", help="사람·LLM 겸용 보고서 워크북 생성")
+    rp.add_argument("--findings", help="scan 이 낸 findings.json 경로")
+    rp.add_argument("--target", help="경로 상대화 기준(기본: findings.json meta.target)")
+    rp.add_argument("--bom", help="cdxgen BOM(bom.cdx.json). 없으면 의존 경로 열은 'BOM 없음'")
+    rp.add_argument("--interpretations", help="Claude 가 쓴 interpretations.json. 검증 통과분만 병합")
+    rp.add_argument("--out", default="out", help="출력 디렉토리")
+    rp.add_argument("--check-result", help="LLM 결과 반환(json 또는 4_결과반환 시트를 담은 xlsx)")
+    rp.add_argument("--rescan", help="수정 뒤 재스캔한 findings.json")
+
+
+def cmd_report(args) -> int:
+    if args.check_result:
+        if not args.rescan:
+            print("secscan report: --check-result 에는 --rescan 이 필요합니다")
+            return 2
+        from .result_check import check, has_mismatch, load_result, render, rescan_ids
+        try:
+            rows = load_result(args.check_result)
+            present_ids = rescan_ids(args.rescan, target=args.target)
+        except (ValueError, RuntimeError, OSError, json.JSONDecodeError) as e:
+            print(f"secscan report: 결과 파일을 읽을 수 없습니다 — {e}")
+            return 2
+        if not rows:
+            print("secscan report: 결과 행이 0개입니다 — 검증할 주장이 없습니다")
+            return 2
+        results = check(rows, present_ids)
+        print(render(results))
+        return 2 if has_mismatch(results) else 0
+    if not args.findings:
+        print("secscan report: --findings 가 필요합니다")
+        return 2
+    text = Path(args.findings).read_text(encoding="utf-8")
+    findings, meta = from_json(text), json.loads(text).get("meta", {})
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    paths, warn = write_report_bundle(findings, meta, out, target=args.target, bom=args.bom,
+                                      interpretations=args.interpretations, findings_path=args.findings)
+    if warn:
+        print(f"⚠️ {warn}")
+    print("출력: " + " · ".join(str(p) for p in paths))
+    return 0

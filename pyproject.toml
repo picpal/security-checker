@@ -20,6 +20,9 @@ secscan = "secscan.cli:main"
 [tool.setuptools.packages.find]
 include = ["secscan*"]
 
+[tool.setuptools.package-data]
+secscan = ["report/kb/*.json"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
