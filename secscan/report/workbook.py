@@ -11,7 +11,7 @@ from ..output.xlsx import Sheet, _openpyxl_available, sanitize_cell, write_csv_b
 from .derive import SEV_KO, conclusion, counts, needs_question, sort_for_report
 from .models import Derived, Interpretation, KbEntry
 
-SHEET_SUMMARY, SHEET_ACTIONS, SHEET_QUESTIONS, SHEET_RULES, SHEET_RESULT = "0_요약", "1_조치목록", "2_확인질문", "3_판정기준", "4_결과반환"
+SHEET_SUMMARY, SHEET_ACTIONS, SHEET_QUESTIONS, SHEET_RULES, SHEET_RESULT = "0_요약", "1_조치목록", "2_확인질문", "3_용어와 대응", "4_결과반환"
 SUMMARY_HEADER = ["항목", "값", "설명"]
 ACTION_HEADER = ["No.", "우선순위", "ID", "문제", "위치", "의존 경로", "무엇이 문제인가", "왜 위험한가", "해야 할 일", "조치 유형",
                  "담당", "같이 해결", "판정 근거", "심각도", "CWE", "기준(KISA/PCI)", "완료 확인 방법"]
@@ -103,7 +103,7 @@ def _summary_rows(findings, meta, kbs, derived, interp_meta) -> list[list]:
         ["제외", meta.get("excluded_count", 0), "build/·node_modules/·.gitignore 대상 등 기본 제외"],
         ["시트 1_조치목록", "개발자·보안팀", "항목별 무엇/왜/어떻게/담당/근거/완료 확인"],
         ["시트 2_확인질문", "담당 개발자·보안팀", "사람이 답해야 LLM 이 움직일 수 있는 항목의 질문·사실·추정"],
-        ["시트 3_판정기준", "보안팀·감사", "우선/검토/강등이 갈린 규칙, 용어 뜻"],
+        ["시트 3_용어와 대응", "모든 독자", "우선순위·담당·판정·심각도 같은 용어의 뜻과 그때 무엇을 하면 되는지"],
         ["시트 4_결과반환", "수정 LLM → 사람", "표 위 안내 6줄 + LLM 이 처리 결과를 채워 돌려주는 표(문제·담당·위치는 미리 채움)"],
     ]
     composed = sorted({f.rule_id for f in findings if f.category != "sca" and kbs[f.id].source == "composed"})
