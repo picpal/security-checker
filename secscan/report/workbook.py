@@ -35,7 +35,7 @@ RULE_ROWS = [
     # 판정 근거 열 — "왜 여기로 분류됐나"
     ["판정", "조치대상", "도구가 확신했고 억제 없음", "우선순위 P1·P2"],
     ["판정", "검토후보", "도구 신뢰도가 낮거나 심각도가 없음", "P3"],
-    ["판정", "강등(낮은 우선순위)", "도달성 분석이 '호출 경로 없음' 으로 판정", "P4. 단 evidence 가 없으면 근거가 약해 2_확인질문에 포함"],
+    ["판정", "강등(낮은 우선순위)", "도달성 분석이 '호출 경로 없음' 으로 판정", "P4. 단 호출 경로 증거가 비어 있으면 근거가 약해 2_확인질문에 포함"],
     ["판정", "억제됨", "사람이 사유·증거·만료를 적어 제외", "P5"],
     # 심각도
     ["심각도", "심각·위험", "악용되면 인증 우회·데이터 유출 수준", "우선 처리"],
@@ -104,7 +104,7 @@ def _summary_rows(findings, meta, kbs, derived, interp_meta) -> list[list]:
         ["시트 1_조치목록", "개발자·보안팀", "항목별 무엇/왜/어떻게/담당/근거/완료 확인"],
         ["시트 2_확인질문", "담당 개발자·보안팀", "사람이 답해야 LLM 이 움직일 수 있는 항목의 질문·사실·추정"],
         ["시트 3_판정기준", "보안팀·감사", "우선/검토/강등이 갈린 규칙, 용어 뜻"],
-        ["시트 4_결과반환", "수정 LLM → 사람", "허용 범위·금지 4줄 + LLM 이 채워 돌려주는 템플릿"],
+        ["시트 4_결과반환", "수정 LLM → 사람", "표 위 안내 6줄 + LLM 이 처리 결과를 채워 돌려주는 표(문제·담당·위치는 미리 채움)"],
     ]
     composed = sorted({f.rule_id for f in findings if f.category != "sca" and kbs[f.id].source == "composed"})
     rows.append(["지식베이스 미등록 룰", ", ".join(composed) or "없음", "합성 폴백으로 설명됨 — rules.json 등록 대기"])
@@ -200,6 +200,7 @@ def _style_xlsx(path: Path, created: str, notes: list[tuple[str, str]]) -> None:
                     cell.alignment = Alignment(wrap_text=True, vertical="top")
                     cell.fill = PatternFill("solid", fgColor="EEF3FA")
                 ws.row_dimensions[i].height = 15 * max(1, -(-_display_len(text) // 100))
+            ws.column_dimensions["A"].width = max(ws.column_dimensions["A"].width or 0, fit_width(n[0] for n in notes))
         for cell in ws[header_row]:
             cell.font = Font(bold=True)
             cell.fill = PatternFill("solid", fgColor="D9D9D9")

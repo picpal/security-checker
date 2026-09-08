@@ -21,3 +21,4 @@
 - **하드코딩 자격증명 룰이 정규식 상수에 발화**: `TOKEN_PROFILE_REGEX = "(?:mg|message-gate)-[a-z0-9-]+"`(KmsProfilePolicy.java:30). 상수명의 TOKEN 접두 매칭. **백로그**: 값이 정규식 메타문자 위주면 미발화(음성 픽스처 추가).
 - **해석 계층은 설계대로 동작**: report-request 18건 → Claude 가 코드 읽고 interpretations.json 작성 → 검증기 18/18 수용, 거부 0. 단 request 의 finding ID(상대화 공간)가 findings.json 의 ID 와 달라 사람이 둘을 대조하려면 헷갈림(설계 §12(f)). **백로그**: request 항목에 `raw_id`(findings.json 기준) 를 함께 싣기.
 - **첫 실행(도달성 size 생략)은 6.4초, 두 번째(--allow-large)는 606초**: 같은 대상·같은 도구인데 도달성 하나로 100배 차이. 요약 출력이 "미적용 (size)" 한 줄이라 사용자가 노이즈 제거가 빠진 줄 모르기 쉬움.
+- **산출물 확인을 사용자에게 미룸(2026-09-08)**: 엑셀 레이아웃을 사용자가 스크린샷으로 두 번 지적(안내 행이 ID 열에 섞임, 옛 창을 보고 있었음). 대응: `tools/render_xlsx.sh`(Numbers → PDF → pdftoppm PNG) 로 시트별 렌더를 직접 보고 검증한 뒤 완료 보고. 재생성 파일은 새 이름으로 열어 옛 창과 혼동 방지. 원칙: **완료 보고 전에 산출물을 직접 렌더링해 본다.**
