@@ -16,7 +16,7 @@ from secscan.report.cli import build_report_with_request
 fix = Path("fixtures/report/work-note-findings.json").read_text(encoding="utf-8")
 fs = from_json(fix); meta = json.loads(fix)["meta"]
 sheets, req, im = build_report_with_request(fs, meta, bom="fixtures/report/work-note-bom.cdx.json")
-acts = sheets["1_조치목록"][1]
+acts = sheets["1_취약점 목록"][1]
 owners = {}
 for r in acts: owners[r[10]] = owners.get(r[10], 0) + 1
 groups = sorted({r[11] for r in acts if r[11]})

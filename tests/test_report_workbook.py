@@ -68,7 +68,7 @@ def test_summary_conclusion_and_counts_and_unregistered_rules():
 def test_result_sheet_is_pure_table_and_notes_live_outside():
     rows = _sheets()[SHEET_RESULT][1]
     acts = _sheets()[SHEET_ACTIONS][1]
-    assert [r[0] for r in rows] == [r[2] for r in acts]  # 안내 행 없이 finding 행만, 조치목록 순서
+    assert [r[0] for r in rows] == [r[2] for r in acts]  # 안내 행 없이 finding 행만, 취약점 목록 순서
     assert all(r[1:6] == ["", "", "", "", ""] for r in rows)  # 처리 결과~커밋은 LLM 이 채움
     assert [r[6:] for r in rows] == [[a[3], a[10], a[4]] for a in acts]  # 문제·담당·위치 참고 열
     notes = result_notes("work-note")
@@ -107,7 +107,7 @@ def test_matches_golden():
 
 def test_write_report_xlsx_or_csv(tmp_path):
     paths, warn = write_report(_sheets(), tmp_path, created="2026-09-06", prefer_xlsx=False)
-    assert warn and (tmp_path / "report-xlsx" / "1_조치목록.csv").exists()
+    assert warn and (tmp_path / "report-xlsx" / "1_취약점 목록.csv").exists()
     try:
         import openpyxl  # noqa: F401
     except ImportError:

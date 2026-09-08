@@ -155,7 +155,7 @@ crypto 안티패턴 → **커스텀 룰(D)** (3종: MyBatis `${}`/하드코딩/z
 - [x] **R1**(Task 1~5): `secscan/report/{models,kb,derive,workbook,cli}.py` — `Finding` 을
   `Derived`/`Interpretation`/`ResultRow` 로 감싸는 보고서 모델, 지식베이스(`rules.json` 10건
   덮어쓰기 > CWE 표·advisory 합성 폴백), 파생 규칙(우선순위 P1~P5·담당 5종·판정 근거·그룹·정렬·
-  확인질문 대상·결론 템플릿), 5 시트 빌더(0_요약·1_조치목록 17열·2_확인질문·3_용어와 대응(구 3_판정기준)·
+  확인질문 대상·결론 템플릿), 5 시트 빌더(0_요약·1_취약점 목록 17열·2_확인질문·3_용어와 대응(구 3_판정기준)·
   4_결과반환 `#` 지시 4행), `secscan report --findings --out` 커맨드. `scan` 끝에 report.xlsx
   자동 생성.
 - [x] **R2**(Task 6~7): `deppath.py` — CycloneDX BOM 그래프 BFS 로 SCA 의존 경로(직접/전이

@@ -11,7 +11,7 @@ from ..output.xlsx import Sheet, _openpyxl_available, sanitize_cell, write_csv_b
 from .derive import SEV_KO, conclusion, counts, needs_question, sort_for_report
 from .models import Derived, Interpretation, KbEntry
 
-SHEET_SUMMARY, SHEET_ACTIONS, SHEET_QUESTIONS, SHEET_RULES, SHEET_RESULT = "0_요약", "1_조치목록", "2_확인질문", "3_용어와 대응", "4_결과반환"
+SHEET_SUMMARY, SHEET_ACTIONS, SHEET_QUESTIONS, SHEET_RULES, SHEET_RESULT = "0_요약", "1_취약점 목록", "2_확인질문", "3_용어와 대응", "4_결과반환"
 SUMMARY_HEADER = ["항목", "값", "설명"]
 ACTION_HEADER = ["No.", "우선순위", "ID", "문제", "위치", "의존 경로", "무엇이 문제인가", "왜 위험한가", "해야 할 일", "조치 유형",
                  "담당", "같이 해결", "판정 근거", "심각도", "CWE", "기준(KISA/PCI)", "완료 확인 방법"]
@@ -64,9 +64,9 @@ def result_notes(target: str) -> list[tuple[str, str]]:
     """4_결과반환 표 **위에** 놓이는 안내 블록(라벨, 문장). 표 자체에는 들어가지 않는다."""
     return [
         ("이 시트는", "수정을 맡은 LLM(또는 담당자)이 처리 결과를 적어 돌려주는 곳입니다. 아래 표의 한 행이 취약 항목 하나입니다. ID·문제·담당·위치는 미리 채워져 있으니 '처리 결과' 부터 '커밋' 까지만 채우세요."),
-        ("고쳐도 되는 것", "'1_조치목록' 의 담당이 '자동 수정' 으로 시작하는 항목만 고칩니다. '사람 확인 후' 항목은 고치지 말고, '2_확인질문' 의 질문을 '질문 또는 사유' 칸에 옮기고 처리 결과를 needs_confirmation 으로 적으세요."),
-        ("하지 말 것", "억제 파일 만들기·고치기 / 스캔 제외 규칙 추가 / 테스트 삭제·약화 / 조치목록에 없는 파일 변경 / 스캐너·룰 설정 변경"),
-        ("끝났는지 확인하는 법", f"고친 뒤 `secscan scan --target {target} --profile standard --out <폴더>` 를 한 번 실행하고, 새 findings.json 에 그 ID 가 남아 있는지 봅니다. 없으면 고쳐진 것입니다. 항목별 기준은 '1_조치목록' 의 '완료 확인 방법' 열입니다."),
+        ("고쳐도 되는 것", "'1_취약점 목록' 의 담당이 '자동 수정' 으로 시작하는 항목만 고칩니다. '사람 확인 후' 항목은 고치지 말고, '2_확인질문' 의 질문을 '질문 또는 사유' 칸에 옮기고 처리 결과를 needs_confirmation 으로 적으세요."),
+        ("하지 말 것", "억제 파일 만들기·고치기 / 스캔 제외 규칙 추가 / 테스트 삭제·약화 / 취약점 목록에 없는 파일 변경 / 스캐너·룰 설정 변경"),
+        ("끝났는지 확인하는 법", f"고친 뒤 `secscan scan --target {target} --profile standard --out <폴더>` 를 한 번 실행하고, 새 findings.json 에 그 ID 가 남아 있는지 봅니다. 없으면 고쳐진 것입니다. 항목별 기준은 '1_취약점 목록' 의 '완료 확인 방법' 열입니다."),
         ("처리 결과에 쓸 수 있는 값", "fixed = 고쳤고 재스캔에서 사라짐 · skipped = 건너뜀(사유 필수) · needs_confirmation = 사람 확인 필요(질문 필수). 이 세 값만 씁니다."),
         ("검증은 누가 하나", "사람이 믿기 전에 `secscan report --check-result <이 파일> --rescan <새 findings.json>` 으로 기계가 대조합니다. fixed 라고 적었는데 ID 가 남아 있으면 불일치로 잡힙니다."),
     ]
@@ -101,7 +101,7 @@ def _summary_rows(findings, meta, kbs, derived, interp_meta) -> list[list]:
         ["강등(P4)", c["demoted"], f"호출 경로 없음으로 판정. 업그레이드 가능 {c['auto_low']}(비차단)"],
         ["억제됨(P5)", c["suppressed"], "사람이 확정한 억제. 만료·버전 변경 시 재표면"],
         ["제외", meta.get("excluded_count", 0), "build/·node_modules/·.gitignore 대상 등 기본 제외"],
-        ["시트 1_조치목록", "개발자·보안팀", "항목별 무엇/왜/어떻게/담당/근거/완료 확인"],
+        ["시트 1_취약점 목록", "개발자·보안팀", "항목별 무엇/왜/어떻게/담당/근거/완료 확인"],
         ["시트 2_확인질문", "담당 개발자·보안팀", "사람이 답해야 LLM 이 움직일 수 있는 항목의 질문·사실·추정"],
         ["시트 3_용어와 대응", "모든 독자", "우선순위·담당·판정·심각도 같은 용어의 뜻과 그때 무엇을 하면 되는지"],
         ["시트 4_결과반환", "수정 LLM → 사람", "표 위 안내 6줄 + LLM 이 처리 결과를 채워 돌려주는 표(문제·담당·위치는 미리 채움)"],
