@@ -60,16 +60,15 @@ RULE_ROWS = [
 ]
 
 
-def guard_rows(target: str) -> list[list]:
-    """4_결과반환 상단 안내 행(첫 열이 finding ID 형식이 아니면 안내 행으로 취급된다)."""
-    pad = [""] * (len(RESULT_HEADER) - 2)
+def result_notes(target: str) -> list[tuple[str, str]]:
+    """4_결과반환 표 **위에** 놓이는 안내 블록(라벨, 문장). 표 자체에는 들어가지 않는다."""
     return [
-        ["이 시트는", "수정을 맡은 LLM(또는 담당자)이 처리 결과를 적어 돌려주는 곳입니다. 아래 표의 한 행이 취약 항목 하나입니다. ID·문제·담당·위치는 미리 채워져 있으니 '처리 결과' 부터 '커밋' 까지만 채우세요."] + pad,
-        ["고쳐도 되는 것", "'1_조치목록' 의 담당이 '자동 수정' 으로 시작하는 항목만 고칩니다. '사람 확인 후' 항목은 고치지 말고, '2_확인질문' 의 질문을 '질문 또는 사유' 칸에 옮기고 처리 결과를 needs_confirmation 으로 적으세요."] + pad,
-        ["하지 말 것", "억제 파일 만들기·고치기 / 스캔 제외 규칙 추가 / 테스트 삭제·약화 / 조치목록에 없는 파일 변경 / 스캐너·룰 설정 변경"] + pad,
-        ["끝났는지 확인하는 법", f"고친 뒤 `secscan scan --target {target} --profile standard --out <폴더>` 를 한 번 실행하고, 새 findings.json 에 그 ID 가 남아 있는지 봅니다. 없으면 고쳐진 것입니다. 항목별 기준은 '1_조치목록' 의 '완료 확인 방법' 열입니다."] + pad,
-        ["처리 결과에 쓸 수 있는 값", "fixed = 고쳤고 재스캔에서 사라짐 · skipped = 건너뜀(사유 필수) · needs_confirmation = 사람 확인 필요(질문 필수). 이 세 값만 씁니다."] + pad,
-        ["검증은 누가 하나", "사람이 믿기 전에 `secscan report --check-result <이 파일> --rescan <새 findings.json>` 으로 기계가 대조합니다. fixed 라고 적었는데 ID 가 남아 있으면 불일치로 잡힙니다."] + pad,
+        ("이 시트는", "수정을 맡은 LLM(또는 담당자)이 처리 결과를 적어 돌려주는 곳입니다. 아래 표의 한 행이 취약 항목 하나입니다. ID·문제·담당·위치는 미리 채워져 있으니 '처리 결과' 부터 '커밋' 까지만 채우세요."),
+        ("고쳐도 되는 것", "'1_조치목록' 의 담당이 '자동 수정' 으로 시작하는 항목만 고칩니다. '사람 확인 후' 항목은 고치지 말고, '2_확인질문' 의 질문을 '질문 또는 사유' 칸에 옮기고 처리 결과를 needs_confirmation 으로 적으세요."),
+        ("하지 말 것", "억제 파일 만들기·고치기 / 스캔 제외 규칙 추가 / 테스트 삭제·약화 / 조치목록에 없는 파일 변경 / 스캐너·룰 설정 변경"),
+        ("끝났는지 확인하는 법", f"고친 뒤 `secscan scan --target {target} --profile standard --out <폴더>` 를 한 번 실행하고, 새 findings.json 에 그 ID 가 남아 있는지 봅니다. 없으면 고쳐진 것입니다. 항목별 기준은 '1_조치목록' 의 '완료 확인 방법' 열입니다."),
+        ("처리 결과에 쓸 수 있는 값", "fixed = 고쳤고 재스캔에서 사라짐 · skipped = 건너뜀(사유 필수) · needs_confirmation = 사람 확인 필요(질문 필수). 이 세 값만 씁니다."),
+        ("검증은 누가 하나", "사람이 믿기 전에 `secscan report --check-result <이 파일> --rescan <새 findings.json>` 으로 기계가 대조합니다. fixed 라고 적었는데 ID 가 남아 있으면 불일치로 잡힙니다."),
     ]
 
 
@@ -135,18 +134,23 @@ def build_report_sheets(findings: list[Finding], meta: dict, kbs: dict[str, KbEn
         SHEET_ACTIONS: (ACTION_HEADER, _san(actions)),
         SHEET_QUESTIONS: (QUESTION_HEADER, _san(questions)),
         SHEET_RULES: (RULES_HEADER, _san([list(r) for r in RULE_ROWS])),
-        SHEET_RESULT: (RESULT_HEADER, _san(guard_rows(str(meta.get("target", ""))) + results)),
+        SHEET_RESULT: (RESULT_HEADER, _san(results)),  # 순수 표. 안내 블록은 write_report(notes=) 가 표 위에 놓는다
     }
 
 
-def write_report(sheets: dict[str, Sheet], out_dir, *, created: str, prefer_xlsx: bool | None = None) -> tuple[list[Path], str | None]:
+def write_report(sheets: dict[str, Sheet], out_dir, *, created: str, prefer_xlsx: bool | None = None,
+                 notes: list[tuple[str, str]] | None = None) -> tuple[list[Path], str | None]:
+    """xlsx: 4_결과반환 표 위에 안내 블록(notes)을 놓는다. CSV 폴백: 안내는 `4_결과반환-안내.csv` 로 따로."""
     out = Path(out_dir)
     use_xlsx = _openpyxl_available() if prefer_xlsx is None else prefer_xlsx
     if use_xlsx:
         path = write_xlsx(sheets, out / "report.xlsx", created=created)
-        _style_xlsx(path, created)
+        _style_xlsx(path, created, notes or [])
         return [path], None
-    return write_csv_bundle(sheets, out / "report-xlsx"), "openpyxl 미설치 — report 시트별 CSV 번들로 대체(`pip install secscan[xlsx]`)"
+    paths = write_csv_bundle(sheets, out / "report-xlsx")
+    if notes:
+        paths += write_csv_bundle({f"{SHEET_RESULT}-안내": (["항목", "내용"], _san([list(n) for n in notes]))}, out / "report-xlsx")
+    return paths, "openpyxl 미설치 — report 시트별 CSV 번들로 대체(`pip install secscan[xlsx]`)"
 
 
 # 열 너비는 내용 길이로 자동 계산한다(결정적: 같은 값 → 같은 너비). 한글·전각은 2칸, 하한 MIN_WIDTH, 상한 MAX_WIDTH.
@@ -167,8 +171,8 @@ def fit_width(values) -> float:
     return float(min(MAX_WIDTH, max(MIN_WIDTH, longest + 2)))
 
 
-def _style_xlsx(path: Path, created: str) -> None:
-    """가독성 서식: 내용 길이 기반 열 너비·줄바꿈·상단 정렬·굵은 헤더·틀고정.
+def _style_xlsx(path: Path, created: str, notes: list[tuple[str, str]]) -> None:
+    """가독성 서식: 내용 길이 기반 열 너비·줄바꿈·상단 정렬·굵은 헤더·틀고정. 4_결과반환에는 표 위에 안내 블록을 삽입한다.
     저장 후 modified 를 created 로 다시 고정해 결정성을 지킨다."""
     from openpyxl import load_workbook
     from openpyxl.styles import Alignment, Font, PatternFill
@@ -183,10 +187,24 @@ def _style_xlsx(path: Path, created: str) -> None:
         for row in ws.iter_rows():
             for cell in row:
                 cell.alignment = Alignment(wrap_text=True, vertical="top")
-        for cell in ws[1]:
+        header_row = 1
+        if ws.title == SHEET_RESULT and notes:
+            header_row = len(notes) + 2  # 안내 n행 + 빈 행 1 + 헤더
+            ws.insert_rows(1, amount=len(notes) + 1)
+            last = get_column_letter(ws.max_column)
+            for i, (label, text) in enumerate(notes, 1):
+                ws.cell(row=i, column=1, value=label).font = Font(bold=True)
+                c = ws.cell(row=i, column=2, value=text)
+                ws.merge_cells(f"B{i}:{last}{i}")
+                for cell in ws[i]:
+                    cell.alignment = Alignment(wrap_text=True, vertical="top")
+                    cell.fill = PatternFill("solid", fgColor="EEF3FA")
+                ws.row_dimensions[i].height = 15 * max(1, -(-_display_len(text) // 100))
+        for cell in ws[header_row]:
             cell.font = Font(bold=True)
             cell.fill = PatternFill("solid", fgColor="D9D9D9")
-        ws.freeze_panes = FREEZE.get(ws.title, "A2")
+        freeze = FREEZE.get(ws.title, "A2")
+        ws.freeze_panes = f"A{header_row + 1}" if header_row != 1 else freeze
     ts = datetime.fromisoformat(created) if created else datetime(1970, 1, 1)
     wb.properties.created = ts
     wb.properties.modified = ts

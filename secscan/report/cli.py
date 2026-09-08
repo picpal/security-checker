@@ -12,7 +12,7 @@ from .derive import derive_all
 from .interpret import build_request, load_interpretations
 from .kb import entry_for
 from .paths import relativize
-from .workbook import build_report_sheets, write_report
+from .workbook import build_report_sheets, result_notes, write_report
 
 
 def build_report_with_request(findings: list[Finding], meta: dict, *, target: str | None = None,
@@ -37,7 +37,8 @@ def write_report_bundle(findings: list[Finding], meta: dict, out_dir, *, target:
     out.mkdir(parents=True, exist_ok=True)
     sheets, request, _ = build_report_with_request(findings, meta, target=target, bom=bom, interpretations=interpretations,
                                                    findings_path=findings_path)
-    paths, warn = write_report(sheets, out, created=str(meta.get("run_date", "")), prefer_xlsx=prefer_xlsx)
+    paths, warn = write_report(sheets, out, created=str(meta.get("run_date", "")), prefer_xlsx=prefer_xlsx,
+                               notes=result_notes(str(target or meta.get("target", ""))))
     rq = out / "report-request.json"
     rq.write_text(json.dumps(request, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return paths + [rq], warn

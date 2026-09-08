@@ -8,7 +8,7 @@ from secscan.report.derive import derive_all
 from secscan.report.kb import entry_for
 from secscan.report.models import Interpretation
 from secscan.report.workbook import (ACTION_HEADER, QUESTION_HEADER, RESULT_HEADER, SHEET_ACTIONS, SHEET_QUESTIONS,
-                                     SHEET_RESULT, SHEET_RULES, SHEET_SUMMARY, build_report_sheets, guard_rows, write_report)
+                                     SHEET_RESULT, SHEET_RULES, SHEET_SUMMARY, build_report_sheets, result_notes, write_report)
 
 FIX = Path("fixtures/report/work-note-findings.json")
 GOLDEN = Path("tests/golden/report-work-note-sheets.json")
@@ -65,15 +65,15 @@ def test_summary_conclusion_and_counts_and_unregistered_rules():
     assert summary["지식베이스 미등록 룰"][0] == "없음"  # 10건 등록으로 work-note 는 전부 커버
 
 
-def test_result_sheet_has_guard_rows_then_one_row_per_finding():
+def test_result_sheet_is_pure_table_and_notes_live_outside():
     rows = _sheets()[SHEET_RESULT][1]
-    labels = [r[0] for r in rows[:6]]
-    assert labels == ["이 시트는", "고쳐도 되는 것", "하지 말 것", "끝났는지 확인하는 법", "처리 결과에 쓸 수 있는 값", "검증은 누가 하나"]
-    assert "secscan scan --target work-note" in rows[3][1]
     acts = _sheets()[SHEET_ACTIONS][1]
-    assert [r[0] for r in rows[6:]] == [r[2] for r in acts]
-    assert all(r[1:6] == ["", "", "", "", ""] for r in rows[6:])  # 처리 결과~커밋은 LLM 이 채움
-    assert [r[6:] for r in rows[6:]] == [[a[3], a[10], a[4]] for a in acts]  # 문제·담당·위치 참고 열
+    assert [r[0] for r in rows] == [r[2] for r in acts]  # 안내 행 없이 finding 행만, 조치목록 순서
+    assert all(r[1:6] == ["", "", "", "", ""] for r in rows)  # 처리 결과~커밋은 LLM 이 채움
+    assert [r[6:] for r in rows] == [[a[3], a[10], a[4]] for a in acts]  # 문제·담당·위치 참고 열
+    notes = result_notes("work-note")
+    assert [n[0] for n in notes] == ["이 시트는", "고쳐도 되는 것", "하지 말 것", "끝났는지 확인하는 법", "처리 결과에 쓸 수 있는 값", "검증은 누가 하나"]
+    assert "secscan scan --target work-note" in notes[3][1]
 
 
 def test_rules_sheet_is_fixed_table():
@@ -112,10 +112,13 @@ def test_write_report_xlsx_or_csv(tmp_path):
         import openpyxl  # noqa: F401
     except ImportError:
         return
-    paths, warn = write_report(_sheets(), tmp_path, created="2026-09-06", prefer_xlsx=True)
+    paths, warn = write_report(_sheets(), tmp_path, created="2026-09-06", prefer_xlsx=True, notes=result_notes("work-note"))
     assert warn is None and paths == [tmp_path / "report.xlsx"]
     from openpyxl import load_workbook
     wb = load_workbook(paths[0])
+    rs = wb[SHEET_RESULT]
+    assert rs["A1"].value == "이 시트는" and rs["A7"].value is None and rs["A8"].value == "ID"  # 안내 6행 + 빈 행 + 헤더
+    assert rs["A9"].value == _sheets()[SHEET_RESULT][1][0][0] and rs.freeze_panes == "A9"
     assert wb.sheetnames == [SHEET_SUMMARY, SHEET_ACTIONS, SHEET_QUESTIONS, SHEET_RULES, SHEET_RESULT]
     assert wb.properties.modified == wb.properties.created
     from openpyxl.utils import get_column_letter
