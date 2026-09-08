@@ -118,3 +118,10 @@ def test_write_report_xlsx_or_csv(tmp_path):
     wb = load_workbook(paths[0])
     assert wb.sheetnames == [SHEET_SUMMARY, SHEET_ACTIONS, SHEET_QUESTIONS, SHEET_RULES, SHEET_RESULT]
     assert wb.properties.modified == wb.properties.created
+    from openpyxl.utils import get_column_letter
+    from secscan.report.workbook import MAX_WIDTH, MIN_WIDTH, fit_width
+    ws = wb[SHEET_ACTIONS]
+    widths = [ws.column_dimensions[get_column_letter(i)].width for i in range(1, len(ACTION_HEADER) + 1)]
+    assert all(MIN_WIDTH <= w <= MAX_WIDTH for w in widths) and widths[0] < widths[8]  # No. 열은 좁고 '해야 할 일' 열은 넓다
+    assert fit_width(["ab", "한글한글"]) == 10.0 and fit_width([]) == MIN_WIDTH and fit_width(["x" * 200]) == MAX_WIDTH
+    assert ws.freeze_panes == "D2" and ws["A1"].font.bold

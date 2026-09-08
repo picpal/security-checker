@@ -149,19 +149,27 @@ def write_report(sheets: dict[str, Sheet], out_dir, *, created: str, prefer_xlsx
     return write_csv_bundle(sheets, out / "report-xlsx"), "openpyxl 미설치 — report 시트별 CSV 번들로 대체(`pip install secscan[xlsx]`)"
 
 
-# 시트별 열 너비(문자 수). 값은 서식일 뿐이라 골든(값 비교)에 영향이 없다.
-COLUMN_WIDTHS = {
-    SHEET_SUMMARY: [24, 70, 60],
-    SHEET_ACTIONS: [5, 12, 14, 32, 44, 40, 42, 46, 50, 18, 24, 10, 44, 8, 18, 36, 44],
-    SHEET_QUESTIONS: [5, 14, 44, 44, 52, 64, 52, 44, 40],
-    SHEET_RULES: [12, 28, 62, 52],
-    SHEET_RESULT: [22, 28, 30, 44, 60, 12, 32, 24, 44],
-}
+# 열 너비는 내용 길이로 자동 계산한다(결정적: 같은 값 → 같은 너비). 한글·전각은 2칸, 하한 MIN_WIDTH, 상한 MAX_WIDTH.
+MIN_WIDTH, MAX_WIDTH = 8, 60
 FREEZE = {SHEET_ACTIONS: "D2", SHEET_QUESTIONS: "C2"}
 
 
+def _display_len(v) -> int:
+    import unicodedata
+    if v is None:
+        return 0
+    return sum(2 if unicodedata.east_asian_width(ch) in ("W", "F") else 1 for ch in str(v))
+
+
+def fit_width(values) -> float:
+    """열의 셀 값들로 너비를 정한다: 가장 긴 값(줄바꿈 전 첫 줄 기준)에 여유 2를 더하고 [MIN_WIDTH, MAX_WIDTH] 로 자른다."""
+    longest = max((_display_len(str(v).split("\n", 1)[0]) for v in values), default=0)
+    return float(min(MAX_WIDTH, max(MIN_WIDTH, longest + 2)))
+
+
 def _style_xlsx(path: Path, created: str) -> None:
-    """가독성 서식: 열 너비·줄바꿈·상단 정렬·굵은 헤더·틀고정. 저장 후 modified 를 created 로 다시 고정해 결정성을 지킨다."""
+    """가독성 서식: 내용 길이 기반 열 너비·줄바꿈·상단 정렬·굵은 헤더·틀고정.
+    저장 후 modified 를 created 로 다시 고정해 결정성을 지킨다."""
     from openpyxl import load_workbook
     from openpyxl.styles import Alignment, Font, PatternFill
     from openpyxl.utils import get_column_letter
@@ -170,9 +178,8 @@ def _style_xlsx(path: Path, created: str) -> None:
 
     wb = load_workbook(path)
     for ws in wb.worksheets:
-        widths = COLUMN_WIDTHS.get(ws.title, [])
-        for i, w in enumerate(widths, 1):
-            ws.column_dimensions[get_column_letter(i)].width = w
+        for col in ws.iter_cols(min_row=1, max_row=ws.max_row):
+            ws.column_dimensions[get_column_letter(col[0].column)].width = fit_width(c.value for c in col)
         for row in ws.iter_rows():
             for cell in row:
                 cell.alignment = Alignment(wrap_text=True, vertical="top")
