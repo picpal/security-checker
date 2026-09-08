@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>secscan 파이프라인 지도</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --paper:      #f5f5f6;
+    --surface:    #ffffff;
+    --surface-2:  #ecedf1;
+    --ink:        #2d3142;
+    --muted:      #4f5d75;
+    --soft:       #7a8399;
+    --rule:       rgba(45, 49, 66, 0.13);
+    --rule-soft:  rgba(45, 49, 66, 0.07);
+    --accent:     #0f766e;
+    --accent-tint:rgba(15, 118, 110, 0.09);
+    --act:        #a3401b;
+    --act-tint:   rgba(163, 64, 27, 0.10);
+    --rev:        #85631f;
+    --rev-tint:   rgba(133, 99, 31, 0.10);
+    --dem:        #4f5d75;
+    --dem-tint:   rgba(79, 93, 117, 0.10);
+    --shadow:     0 1px 2px rgba(45, 49, 66, 0.05);
+
+    --sans:  'Pretendard', 'Noto Sans KR', system-ui, -apple-system, sans-serif;
+    --mono:  'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  :root:not([data-theme="light"]) { color-scheme: light dark; }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:      #171a23;
+      --surface:    #1e2230;
+      --surface-2:  #262b3a;
+      --ink:        #e5e8f1;
+      --muted:      #a8b0c4;
+      --soft:       #838b9e;
+      --rule:       rgba(229, 232, 241, 0.15);
+      --rule-soft:  rgba(229, 232, 241, 0.08);
+      --accent:     #46b8aa;
+      --accent-tint:rgba(70, 184, 170, 0.14);
+      --act:        #e0895e;
+      --act-tint:   rgba(224, 137, 94, 0.14);
+      --rev:        #d3ab53;
+      --rev-tint:   rgba(211, 171, 83, 0.14);
+      --dem:        #a8b0c4;
+      --dem-tint:   rgba(168, 176, 196, 0.12);
+      --shadow:     0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper:      #171a23;
+    --surface:    #1e2230;
+    --surface-2:  #262b3a;
+    --ink:        #e5e8f1;
+    --muted:      #a8b0c4;
+    --soft:       #838b9e;
+    --rule:       rgba(229, 232, 241, 0.15);
+    --rule-soft:  rgba(229, 232, 241, 0.08);
+    --accent:     #46b8aa;
+    --accent-tint:rgba(70, 184, 170, 0.14);
+    --act:        #e0895e;
+    --act-tint:   rgba(224, 137, 94, 0.14);
+    --rev:        #d3ab53;
+    --rev-tint:   rgba(211, 171, 83, 0.14);
+    --dem:        #a8b0c4;
+    --dem-tint:   rgba(168, 176, 196, 0.12);
+    --shadow:     0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.65;
+    padding: 3rem 1.5rem 5rem;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .frame { max-width: 1120px; margin: 0 auto; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.6rem;
+  }
+
+  h1 {
+    font-size: clamp(1.6rem, 2.4vw + 0.8rem, 2.15rem);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+    text-wrap: balance;
+    margin-bottom: 0.85rem;
+  }
+
+  .lede { color: var(--muted); max-width: 68ch; }
+  .lede + .lede { margin-top: 0.6rem; }
+  .lede code, p code, li code, td code { font-family: var(--mono); font-size: 0.85em; color: var(--ink); }
+
+  .meta-strip {
+    display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem;
+    margin-top: 1.6rem; padding-top: 1.1rem;
+    border-top: 1px solid var(--rule);
+    font-family: var(--mono); font-size: 0.72rem; color: var(--soft);
+  }
+  .meta-strip b { color: var(--muted); font-weight: 500; }
+
+  section { margin-top: 3.75rem; }
+  h2 {
+    font-size: 1.25rem; font-weight: 600; letter-spacing: -0.015em;
+    display: flex; align-items: baseline; gap: 0.7rem; margin-bottom: 0.5rem;
+  }
+  h2 .sec-no {
+    font-family: var(--mono); font-size: 0.72rem; font-weight: 500;
+    color: var(--accent); letter-spacing: 0.1em; padding-top: 0.1rem;
+  }
+  .sec-note { color: var(--muted); max-width: 74ch; margin-bottom: 1.6rem; font-size: 0.94rem; }
+
+  /* ---------- 실행 레일 ---------- */
+  .rail { list-style: none; position: relative; display: flex; flex-direction: column; gap: 0.55rem; }
+  .rail::before {
+    content: ""; position: absolute; left: 15px; top: 14px; bottom: 14px;
+    width: 2px; background: var(--rule); border-radius: 2px;
+  }
+  .stage {
+    position: relative; display: grid;
+    grid-template-columns: 32px minmax(190px, 232px) 1fr;
+    gap: 0 1.1rem; align-items: start;
+    padding: 0.75rem 0;
+  }
+  .stage + .stage { border-top: 1px solid var(--rule-soft); }
+  .node {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--surface); border: 2px solid var(--rule);
+    display: grid; place-items: center;
+    font-family: var(--mono); font-size: 0.7rem; font-weight: 600; color: var(--muted);
+    position: relative; z-index: 1;
+  }
+  .stage.is-gate .node { border-color: var(--accent); color: var(--accent); }
+  .stage.is-out .node { border-color: var(--act); color: var(--act); }
+  .stage-head h3 { font-size: 0.98rem; font-weight: 600; line-height: 1.4; margin-top: 0.15rem; }
+  .stage-head .mod {
+    display: block; font-family: var(--mono); font-size: 0.72rem;
+    color: var(--soft); margin-top: 0.15rem; word-break: keep-all; overflow-wrap: anywhere;
+  }
+  .stage-body { display: flex; flex-direction: column; gap: 0.5rem; padding-top: 0.15rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .chip {
+    font-family: var(--mono); font-size: 0.72rem; line-height: 1.7;
+    padding: 0.05rem 0.5rem; border-radius: 3px; align-self: flex-start;
+    border: 1px solid var(--rule); background: var(--surface); color: var(--muted);
+  }
+  .chip.tool { border-color: var(--accent); background: var(--accent-tint); color: var(--accent); font-weight: 500; }
+  .chip.none { border-style: dashed; }
+  .kv { display: grid; grid-template-columns: 3.4rem 1fr; gap: 0.15rem 0.75rem; font-size: 0.88rem; }
+  .kv dt {
+    font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--soft); padding-top: 0.28rem;
+  }
+  .kv dd { color: var(--muted); }
+  .kv dd b { color: var(--ink); font-weight: 600; }
+
+  /* ---------- 판정 규칙 ---------- */
+  .cascade { display: flex; flex-direction: column; gap: 0.5rem; counter-reset: rule; }
+  .crule {
+    display: grid; grid-template-columns: 1.9rem 1fr auto; gap: 0.9rem; align-items: center;
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 4px;
+    padding: 0.7rem 0.9rem; box-shadow: var(--shadow);
+  }
+  .crule .ord {
+    font-family: var(--mono); font-size: 0.75rem; color: var(--soft);
+    text-align: right; font-variant-numeric: tabular-nums;
+  }
+  .crule .cond { font-size: 0.9rem; color: var(--muted); }
+  .crule .cond b { color: var(--ink); font-weight: 600; }
+  .verdict {
+    font-family: var(--mono); font-size: 0.73rem; font-weight: 600; white-space: nowrap;
+    padding: 0.2rem 0.6rem; border-radius: 999px; border: 1px solid;
+  }
+  .v-act { color: var(--act); background: var(--act-tint); border-color: var(--act); }
+  .v-rev { color: var(--rev); background: var(--rev-tint); border-color: var(--rev); }
+  .v-dem { color: var(--dem); background: var(--dem-tint); border-color: var(--dem); }
+  .v-sup { color: var(--soft); background: transparent; border-color: var(--rule); }
+
+  /* ---------- 표 ---------- */
+  .scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 4px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.87rem; min-width: 560px; }
+  th, td { text-align: left; padding: 0.6rem 0.85rem; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+  thead th {
+    font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--soft); font-weight: 500; background: var(--surface-2); border-bottom: 1px solid var(--rule);
+    position: sticky; top: 0;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.name { font-family: var(--mono); font-size: 0.8rem; color: var(--ink); white-space: nowrap; }
+  td.c { text-align: center; font-family: var(--mono); color: var(--soft); }
+  td.c.on { color: var(--accent); font-weight: 600; }
+  .tnote { font-size: 0.85rem; color: var(--soft); margin-top: 0.85rem; max-width: 78ch; }
+
+  /* ---------- 도구 카드 ---------- */
+  .tools { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 0.9rem; }
+  .tool {
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 4px;
+    padding: 1rem 1.1rem 1.1rem; box-shadow: var(--shadow);
+    display: flex; flex-direction: column; gap: 0.7rem;
+  }
+  .tool-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
+  .tool-head h3 { font-family: var(--mono); font-size: 0.92rem; font-weight: 600; letter-spacing: -0.01em; }
+  .role {
+    font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--accent); background: var(--accent-tint); border-radius: 3px; padding: 0.12rem 0.42rem; white-space: nowrap;
+  }
+  .role.off { color: var(--soft); background: transparent; border: 1px dashed var(--rule); }
+  .cmd {
+    font-family: var(--mono); font-size: 0.74rem; line-height: 1.55; color: var(--ink);
+    background: var(--surface-2); border-radius: 3px; padding: 0.5rem 0.6rem;
+    overflow-x: auto; white-space: pre; scrollbar-width: thin;
+  }
+  .tool dl { display: grid; grid-template-columns: 4.2rem 1fr; gap: 0.25rem 0.7rem; font-size: 0.85rem; }
+  .tool dt {
+    font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--soft); padding-top: 0.2rem;
+  }
+  .tool dd { color: var(--muted); }
+  .tool dd b { color: var(--ink); font-weight: 600; }
+
+  /* ---------- 패널 ---------- */
+  .panel {
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 4px;
+    padding: 1.1rem 1.2rem; box-shadow: var(--shadow);
+  }
+  .panel + .panel { margin-top: 0.9rem; }
+  .panel h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.5rem; }
+  .panel p { color: var(--muted); font-size: 0.9rem; }
+  .panel ul { margin: 0.5rem 0 0 1.05rem; color: var(--muted); font-size: 0.9rem; }
+  .panel li { margin-bottom: 0.25rem; }
+  .panel li b { color: var(--ink); font-weight: 600; }
+
+  .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 0.9rem; align-items: start; }
+
+  .flowline {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem;
+    font-family: var(--mono); font-size: 0.76rem; color: var(--muted);
+  }
+  .flowline .box {
+    border: 1px solid var(--rule); background: var(--surface-2);
+    border-radius: 3px; padding: 0.22rem 0.55rem; color: var(--ink);
+  }
+  .flowline .box.llm { border-color: var(--rev); background: var(--rev-tint); color: var(--rev); }
+  .flowline .box.gate { border-color: var(--accent); background: var(--accent-tint); color: var(--accent); }
+  .flowline .arw { color: var(--soft); }
+
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 0.75rem 1.4rem; margin-top: 0.9rem; }
+  .fact .n { font-family: var(--mono); font-size: 1.35rem; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .fact .l { font-size: 0.78rem; color: var(--soft); }
+
+  footer {
+    margin-top: 4rem; padding-top: 1.2rem; border-top: 1px solid var(--rule);
+    font-family: var(--mono); font-size: 0.72rem; color: var(--soft); line-height: 1.9;
+  }
+  footer b { color: var(--muted); font-weight: 500; }
+
+  @media (max-width: 760px) {
+    body { padding: 2rem 1rem 3rem; }
+    .stage { grid-template-columns: 32px 1fr; gap: 0.4rem 0.9rem; }
+    .stage-body { grid-column: 2; }
+    .crule { grid-template-columns: 1.6rem 1fr; }
+    .crule .verdict { grid-column: 2; justify-self: start; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="frame">
+
+  <header>
+    <p class="eyebrow">secscan · 단계 × 도구 × 기준</p>
+    <h1>secscan 파이프라인 지도</h1>
+    <p class="lede">
+      <code>secscan scan</code> 한 번이 어떤 순서로 무슨 도구를 돌리고, 그 결과를 어떤 조건으로 걸러
+      최종 판정에 이르는지를 코드 기준으로 정리했다. 각 단계에 <b>실행 도구</b>·<b>실행 조건</b>·<b>판정 기준</b>을
+      함께 적었다. 원칙은 하나다 — 도구 실행·정규화·도달성·판정은 전부 결정적 코드이고,
+      Claude 는 확인질문에 답을 다는 <em>증거 해석자</em>일 뿐 판정 주체가 아니다.
+    </p>
+    <p class="lede">
+      2026-09-04 자 <code>2026-09-04-scan-pipeline-flow.html</code> 이 "왜 이 순서인가"(설계 근거)를 다뤘다면,
+      이 문서는 "어느 단계에서 어떤 툴이 무엇을 근거로 결론을 내는가"를 다룬다.
+    </p>
+    <div class="meta-strip">
+      <span><b>기준 코드</b> main @ 2026-09-08</span>
+      <span><b>프로파일</b> quick · accurate-sca · standard · deep</span>
+      <span><b>스캐너</b> trivy · cdxgen · semgrep · gitleaks · depscan · spotbugs · trufflehog · osv-scanner</span>
+    </div>
+  </header>
+
+  <!-- ================= 1. 실행 흐름 ================= -->
+  <section>
+    <h2><span class="sec-no">01</span>실행 흐름 — 단계마다 무엇이 돌고 무엇으로 거르는가</h2>
+    <p class="sec-note">
+      번호는 실제 실행 순서다(<code>secscan/scan.py</code> <code>run_scan</code>). 테두리가 강조된 노드는
+      <b>건너뛸 수 있는 관문</b>(조건 불충족 시 그 단계만 생략되고 나머지 결과는 그대로 유효),
+      마지막 노드는 <b>바깥으로 나가는 산출물</b>이다.
+    </p>
+
+    <ol class="rail">
+
+      <li class="stage">
+        <div class="node">00</div>
+        <div class="stage-head"><h3>대상 스택 감지</h3><span class="mod">secscan/detect.py · secscan detect</span></div>
+        <div class="stage-body">
+          <div class="chips"><span class="chip none">외부 도구 없음 — 파일 존재 검사</span></div>
+          <dl class="kv">
+            <dt>조건</dt><dd>루트의 <code>pom.xml</code> → maven, <code>build.gradle(.kts)</code> → gradle. 루트에 없으면 하위 모듈까지 탐색</dd>
+            <dt>기준</dt><dd><code>build</code>·<code>node_modules</code>·<code>fixtures</code>·<code>testdata</code> 등은 감지에서 제외 — "주 스택"만 본다</dd>
+            <dt>산출</dt><dd>감지 결과로 <b>프로파일 추천</b>. 자연어 요청 해석은 Claude, 스택 판정은 이 코드</dd>
+          </dl>
+        </div>
+      </li>
+
+      <li class="stage">
+        <div class="node">01</div>
+        <div class="stage-head"><h3>프로파일 → 어댑터 확정</h3><span class="mod">secscan/profiles.py</span></div>
+        <div class="stage-body">
+          <div class="chips">
+            <span class="chip">quick</span><span class="chip">accurate-sca</span><span class="chip">standard</span><span class="chip">deep</span>
+          </div>
+          <dl class="kv">
+            <dt>조건</dt><dd>프로파일 이름이 곧 <b>어댑터 목록 + 도달성 on/off</b> 선언 (§4 매트릭스 참조)</dd>
+            <dt>기준</dt><dd>quick 만 <code>trivy fs</code>(속도), 나머지는 BOM 기반 SCA(전이 의존성 recall)</dd>
+          </dl>
+        </div>
+      </li>
+
+      <li class="stage">
+        <div class="node">02</div>
+        <div class="stage-head"><h3>스캐너 병렬 실행</h3><span class="mod">secscan/orchestrator.py · adapters/*.py</span></div>
+        <div class="stage-body">
+          <div class="chips">
+            <span class="chip tool">trivy</span><span class="chip tool">cdxgen</span><span class="chip tool">semgrep</span>
+            <span class="chip tool">gitleaks</span><span class="chip tool">spotbugs+findsecbugs</span>
+          </div>
+          <dl class="kv">
+            <dt>조건</dt><dd>ThreadPool <code>min(어댑터 수, 8)</code> 동시 실행. 도구별 타임아웃: gitleaks 300s · BOM-SCA/spotbugs 900s</dd>
+            <dt>기준</dt><dd>성공 판정은 도구별 종료코드 화이트리스트 — trivy·semgrep <code>{0}</code>, gitleaks·osv-scanner <code>{0,1}</code>(1 = 발견됨 = 성공)</dd>
+            <dt>실패</dt><dd>미설치·타임아웃·빌드실패는 예외를 올리지 않고 <code>status=skipped/timeout/failed</code> 로 격리 → <b>부분 실패로 보고</b>하고 나머지는 계속</dd>
+          </dl>
+        </div>
+      </li>
+
+      <li class="stage">
+        <div class="node">03</div>
+        <div class="stage-head"><h3>정규화 → typed Finding</h3><span class="mod">secscan/normalize/&lt;tool&gt;.py</span></div>
+        <div class="stage-body">
+          <div class="chips"><span class="chip none">도구 출력(JSON/SARIF) → 내부 모델</span></div>
+          <dl class="kv">
+            <dt>기준</dt><dd>CWE 표기를 전 도구 <code>"CWE-NNN"</code> 으로 통일. semgrep 은 <code>metadata.cwe / owasp / confidence</code>, trivy 는 CVE·컴포넌트·수정버전, gitleaks 는 <b>위치만</b>(비밀값은 저장하지 않음)</dd>
+            <dt>주의</dt><dd>SARIF 는 <b>출력 전용</b>이다 — 내부 정본은 항상 typed <code>Finding</code></dd>
+          </dl>
+        </div>
+      </li>
+
+      <li class="stage">
+        <div class="node">04</div>
+        <div class="stage-head"><h3>합의 병합(dedup)</h3><span class="mod">secscan/normalize/merge.py</span></div>
+        <div class="stage-body">
+          <div class="chips"><span class="chip">dedup_key 동일 → 1건</span></div>
+          <dl class="kv">
+            <dt>조건</dt><dd>SCA 는 <code>ecosystem|package|version|advisory</code>, 코드 위치형은 <code>category|file|line|rule_id</code></dd>
+            <dt>기준</dt><dd>severity 는 <b>최대값</b>, confidence 는 <b>최소값</b>(보수적), cwe·owasp·참조는 합집합, <code>tool</code> 은 <code>"a+b"</code>, <code>consensus.score</code> = 지목한 도구 수</dd>
+          </dl>
+        </div>
+      </li>
+
+      <li class="stage">
+        <div class="node">05</div>
+        <div class="stage-head"><h3>경로 제외</h3><span class="mod">secscan/exclude.py</span></div>
+        <div class="stage-body">
+          <div class="chips"><span class="chip">기본 제외 13종</span><span class="chip">--exclude</span><span class="chip">.gitignore</span></div>
+          <dl class="kv">
+            <dt>조건</dt><dd><code>build target .git .gradle node_modules dist out .venv __pycache__ .idea …</code> + 사용자 지정 + git 이 무시하는 경로</dd>
+            <dt>기준</dt><dd>스캐너별 제외 옵션이 제각각이라 <b>정규화 후 경로로 한 번에</b> 거른다. 제외 건수는 요약에 명시</dd>
+          </dl>
+        </div>
+      </li>
+
+      <li class="stage is-gate">
+        <div class="node">06</div>
+        <div class="stage-head"><h3>도달성 분석 <span style="color:var(--accent)">(관문)</span></h3><span class="mod">reachability/engine.py · depscan.py</span></div>
+        <div class="stage-body">
+          <div class="chips"><span class="chip tool">OWASP dep-scan</span><span class="chip tool">atom</span></div>
+          <dl class="kv">
+            <dt>조건</dt><dd>4중 안전장치를 순서대로 통과해야 실행: ① <code>doctor</code> 런타임·메모리 점검 → ② 소스 5만 LOC 초과면 중단(<code>--allow-large</code> 로 강행) → ③ 코드 해시 캐시 적중 시 재사용 → ④ 예산 600s</dd>
+            <dt>기준</dt><dd>atom usage 슬라이스에서 <b>앱 코드가 실제 호출한 타입</b>을 뽑아 취약 패키지 prefix 와 대조 — 일치하면 <code>reachable</code>(+"앱 코드가 X 사용" 증거), 불일치면 <code>unreachable</code>, 슬라이스에 없으면 <code>unknown</code> 유지</dd>
+            <dt>실패</dt><dd>타임아웃·에러·크기초과 → <code>reason=timeout|error|size|env</code> 로 <b>도달성만 생략</b>, 탐지 결과는 100% 보존</dd>
+          </dl>
+        </div>
+      </li>
+
+      <li class="stage is-gate">
+        <div class="node">07</div>
+        <div class="stage-head"><h3>시크릿 유효성 검증 <span style="color:var(--accent)">(관문·기본 off)</span></h3><span class="mod">secscan/secret/verify.py</span></div>
+        <div class="stage-body">
+          <div class="chips"><span class="chip tool">trufflehog</span></div>
+          <dl class="kv">
+            <dt>조건</dt><dd><code>--verify-secrets</code> 이고 <code>--network-off</code> 가 아닐 때만 <code>verify</code>. <b>정책이 verify 가 아니면 runner 를 호출조차 하지 않는다</b>(= 자격증명 외부 전송 없음)</dd>
+            <dt>기준</dt><dd><code>trufflehog filesystem --only-verified</code> 가 살아있다고 표시한 파일의 시크릿만 <code>verified=true</code> + severity <b>critical</b> 승격</dd>
+          </dl>
+        </div>
+      </li>
+
+      <li class="stage is-gate">
+        <div class="node">08</div>
+        <div class="stage-head"><h3>억제 적용 <span style="color:var(--accent)">(사람이 쓴 것만)</span></h3><span class="mod">secscan/suppress/*.py</span></div>
+        <div class="stage-body">
+          <div class="chips"><span class="chip">baseline</span><span class="chip">suppressions 파일</span></div>
+          <dl class="kv">
+            <dt>조건</dt><dd>baseline → 명시 억제 순. 억제 항목은 근거(provenance)·증거·만료일·범위를 갖는다</dd>
+            <dt>기준</dt><dd>만료·버전 상향·도달성 변화가 감지되면 <b>무효화(invalidated)</b> 로 재검토 보고. <b>자동 억제는 어떤 경로로도 하지 않는다</b> — 억제는 사람이 확정</dd>
+          </dl>
+        </div>
+      </li>
+
+      <li class="stage">
+        <div class="node">09</div>
+        <div class="stage-head"><h3>판정 H + 컴플라이언스</h3><span class="mod">secscan/disposition.py · compliance.py</span></div>
+        <div class="stage-body">
+          <div class="chips"><span class="chip">tier</span><span class="chip">disposition</span><span class="chip">KISA·PCI 매핑</span></div>
+          <dl class="kv">
+            <dt>조건</dt><dd>억제 다음, 출력 앞의 <b>단일 결정 지점</b>. 이후 md·SARIF·xlsx·종료코드는 여기 저장된 값을 읽기만 한다(재계산 금지)</dd>
+            <dt>기준</dt><dd>§2 판정 규칙 표 참조. 동시에 <code>Finding.cwe</code> 를 허브로 KISA·PCI 분류를 채운다(판정이 아니라 분류)</dd>
+          </dl>
+        </div>
+      </li>
+
+      <li class="stage is-out">
+        <div class="node">10</div>
+        <div class="stage-head"><h3>정렬 · 출력</h3><span class="mod">secscan/output/*.py</span></div>
+        <div class="stage-body">
+          <div class="chips"><span class="chip">report.md</span><span class="chip">findings.json</span><span class="chip">findings.sarif</span><span class="chip">findings.xlsx</span></div>
+          <dl class="kv">
+            <dt>기준</dt><dd>정렬 키는 category → severity → 위치. xlsx 는 openpyxl 이 있을 때만(없으면 CSV 폴백, 스캔은 실패하지 않음)</dd>
+          </dl>
+        </div>
+      </li>
+
+      <li class="stage is-out">
+        <div class="node">11</div>
+        <div class="stage-head"><h3>종료 코드 게이트</h3><span class="mod">secscan/cli.py <code>_has_actionable</code></span></div>
+        <div class="stage-body">
+          <div class="chips"><span class="chip">exit 1 = 조치대상 있음</span><span class="chip">exit 0 = 없음</span></div>
+          <dl class="kv">
+            <dt>기준</dt><dd><code>disposition == actionable</code> 이 <b>한 건이라도</b> 있으면 1. 검토후보·강등·억제됨은 <b>차단하지 않는다</b></dd>
+            <dt>안전</dt><dd>판정 H 를 거치지 않은 finding 이 섞여 있으면 조용히 통과시키지 않고 예외로 중단</dd>
+          </dl>
+        </div>
+      </li>
+
+      <li class="stage is-out">
+        <div class="node">12</div>
+        <div class="stage-head"><h3>보고서 워크북</h3><span class="mod">secscan/report/*.py · secscan report</span></div>
+        <div class="stage-body">
+          <div class="chips"><span class="chip">5 시트 xlsx</span><span class="chip">report-request.json</span></div>
+          <dl class="kv">
+            <dt>기준</dt><dd>지식베이스 + 파생 규칙으로 우선순위·담당·근거를 채운다. 해석 파일이 없어도 워크북은 완성된다 — §6 참조</dd>
+          </dl>
+        </div>
+      </li>
+
+    </ol>
+  </section>
+
+  <!-- ================= 2. 판정 규칙 ================= -->
+  <section>
+    <h2><span class="sec-no">02</span>판정 규칙 — "조치대상"은 무엇으로 결정되는가</h2>
+    <p class="sec-note">
+      단계 09 의 규칙은 <b>위에서부터 순서대로</b> 적용되고, 먼저 걸리는 규칙이 이긴다
+      (<code>secscan/disposition.py</code>, <code>models.sast_tier</code>). 도구가 매긴 severity 는 이 규칙의 입력일 뿐,
+      그 자체가 결론이 아니다.
+    </p>
+
+    <div class="cascade">
+      <div class="crule">
+        <span class="ord">1</span>
+        <span class="cond">사람이 확정한 <b>억제</b>가 붙어 있다</span>
+        <span class="verdict v-sup">억제됨 · P5</span>
+      </div>
+      <div class="crule">
+        <span class="ord">2</span>
+        <span class="cond"><b>SAST</b> · 경로가 테스트/로드테스트다 (<code>/test/</code>, <code>loadtest</code>, <code>*Test.java</code> …)</span>
+        <span class="verdict v-rev">검토후보 · P3</span>
+      </div>
+      <div class="crule">
+        <span class="ord">3</span>
+        <span class="cond"><b>SAST</b> · 룰 신뢰도 high|medium <b>그리고</b> severity critical|high|medium</span>
+        <span class="verdict v-act">조치대상 · P1/P2</span>
+      </div>
+      <div class="crule">
+        <span class="ord">4</span>
+        <span class="cond"><b>SAST</b> · 신뢰도가 없거나 낮다 — 검증 안 된 룰은 우선 버킷에 넣지 않는다</span>
+        <span class="verdict v-rev">검토후보 · P3</span>
+      </div>
+      <div class="crule">
+        <span class="ord">5</span>
+        <span class="cond"><b>SCA</b> · 도달성이 <code>unreachable</code> 이 <em>아니다</em> (reachable 또는 unknown)</span>
+        <span class="verdict v-act">조치대상 · P1/P2</span>
+      </div>
+      <div class="crule">
+        <span class="ord">6</span>
+        <span class="cond"><b>SCA</b> · 도달성이 <code>unreachable</code> 로 확정됐다</span>
+        <span class="verdict v-dem">강등 · P4</span>
+      </div>
+      <div class="crule">
+        <span class="ord">7</span>
+        <span class="cond"><b>Secret</b> 등 도달성 개념이 없는 범주 — 항상 조치</span>
+        <span class="verdict v-act">조치대상 · P1/P2</span>
+      </div>
+    </div>
+
+    <div class="two" style="margin-top:1.1rem">
+      <div class="panel">
+        <h3>우선순위 P1~P5</h3>
+        <ul>
+          <li><b>P1</b> 조치대상 &amp; severity 심각/위험</li>
+          <li><b>P2</b> 조치대상 &amp; 그 외 severity</li>
+          <li><b>P3</b> 검토후보(사람 확인 필요) 또는 미판정</li>
+          <li><b>P4</b> 강등 — 도달 불가 SCA</li>
+          <li><b>P5</b> 억제됨</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>담당 배정(보고서)</h3>
+        <ul>
+          <li><b>자동 수정(LLM)</b> 조치대상 &amp; 코드 문맥 확인이 불필요한 룰</li>
+          <li><b>사람 확인 후</b> 조치대상이지만 문맥이 필요한 룰, 그리고 모든 검토후보</li>
+          <li><b>자동 수정 가능(비차단)</b> 강등 &amp; 조치가 "버전 올리기"</li>
+          <li><b>조치 불필요(모니터링)</b> 강등 &amp; 그 외</li>
+          <li><b>억제됨</b> P5</li>
+        </ul>
+      </div>
+    </div>
+    <p class="tnote">
+      "사람 확인 후" 로 배정된 항목은 자동으로 <b>2_확인질문</b> 시트와 <code>report-request.json</code> 에 실린다.
+      도달 불가인데 호출 경로 증거가 비어 있는 SCA 도 같은 경로로 질문이 만들어진다.
+    </p>
+  </section>
+
+  <!-- ================= 3. 도구 ================= -->
+  <section>
+    <h2><span class="sec-no">03</span>도구별 실제 실행 — 명령 · 성공 조건 · 산출</h2>
+    <p class="sec-note">
+      새 스캐너를 붙이는 비용이 어댑터 1개인 이유가 여기 있다 — 코어는 <code>RawResult</code> 만 알고,
+      도구의 종료코드 관습·타임아웃·실패 격리는 각 어댑터 안에서 끝난다.
+    </p>
+
+    <div class="tools">
+
+      <div class="tool">
+        <div class="tool-head"><h3>trivy fs</h3><span class="role">SCA · quick</span></div>
+        <div class="cmd">trivy fs --scanners vuln --format json --quiet &lt;target&gt;</div>
+        <dl>
+          <dt>본다</dt><dd>Maven/Gradle 의존성 선언·락파일을 정적 파싱</dd>
+          <dt>성공</dt><dd>exit <b>0</b> 만 (취약점이 있어도 0)</dd>
+          <dt>산출</dt><dd>CVE/GHSA · 컴포넌트 · 수정 버전</dd>
+          <dt>한계</dt><dd>락파일 없는 gradle 의 전이 의존은 못 본다 → BOM-SCA 로 보완</dd>
+        </dl>
+      </div>
+
+      <div class="tool">
+        <div class="tool-head"><h3>cdxgen → trivy sbom</h3><span class="role">SCA · 정확 프로파일</span></div>
+        <div class="cmd">cdxgen -t java -o bom.json &lt;target&gt;
+trivy sbom --format json --quiet bom.json</div>
+        <dl>
+          <dt>본다</dt><dd>빌드도구를 호출해 만든 CycloneDX BOM = <b>전이 의존성 전체 그래프</b></dd>
+          <dt>조건</dt><dd>BOM 은 경로 해시 캐시에 1회만 생성(동시 어댑터도 한 번). 타임아웃 900s</dd>
+          <dt>실패</dt><dd>BOM 생성 실패 시 <code>skipped</code> — SCA 만 빠지고 스캔은 계속</dd>
+          <dt>효과</dt><dd>락파일 없는 gradle 프로젝트에서 SCA 탐지 0 → 34건</dd>
+        </dl>
+      </div>
+
+      <div class="tool">
+        <div class="tool-head"><h3>semgrep</h3><span class="role">SAST</span></div>
+        <div class="cmd">semgrep --config p/java --config p/security-audit
+        --config p/owasp-top-ten --config p/cwe-top-25
+        --config secscan/rules --json --quiet</div>
+        <dl>
+          <dt>본다</dt><dd>소스 코드 패턴(파일 내). 공개 룰팩 4종 + 프로젝트 커스텀 룰을 항상 함께 로드</dd>
+          <dt>성공</dt><dd>exit <b>0</b> 만</dd>
+          <dt>산출</dt><dd>rule_id · CWE · OWASP · confidence — 이 confidence 가 tier 를 가른다</dd>
+          <dt>한계</dt><dd>CE 는 함수 간 taint 추적이 없다 — 대신 커스텀 룰 + 확인질문으로 메운다</dd>
+        </dl>
+      </div>
+
+      <div class="tool">
+        <div class="tool-head"><h3>secscan/rules (자체 룰 4종)</h3><span class="role">SAST · 갭 보완</span></div>
+        <div class="cmd">mybatis-sqli-value        ERROR   / HIGH
+mybatis-sqli-identifier   WARNING / LOW
+hardcoded-credential      ERROR   / HIGH
+zero-salt                 ERROR   / HIGH</div>
+        <dl>
+          <dt>규칙</dt><dd>MyBatis <code>${}</code> 는 <b>위치로 분기</b> — 값 자리는 조치대상, 식별자 자리는 검토후보</dd>
+          <dt>계약</dt><dd>룰 metadata 에 <code>cwe</code>·<code>confidence</code> 필수 → tier·컴플라이언스가 자동으로 따라온다</dd>
+          <dt>근거</dt><dd>공개 룰팩·gitleaks 가 놓친 실제 미탐 사례를 취약 시점 커밋으로 실증해 추가</dd>
+        </dl>
+      </div>
+
+      <div class="tool">
+        <div class="tool-head"><h3>gitleaks</h3><span class="role">SECRET</span></div>
+        <div class="cmd">gitleaks dir &lt;target&gt; --report-format json
+        --report-path &lt;tmp&gt; --no-banner --exit-code 1
+        [--config &lt;target&gt;/.gitleaks.toml]</div>
+        <dl>
+          <dt>본다</dt><dd>워킹 트리 파일의 시크릿 패턴 + 엔트로피. 대상 저장소의 allowlist 설정을 존중</dd>
+          <dt>성공</dt><dd>exit <b>0 또는 1</b> (1 = 발견됨 = 정상)</dd>
+          <dt>산출</dt><dd><b>위치만</b> — 비밀값 자체는 finding 에도 요청 파일에도 담지 않는다</dd>
+          <dt>한계</dt><dd>dir 모드는 히스토리를 보지 않는다(과거 커밋 시크릿은 git 모드 필요)</dd>
+        </dl>
+      </div>
+
+      <div class="tool">
+        <div class="tool-head"><h3>trufflehog</h3><span class="role off">SECRET 검증 · opt-in</span></div>
+        <div class="cmd">trufflehog filesystem --only-verified --json &lt;target&gt;</div>
+        <dl>
+          <dt>조건</dt><dd><code>--verify-secrets</code> 명시 &amp; <code>--network-off</code> 아님. 그 외에는 호출 자체가 없다</dd>
+          <dt>기준</dt><dd>출력 JSONL 중 <code>Verified=true</code> 인 파일의 시크릿만 살아있는 것으로 표시</dd>
+          <dt>효과</dt><dd>해당 finding 을 <code>verified</code> + severity <b>critical</b> 로 승격</dd>
+        </dl>
+      </div>
+
+      <div class="tool">
+        <div class="tool-head"><h3>OWASP dep-scan + atom</h3><span class="role">도달성 판정</span></div>
+        <div class="cmd">depscan --src &lt;target&gt; --reports-dir &lt;dir&gt;
+        --reachability-analyzer SemanticReachability
+        -t java --profile research</div>
+        <dl>
+          <dt>본다</dt><dd>atom usage 슬라이스 — 앱 소스가 실제로 호출/참조하는 외부 타입 집합</dd>
+          <dt>기준</dt><dd>취약 패키지의 Java 패키지 prefix 와 호출 타입이 일치 → reachable, 없으면 unreachable</dd>
+          <dt>한계</dt><dd><b>앱 레벨 호출 기준</b>이다. 리플렉션·DI·전이 의존 내부 호출은 사각지대 — "도달 불가"는 안전 보증이 아니다</dd>
+        </dl>
+      </div>
+
+      <div class="tool">
+        <div class="tool-head"><h3>spotbugs + findsecbugs</h3><span class="role">SAST · deep</span></div>
+        <div class="cmd">spotbugs -textui -pluginList findsecbugs-plugin.jar
+        -sarif -output &lt;out&gt; -effort:max -low &lt;classes&gt;</div>
+        <dl>
+          <dt>조건</dt><dd><b>컴파일된 클래스가 필요</b>. <code>target/classes</code>·<code>build/classes/java/main</code> 를 찾고 없으면 <code>mvn -DskipTests compile</code> / <code>gradlew compileJava</code> 시도</dd>
+          <dt>실패</dt><dd>빌드 실패 시 <code>skipped</code> 로 격리 — deep 만 빠지고 다른 스캐너 결과는 보존</dd>
+          <dt>효과</dt><dd>바이트코드 분석이라 semgrep CE 가 놓친 명령어 삽입(CWE-78) 같은 항목을 잡는다</dd>
+        </dl>
+      </div>
+
+      <div class="tool">
+        <div class="tool-head"><h3>osv-scanner</h3><span class="role off">SCA 보강 · 기본 미사용</span></div>
+        <div class="cmd">osv-scanner scan source --format json -r &lt;target&gt;</div>
+        <dl>
+          <dt>상태</dt><dd>어댑터·doctor 점검은 있으나 <b>기본 프로파일에는 없다</b>(옵션)</dd>
+          <dt>성공</dt><dd>exit <b>0 또는 1</b> (1 = 취약점 발견 = 정상)</dd>
+          <dt>쓸모</dt><dd>OSV.dev advisory 커버리지 보강 — 켜면 합의 병합으로 trivy 와 한 건으로 합쳐진다</dd>
+        </dl>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= 4. 매트릭스 ================= -->
+  <section>
+    <h2><span class="sec-no">04</span>프로파일 × 도구</h2>
+    <p class="sec-note">프로파일은 "무엇을 얼마나 볼 것인가"의 선언이다. 도달성 분석은 정확도 프로파일에만 붙는다.</p>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>도구</th><th>역할</th><th style="text-align:center">quick</th>
+            <th style="text-align:center">accurate-sca</th><th style="text-align:center">standard</th><th style="text-align:center">deep</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="name">trivy fs</td><td>SCA(정적 파싱)</td><td class="c on">●</td><td class="c">·</td><td class="c">·</td><td class="c">·</td></tr>
+          <tr><td class="name">cdxgen + trivy sbom</td><td>SCA(전이 의존)</td><td class="c">·</td><td class="c on">●</td><td class="c on">●</td><td class="c on">●</td></tr>
+          <tr><td class="name">semgrep + 자체 룰</td><td>SAST(소스)</td><td class="c">·</td><td class="c">·</td><td class="c on">●</td><td class="c on">●</td></tr>
+          <tr><td class="name">gitleaks</td><td>Secret</td><td class="c on">●</td><td class="c">·</td><td class="c on">●</td><td class="c on">●</td></tr>
+          <tr><td class="name">spotbugs + findsecbugs</td><td>SAST(바이트코드)</td><td class="c">·</td><td class="c">·</td><td class="c">·</td><td class="c on">●</td></tr>
+          <tr><td class="name">dep-scan + atom</td><td>도달성</td><td class="c">·</td><td class="c on">●</td><td class="c on">●</td><td class="c on">●</td></tr>
+          <tr><td class="name">trufflehog</td><td>Secret 검증</td><td class="c" colspan="4" style="text-align:center">프로파일과 무관 — <code>--verify-secrets</code> 로만</td></tr>
+          <tr><td class="name">osv-scanner</td><td>SCA 보강</td><td class="c" colspan="4" style="text-align:center">기본 프로파일 미포함(옵션)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="tnote">
+      <code>secscan doctor</code> 가 이 표의 도구를 실행 전에 점검한다 — 미설치·버전·메모리까지. 도달성은 doctor 통과가 실행 조건(안전장치 ①)이다.
+    </p>
+  </section>
+
+  <!-- ================= 5. 표준 매핑 ================= -->
+  <section>
+    <h2><span class="sec-no">05</span>표준·컴플라이언스가 붙는 위치</h2>
+    <p class="sec-note">
+      "OWASP" 는 이 파이프라인에서 세 곳에 등장하는데, 서로 다른 것이다. 혼동이 잦아 따로 떼어 적는다.
+    </p>
+
+    <div class="two">
+      <div class="panel">
+        <h3>OWASP 라는 이름이 붙는 세 지점</h3>
+        <ul>
+          <li><b>p/owasp-top-ten</b> — semgrep 공개 룰팩. <em>탐지 규칙</em>으로 단계 02 에서 실행된다</li>
+          <li><b>Finding.owasp</b> — semgrep 룰 metadata 를 그대로 옮긴 <em>분류 라벨</em>. 판정에 쓰이지 않는다</li>
+          <li><b>OWASP dep-scan</b> — 단계 06 의 <em>도달성 엔진</em>. 취약점을 탐지하는 도구가 아니다</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>KISA · PCI-DSS 는 CWE 에서 파생</h3>
+        <p>
+          KISA 소프트웨어 보안약점(49개)과 PCI-DSS v4.0.1 §6.2.4 는 <b>기계가독 룰셋을 공식 제공하지 않는다</b>.
+          그래서 별도 탐지 룰을 만들지 않고, 도구들이 이미 채운 <code>Finding.cwe</code> 를 허브로 역매핑한다.
+        </p>
+        <div class="flowline" style="margin-top:0.7rem">
+          <span class="box">도구 출력</span><span class="arw">→</span>
+          <span class="box">CWE-NNN</span><span class="arw">→</span>
+          <span class="box gate">KISA 49 (7대 분류)</span>
+          <span class="box gate">PCI 6.2.4 (5유형)</span>
+        </div>
+        <p style="margin-top:0.7rem">
+          결과는 <b>판정이 아니라 분류</b>이며 순수 결정적이다. 코드 레벨 대응이 흐린 CWE 는 일부러 비워 둔다(과대 매핑 금지).
+          새 표준을 붙이는 비용은 <code>compliance.py</code> 표에 한 줄이다.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 6. 보고서 ================= -->
+  <section>
+    <h2><span class="sec-no">06</span>보고서 워크북과 LLM 경계</h2>
+    <p class="sec-note">
+      스캔 결과를 사람이 읽고 수정 LLM 이 실행할 수 있는 문서로 바꾸는 마지막 구간이다.
+      이 구간에서도 <b>수치·판정·담당·우선순위는 전부 규칙 파생</b>이고, Claude 가 쓰는 것은 "추정과 확인 방법" 두 문장뿐이다.
+    </p>
+
+    <div class="panel">
+      <div class="flowline">
+        <span class="box">findings.json</span><span class="arw">→</span>
+        <span class="box">지식베이스 + 파생 규칙</span><span class="arw">→</span>
+        <span class="box gate">report-request.json</span><span class="arw">→</span>
+        <span class="box llm">Claude 해석</span><span class="arw">→</span>
+        <span class="box gate">검증 통과분만 병합</span><span class="arw">→</span>
+        <span class="box">5 시트 워크북</span><span class="arw">→</span>
+        <span class="box llm">수정 LLM</span><span class="arw">→</span>
+        <span class="box gate">--check-result</span>
+      </div>
+      <ul style="margin-top:0.9rem">
+        <li><b>지식베이스</b> 룰 설명은 스캔 때 생성하지 않는다 — <code>rules.json</code>(등록 룰) 우선, 없으면 CWE 표·advisory 로 합성. 같은 룰은 언제 돌려도 같은 설명</li>
+        <li><b>요청 파일</b> 사람 확인이 필요한 항목만 담는다. 항목마다 위치·룰·질문·사실 목록. 비밀값·코드 스니펫은 담지 않는다</li>
+        <li><b>해석 검증</b> 인용(<code>경로:줄</code>) 없는 답, 길이 초과, 판정 단어("오탐 확정"·"안전함"·"문제 없음"·"억제함"·"수정 완료"), 추정에 섞인 숫자, 모르는 ID 등 8가지 사유로 거부 — 거부된 항목은 조용히 버려지지 않고 사유가 기록된다</li>
+        <li><b>완료 확인</b> <code>secscan report --check-result</code> 가 4_결과반환 시트의 "고쳤다" 주장과 재스캔 결과를 대조 — 여전히 같은 ID 가 나오면 불일치로 exit 2</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h3>워크북 5 시트</h3>
+      <div class="scroll" style="border:none">
+        <table style="min-width:520px">
+          <thead><tr><th>시트</th><th>주 독자</th><th>담는 것</th></tr></thead>
+          <tbody>
+            <tr><td class="name">0_요약</td><td>경영·보안</td><td>총계, 판정 분포, 스캐너 상태, 각 시트 안내</td></tr>
+            <tr><td class="name">1_취약점 목록</td><td>개발·보안</td><td>ID·우선순위·문제·위치·의존 경로·담당·조치·근거</td></tr>
+            <tr><td class="name">2_확인질문</td><td>사람</td><td>문맥이 필요한 항목의 질문과 사실 목록</td></tr>
+            <tr><td class="name">3_용어와 대응</td><td>모든 독자</td><td>P1~P5·담당·판정·심각도·조치 유형을 일반어로</td></tr>
+            <tr><td class="name">4_결과반환</td><td>수정 LLM → 사람</td><td>처리 결과를 적어 되돌려 주는 표 + 규칙 안내</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 7. 실행 예 ================= -->
+  <section>
+    <h2><span class="sec-no">07</span>실행 예 — message-gate (standard, 2026-09-07)</h2>
+    <p class="sec-note">위 규칙이 실제 프로젝트에서 어떤 숫자로 떨어지는지의 한 사례. 아래는 그 실행의 출력 그대로다.</p>
+    <div class="panel">
+      <div class="facts">
+        <div class="fact"><div class="n">23</div><div class="l">최종 finding</div></div>
+        <div class="fact"><div class="n" style="color:var(--act)">12</div><div class="l">조치대상 (exit 1)</div></div>
+        <div class="fact"><div class="n" style="color:var(--rev)">11</div><div class="l">검토후보 (비차단)</div></div>
+        <div class="fact"><div class="n">60</div><div class="l">경로 제외로 걸러짐</div></div>
+        <div class="fact"><div class="n">18</div><div class="l">확인질문</div></div>
+        <div class="fact"><div class="n">—</div><div class="l">도달성 미적용(error)</div></div>
+      </div>
+      <p style="margin-top:1rem">
+        범주별로는 SAST 12(조치대상 1 · 검토후보 11) · SCA 5 · Secret 6.
+        SAST 검토후보 11건은 전부 MyBatis 식별자 자리 <code>${}</code> — 자체 룰이 위치로 분기해 자동으로 사람 확인 대상이 됐다.
+        도달성은 엔진 오류로 생략됐고(<code>reason=error</code>), 그래서 SCA 5건은 <code>unknown</code> 상태로 남아 규칙 5 에 따라 조치대상이 됐다 —
+        <b>도달성이 없으면 강등도 없다</b>는 것이 이 파이프라인의 보수적 기본값이다.
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    <div><b>근거 코드</b> secscan/scan.py · profiles.py · orchestrator.py · adapters/*.py · normalize/*.py · exclude.py · reachability/{engine,depscan}.py · secret/verify.py · suppress/*.py · disposition.py · compliance.py · output/*.py · report/*.py</div>
+    <div><b>함께 보기</b> docs/diagrams/2026-09-04-scan-pipeline-flow.html (설계 근거·검증 캠페인) · docs/superpowers/specs/ (spec) · lessons.md (실행 교훈)</div>
+    <div><b>작성</b> 2026-09-08 · 코드에서 직접 확인한 사실만 기재</div>
+  </footer>
+
+</div>
+</body>
+</html>
