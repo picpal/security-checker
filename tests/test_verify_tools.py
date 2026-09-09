@@ -852,7 +852,7 @@ def test_write_evidence_copies_bom_cache_to_raw_when_target_given(tmp_path, monk
     cache = tmp_path / "cache-bom.json"
     cache.write_text('{"components": []}', encoding="utf-8")
     monkeypatch.setattr(evidence_mod, "bom_cache_path", lambda target: cache)
-    result = ScanResult(findings=[], raw_results=[])
+    result = ScanResult(findings=[], raw_results=[RawResult("trivy", "ok", payload="{}")])
     out = tmp_path / "out"
     written = write_evidence(out, result=result, trace=None, meta={"snapshot": "x"}, target="/some/repo")
     p = out / "raw" / "bom.cdx.json"
@@ -872,7 +872,7 @@ def test_write_evidence_skips_bom_copy_when_cache_missing(tmp_path, monkeypatch)
     """I3 — `bom_cache_path(target)` 가 가리키는 파일이 없으면(BOM 미생성) 조용히 건너뛴다."""
     import tools.verify.evidence as evidence_mod
     monkeypatch.setattr(evidence_mod, "bom_cache_path", lambda target: tmp_path / "does-not-exist.json")
-    result = ScanResult(findings=[], raw_results=[])
+    result = ScanResult(findings=[], raw_results=[RawResult("trivy", "ok", payload="{}")])
     out = tmp_path / "out"
     write_evidence(out, result=result, trace=None, meta={"snapshot": "x"}, target="/some/repo")
     assert not (out / "raw" / "bom.cdx.json").exists()
@@ -1206,3 +1206,17 @@ def test_sca_extras_unclassified_counts_nonzero_case():
                           {"scanner_status": [{"tool": "trivy", "status": "ok"}]}, [])
     assert facts["sca.extras"] == 2 and facts["sca.extras.unclassified"] == 1
     assert facts["sca.extras.inventory-diff"] == 1
+
+
+def test_write_evidence_skips_bom_copy_when_bom_sca_did_not_succeed(tmp_path, monkeypatch):
+    """[R3 P2] TTL 재생성이 실패하면 어댑터는 SKIPPED 를 보고하고 옛 캐시 파일은 남는다.
+    그걸 raw/bom.cdx.json 으로 복사하면 증적이 성공처럼 굳는다 — 원칙 5(부분 실패 위장 금지)."""
+    import tools.verify.evidence as evidence_mod
+    cache = tmp_path / "stale-bom.json"
+    cache.write_text('{"components": [{"name": "old"}]}', encoding="utf-8")
+    monkeypatch.setattr(evidence_mod, "bom_cache_path", lambda target: cache)
+    result = ScanResult(findings=[], raw_results=[
+        RawResult("trivy", "skipped", error="cdxgen BOM 생성 실패 — SCA 건너뜀(부분)")])
+    out = tmp_path / "out"
+    write_evidence(out, result=result, trace=None, meta={"snapshot": "x"}, target="/some/repo")
+    assert not (out / "raw" / "bom.cdx.json").exists()

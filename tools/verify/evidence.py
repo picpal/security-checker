@@ -8,6 +8,7 @@ from dataclasses import asdict, replace
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from secscan.adapters.base import OK
 from secscan.output.json_io import to_json
 from secscan.output.markdown import to_markdown
 from secscan.output.sarif import to_sarif
@@ -75,6 +76,11 @@ def _relativize(findings: list[Finding], repo_root: Path) -> list[Finding]:
     return out
 
 
+def _bom_sca_succeeded(result: ScanResult) -> bool:
+    """BOM 을 먹인 SCA(어댑터 이름 "trivy")가 OK 로 끝났는가."""
+    return any(r.tool == "trivy" and r.status == OK for r in result.raw_results)
+
+
 def write_evidence(out_dir, *, result: ScanResult, trace: TraceSink | None, meta: dict, xlsx: bool = False,
                    repo_root: Path | None = None, target=None) -> list[Path]:
     out = Path(out_dir)
@@ -84,7 +90,10 @@ def write_evidence(out_dir, *, result: ScanResult, trace: TraceSink | None, meta
     # I3(최종 리뷰) — bom-sca 가 실제로 먹인 cdxgen BOM 은 secscan.sbom.ensure_bom 의 경로해시 캐시
     # 에만 있었고, 지금까지는 사람이 손으로 raw/bom.cdx.json 으로 복사했다(known_fp·jar_surface 가
     # 정본 축 3·5 로 그 파일을 읽는다). target 이 주어지면 여기서 그 복사를 대신한다.
-    if target is not None:
+    # 단, **BOM SCA 가 실제로 성공했을 때만** 복사한다. TTL 재생성이 실패하면 어댑터는
+    # SKIPPED 를 보고하고 옛 캐시 파일은 그대로 남는데(비파괴), 그걸 정본으로 복사하면
+    # 증적이 성공처럼 굳는다 — 부분 실패 위장 금지(원칙 5, R3 P2).
+    if target is not None and _bom_sca_succeeded(result):
         cache = bom_cache_path(target)
         if cache.exists():
             p = out / "raw" / "bom.cdx.json"

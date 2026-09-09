@@ -45,7 +45,7 @@ def main(argv: list[str] | None = None) -> int:
     repo_dir = prepare_snapshot(Path(args.repo), args.sha, scratch)
 
     profile = get_profile(args.profile)
-    adapters = build_adapters(profile)
+    adapters = build_adapters(profile, target=repo_dir)  # 불확실 신호면 BOM 캐시 우회
     provider, env_ok = None, (lambda: True)
     if profile.reachability and not args.no_reachability:
         provider = DepscanUsageProvider(scratch / args.sha / "reach" / source_hash(repo_dir))

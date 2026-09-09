@@ -462,3 +462,22 @@ def test_main_scan_records_bom_cache_decision_in_findings_meta(monkeypatch, tmp_
               "--out", str(tmp_path), "--no-reachability", "--no-bom-cache"])
     meta = json.loads((tmp_path / "findings.json").read_text())["meta"]
     assert meta["bom_cache"] == {"refresh": True, "reason": "--no-bom-cache", "max_age_h": 24.0}
+
+
+def test_build_adapters_auto_detects_uncertainty_when_target_given(tmp_path):
+    """[R3 P2] CLI 밖 호출부(run_snapshot 등)도 자동 우회를 받도록 build_adapters 가 결정 지점이다."""
+    from secscan.profiles import build_adapters, get_profile
+    proj = tmp_path / "p"
+    proj.mkdir()
+    (proj / "build.gradle").write_text("dependencies { implementation 'g:a:2.+' }\n")
+    adapters = build_adapters(get_profile("accurate-sca"), target=proj)
+    assert [a for a in adapters if type(a).__name__ == "BomScaAdapter"][0].refresh is True
+
+
+def test_build_adapters_keeps_cache_for_certain_target(tmp_path):
+    from secscan.profiles import build_adapters, get_profile
+    proj = tmp_path / "p"
+    proj.mkdir()
+    (proj / "build.gradle").write_text("dependencies { implementation 'g:a:1.9' }\n")
+    adapters = build_adapters(get_profile("accurate-sca"), target=proj)
+    assert [a for a in adapters if type(a).__name__ == "BomScaAdapter"][0].refresh is False

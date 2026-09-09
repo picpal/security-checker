@@ -746,3 +746,62 @@ def test_ensure_bom_keeps_fresh_cache_within_max_age(tmp_path, monkeypatch):
     ensure_bom(proj, run=run)
     ensure_bom(proj, run=run, max_age_s=24 * 3600)
     assert calls == ["10.1.55"]
+
+
+# --- codex 라운드3 ---
+
+def _inherit_repo(tmp_path, agg_parent, child_parent):
+    repo = tmp_path / "repo"
+    (repo / "mod").mkdir(parents=True)
+    (repo / "pom.xml").write_text(_pom(f"{agg_parent}<artifactId>agg</artifactId>"))
+    (repo / "mod" / "pom.xml").write_text(_pom(f"{child_parent}<artifactId>mod</artifactId>"))
+    return repo
+
+
+def test_dynamic_versions_flags_parent_when_inherited_effective_gav_differs(tmp_path):
+    """[R3 P1-2] 후보 pom 이 groupId/version 을 상속으로 생략해도 **실효 좌표**로 대조해야 한다.
+    실효 GAV 가 다르면 maven 은 상대경로를 거부하고 원격에서 받는다."""
+    repo = _inherit_repo(
+        tmp_path,
+        agg_parent="""<parent><groupId>com.corp</groupId><artifactId>base</artifactId>
+            <version>5.0.0</version><relativePath/></parent>""",   # 실효 = com.corp:agg:5.0.0
+        child_parent="""<parent><groupId>com.example</groupId><artifactId>agg</artifactId>
+            <version>1.0-SNAPSHOT</version></parent>""")           # 선언 = com.example:agg:1.0-SNAPSHOT
+    assert [d.version for d in dynamic_versions(repo / "mod")] == ["1.0-SNAPSHOT"]
+
+
+def test_dynamic_versions_ignores_parent_when_inherited_effective_gav_matches(tmp_path):
+    """[R3 P1-2 FP 방어] 상속으로 생략했어도 실효 좌표가 맞으면 로컬 parent 다.
+    지난번 이 필드를 대조에서 뺐던 이유가 이 케이스 — 멀티모듈을 깨면 안 된다."""
+    repo = _inherit_repo(
+        tmp_path,
+        agg_parent="""<parent><groupId>com.corp</groupId><artifactId>base</artifactId>
+            <version>5.0.0</version><relativePath/></parent>""",
+        child_parent="""<parent><groupId>com.corp</groupId><artifactId>agg</artifactId>
+            <version>5.0.0</version></parent>""")
+    assert dynamic_versions(repo / "mod") == []
+
+
+def test_dynamic_versions_flags_parent_when_candidate_gav_unresolvable(tmp_path):
+    """[R3 P1-2] 실효 좌표를 못 구하면 로컬이라 단정하지 않는다(fail-closed)."""
+    repo = _inherit_repo(
+        tmp_path, agg_parent="",  # groupId·version 도 parent 도 없다 → 실효 좌표 미상
+        child_parent="""<parent><groupId>com.example</groupId><artifactId>agg</artifactId>
+            <version>1.0-SNAPSHOT</version></parent>""")
+    assert [d.version for d in dynamic_versions(repo / "mod")] == ["1.0-SNAPSHOT"]
+
+
+def test_dynamic_versions_resolves_root_scoped_apply_from_in_subproject(tmp_path):
+    """[R3 P2] 서브프로젝트의 `apply from: "$rootDir/..."` 는 빌드 루트 기준으로 풀어야 한다.
+    지문에 이미 있는 스크립트를 external-script 로 몰면 매 스캔 재생성을 강제한다(성능 오탐)."""
+    repo = tmp_path / "repo"
+    (repo / "app").mkdir(parents=True)
+    (repo / "gradle" / "scripts").mkdir(parents=True)
+    (repo / "settings.gradle").write_text("include 'app'\n")
+    (repo / "build.gradle").write_text("// root\n")
+    (repo / "gradle" / "scripts" / "deps.gradle").write_text("ext { libVersion = '1.0.0' }\n")
+    (repo / "app" / "build.gradle").write_text(
+        'apply from: "$rootDir/gradle/scripts/deps.gradle"\n'
+        'dependencies { implementation "c:lib:$libVersion" }\n')
+    assert dynamic_versions(repo / "app") == []
+    assert dynamic_versions(repo) == []

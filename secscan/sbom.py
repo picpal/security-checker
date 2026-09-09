@@ -62,6 +62,18 @@ def iter_manifests(target, *, excludes=DEFAULT_EXCLUDES):
                 yield Path(dirpath) / name
 
 
+def _effective_gav(pom_root) -> tuple[str, str, str]:
+    """pom 의 실효 좌표. groupId/version 은 생략 시 자기 <parent> 에서 상속된다
+    (artifactId 는 상속되지 않는다). 못 구한 필드는 빈 문자열."""
+    parent = _child(pom_root, "parent")
+    def field(name):
+        own = _child_text(pom_root, name)
+        if own or parent is None:
+            return own
+        return _child_text(parent, name)
+    return (field("groupId"), _child_text(pom_root, "artifactId"), field("version"))
+
+
 def _local_parent_pom(pom: Path) -> Path | None:
     """pom 이 실제로 읽는 로컬 parent 파일. 원격(`<relativePath/>` 명시)이거나 없으면 None."""
     try:
@@ -85,17 +97,17 @@ def _local_parent_pom(pom: Path) -> Path | None:
     if not cand.is_file():
         return None
     # 파일이 있어도 좌표가 다르면 maven 은 그 파일을 무시하고 원격에서 받는다(P1-B).
-    # 후보가 생략한 필드(부모에게서 상속)는 대조 대상에서 뺀다 — 없는 걸 불일치로 보면
-    # 멀티모듈이 통째로 원격 취급돼 캐시를 잃는다.
+    # 후보가 생략한 groupId/version 은 **자기 <parent> 에서 상속**되므로 실효 좌표로 대조한다
+    # (R3 P1-2). 실효 좌표를 못 구하면 로컬이라 단정하지 않는다(fail-closed).
     try:
         cand_root = ET.fromstring(cand.read_bytes())
     except Exception:
-        return None  # 읽을 수 없으면 로컬이라 단정하지 않는다
-    for field in ("groupId", "artifactId", "version"):
-        declared = _child_text(node, field)
-        actual = _child_text(cand_root, field)
-        if declared and actual and declared != actual:
-            return None
+        return None
+    actual = _effective_gav(cand_root)
+    declared = (_child_text(node, "groupId"), _child_text(node, "artifactId"),
+                _child_text(node, "version"))
+    if not all(actual) or actual != declared:
+        return None
     return cand
 
 
@@ -416,7 +428,8 @@ def _gradle_lookup(symbols: dict, has_catalog: bool, local: dict | None = None):
     return lookup
 
 
-def _gradle_dynamic(path: Path, rel: str, symbols: dict, has_catalog: bool, followed: set):
+def _gradle_dynamic(path: Path, rel: str, symbols: dict, has_catalog: bool, followed: set,
+                    build_root: Path):
     text = path.read_text(encoding="utf-8", errors="replace")
     local: dict[str, set] = {}
     for name, value in _GRADLE_ASSIGN.findall(text):
@@ -435,7 +448,10 @@ def _gradle_dynamic(path: Path, rel: str, symbols: dict, has_catalog: bool, foll
         if "://" in target:
             yield DynamicVersion(rel, f"apply from {target}", "원격 스크립트", "external-script")
             continue
-        cand = (path.parent / _strip_interp(target)).resolve()
+        # `$rootDir/...` 은 스크립트 위치가 아니라 **빌드 루트** 기준이다. 이걸 틀리면
+        # 지문에 이미 있는 스크립트가 external-script 로 몰려 매 스캔 재생성된다(R3 P2).
+        base = build_root if _ROOT_VARS.search(target) else path.parent
+        cand = (base / _strip_interp(target)).resolve()
         if cand not in followed:
             yield DynamicVersion(rel, f"apply from {target}", "지문 밖", "external-script")
 
@@ -466,12 +482,13 @@ def _properties_dynamic(path: Path, rel: str):
             yield DynamicVersion(rel, key, value)
 
 
-def _manifest_dynamic(path: Path, rel: str, fingerprinted: set, symbols: dict, has_catalog: bool):
+def _manifest_dynamic(path: Path, rel: str, fingerprinted: set, symbols: dict, has_catalog: bool,
+                      build_root: Path):
     name = path.name
     if name == "pom.xml":
         return _maven_dynamic(path, rel, fingerprinted)
     if fnmatch(name, "*.gradle") or fnmatch(name, "*.gradle.kts"):
-        return _gradle_dynamic(path, rel, symbols, has_catalog, fingerprinted)
+        return _gradle_dynamic(path, rel, symbols, has_catalog, fingerprinted, build_root)
     if fnmatch(name, "*.versions.toml"):
         return _toml_dynamic(path, rel)
     if name == "gradle.properties":
@@ -490,12 +507,13 @@ def dynamic_versions(target, *, excludes=DEFAULT_EXCLUDES) -> list[DynamicVersio
     fingerprinted = {p.resolve() for p in manifests}
     has_catalog = any(fnmatch(p.name, "*.versions.toml") for p in manifests)
     symbols = _gradle_symbols(manifests)
+    build_root = (_gradle_build_root(root) or root).resolve()
 
     out: list[DynamicVersion] = []
     for p in manifests:
         key = _manifest_key(p, root)
         try:
-            out.extend(_manifest_dynamic(p, key, fingerprinted, symbols, has_catalog))
+            out.extend(_manifest_dynamic(p, key, fingerprinted, symbols, has_catalog, build_root))
         except Exception as e:
             # 파싱 실패는 "고정"이 아니라 "모른다" — 조용히 넘기면 스테일이 된다(원칙 5).
             out.append(DynamicVersion(key, type(e).__name__, "해석 실패", "unparsable"))
