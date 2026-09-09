@@ -240,9 +240,12 @@ _GRADLE_EXT_INDEX = re.compile(
 # `version:` 단독은 절대 신호로 못 쓴다 — 프로젝트 자기 버전·publishing DSL 과 구분이 안 된다.
 # 콜론 형태는 Groovy 의 인자 구문이라 DSL 프로퍼티 대입(`version = '…'`)과 겹치지 않고,
 # 앞선 문자를 [\s{;(] 로 제한해 문자열·주석 안의 유사 표기를 배제한다.
-_COMMENTS = re.compile(r"/\*.*?\*/|//[^\n]*", re.S)
-_NAMED_DEP_HEAD = re.compile(r"""(?:^|[\s{;(])\w+\s*\(?\s*(?:group|module|name)\s*:""")
-_NAMED_ARG = re.compile(r"""(\w+)\s*:\s*(?:(["'])([^"']*)\2|([A-Za-z_][\w.]*))""")
+# 호출 인식은 느슨하게(식별자 + 여는 구분자 + 명명인자), **필수 키 충족은 파싱 후에** 검증한다 —
+# Groovy 맵은 순서가 무의미해 `version:` 이 먼저 올 수 있고 대괄호 맵도 쓰기 때문.
+# 식별자와 인자 사이에는 **여는 구분자나 공백**이 반드시 있어야 한다 — 없으면 `name:` 의
+# 'nam'+'e:' 처럼 단어 중간이 호출로 잡혀 인자가 두 호출로 쪼개진다.
+_NAMED_CALL = re.compile(r"""(?:^|[\s{;=])([A-Za-z_]\w*)(?:(?:\s*[\(\[])+\s*|\s+)(?=\w+\s*:)""")
+_NAMED_ARG = re.compile(r"""(\w+)\s*:\s*(?:\x00(\d+)\x00|([A-Za-z_][\w.]*))""")
 # apply from: 'x.gradle' / apply(from = "x.gradle")
 _APPLY_FROM = re.compile(r"""apply\s*\(?\s*from\s*[:=]\s*["']([^"']+)["']""")
 _ROOT_VARS = re.compile(r"""\$\{?(?:rootProject\.projectDir|rootProject\.rootDir|rootDir|projectDir|project\.rootDir)\}?/?""")
@@ -389,33 +392,90 @@ def _maven_dynamic(path: Path, rel: str, fingerprinted: set):
             yield DynamicVersion(rel, coord, reason[0], reason[1])
 
 
-def _logical_lines(text: str):
-    """주석을 걷어내고, 쉼표로 이어지는 인자 목록을 한 줄로 합친다(여러 줄 선언 대응)."""
-    buf = ""
-    for line in _COMMENTS.sub("", text).splitlines():
-        buf = f"{buf} {line.strip()}" if buf else line
-        if buf.rstrip().endswith(","):
+def _mask_strings(text: str) -> tuple[str, list[str]]:
+    """주석을 지우고 문자열 리터럴을 자리표시자(\x00N\x00)로 바꾼 "코드 골격"을 만든다.
+
+    골격에는 문자열 내용이 남지 않아 삼중따옴표 예시 코드가 코드로 오인되지 않는다.
+    값이 필요한 자리에서는 번호로 원문을 되찾는다.
+    """
+    out: list[str] = []
+    lits: list[str] = []
+    i, n = 0, len(text)
+    while i < n:
+        pair = text[i:i + 2]
+        if pair == "//":
+            j = text.find("\n", i)
+            i = n if j < 0 else j
             continue
-        yield buf
-        buf = ""
-    if buf:
-        yield buf
+        if pair == "/*":
+            j = text.find("*/", i + 2)
+            i = n if j < 0 else j + 2
+            continue
+        c = text[i]
+        if c in "'\"":
+            triple = text[i:i + 3]
+            if triple in ("\'\'\'", '"""'):
+                j = text.find(triple, i + 3)
+                body = text[i + 3: j if j >= 0 else n]
+                i = n if j < 0 else j + 3
+            else:
+                j = i + 1
+                while j < n and text[j] != c and text[j] != "\n":
+                    j += 2 if text[j] == "\\" else 1
+                body = text[i + 1:j]
+                i = min(j + 1, n)
+            out.append(f"\x00{len(lits)}\x00")
+            lits.append(body)
+            continue
+        out.append(c)
+        i += 1
+    return "".join(out), lits
+
+
+def _statements(skeleton: str):
+    """골격을 문장 단위로 자른다.
+
+    괄호·대괄호 깊이를 추적해 여는 구분자 뒤 줄바꿈으로 이어지는 인자 목록을 하나로 유지하고,
+    깊이 0 의 세미콜론·개행을 경계로 삼는다(한 줄에 두 호출이 뭉개지지 않게). 괄호 없이
+    쉼표로 이어 쓰는 표기도 잇는다.
+    """
+    depth, buf = 0, []
+    for ch in skeleton:
+        if ch in "([":
+            depth += 1
+        elif ch in ")]":
+            depth = max(0, depth - 1)
+        if depth == 0 and ch in ";\n":
+            stmt = "".join(buf)
+            if ch == "\n" and stmt.rstrip().endswith(","):
+                buf.append(" ")  # 쉼표 계속 — 다음 줄과 잇는다
+                continue
+            yield stmt
+            buf = []
+            continue
+        buf.append(ch)
+    yield "".join(buf)
 
 
 def _named_arg_deps(text: str):
     """명명인자 의존성 선언 → (group:name, 버전 표현). 세 키가 다 모일 때만 낸다."""
-    for line in _logical_lines(text):
-        if not _NAMED_DEP_HEAD.search(line):
+    skeleton, lits = _mask_strings(text)
+    for stmt in _statements(skeleton):
+        starts = [m.start(1) for m in _NAMED_CALL.finditer(stmt)]
+        if not starts:
             continue
-        args: dict[str, str] = {}
-        for key, quote, quoted, bare in _NAMED_ARG.findall(line):
-            if key not in args:
+        bounds = starts + [len(stmt)]
+        for begin, end in zip(bounds, bounds[1:]):  # 호출 단위로 분리
+            args: dict[str, str] = {}
+            for key, slot, bare in _NAMED_ARG.findall(stmt[begin:end]):
+                if key in args:
+                    continue
                 # 따옴표 없는 식(rootProject.ext.libVersion)은 보간과 같은 경로로 해석한다
-                args[key] = quoted if quote else "${%s}" % bare
-        group = args.get("group") or args.get("module")
-        if not group or "name" not in args or "version" not in args:
-            continue
-        yield f"{group}:{args['name']}", args["version"]
+                args[key] = lits[int(slot)] if slot else "${%s}" % bare
+            group = args.get("group") or args.get("module")
+            if not group or "name" not in args or "version" not in args:
+                continue
+            yield f"{group}:{args['name']}", args["version"]
 
 
 def _gradle_symbols(manifests) -> dict:

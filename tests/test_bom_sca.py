@@ -880,3 +880,40 @@ def test_dynamic_versions_resolves_named_argument_variable(tmp_path):
 def test_dynamic_versions_named_argument_negative_controls(tmp_path, script):
     """음성 대조군 — 하나라도 잡히면 판별 축이 틀린 것이다."""
     assert dynamic_versions(_gradle(tmp_path, script)) == []
+
+
+# --- 명명인자 파서 경계 처리 (codex) ---
+
+def test_named_arg_detects_open_paren_continuation(tmp_path):
+    """[P1] 여는 괄호 뒤 줄바꿈으로 인자가 이어지는 흔한 포맷 — 열린 구분자를 추적해야 한다."""
+    p = _gradle(tmp_path, "dependencies {\n  implementation(\n"
+                          "      group: 'org.x',\n      name: 'y',\n      version: '2.+'\n  )\n}\n")
+    assert [d.version for d in dynamic_versions(p)] == ["2.+"]
+
+
+@pytest.mark.parametrize("call", [
+    "implementation(version: '2.+', group: 'org.x', name: 'y')",   # Groovy 맵은 순서 무의미
+    "implementation([group: 'org.x', name: 'y', version: '2.+'])",  # 대괄호 맵
+    "implementation([version: '2.+', name: 'y', group: 'org.x'])",
+])
+def test_named_arg_detects_regardless_of_key_order_or_brackets(tmp_path, call):
+    """[P1] 호출을 먼저 인식하고 필수 키 충족은 파싱 후에 검증한다."""
+    p = _gradle(tmp_path, f"dependencies {{\n  {call}\n}}\n")
+    assert [d.version for d in dynamic_versions(p)] == ["2.+"]
+
+
+def test_named_arg_splits_calls_on_same_physical_line(tmp_path):
+    """[P2] 한 줄에 `;` 로 두 호출이 있으면 args 가 뭉개져 뒤쪽 동적 버전이 버려졌다."""
+    p = _gradle(tmp_path, "dependencies {\n"
+                          "  implementation group: 'a', name: 'b', version: '1.9'; "
+                          "implementation group: 'c', name: 'd', version: '2.+'\n}\n")
+    got = [(d.coordinate, d.version) for d in dynamic_versions(p)]
+    assert got == [("c:d", "2.+")]
+
+
+def test_named_arg_ignores_triple_quoted_example_code(tmp_path):
+    """[P2] 삼중따옴표 문자열 안의 예시 코드 — 스테일이 아니라 오탐(매 스캔 재생성)이다."""
+    p = _gradle(tmp_path, 'def usage = """\n'
+                          "implementation group: 'org.x', name: 'y', version: '2.+'\n"
+                          '"""\n')
+    assert dynamic_versions(p) == []
