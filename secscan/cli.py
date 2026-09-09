@@ -25,7 +25,7 @@ from .output.sarif import to_sarif
 from .profiles import build_adapters, get_profile
 from .reachability.depscan import DepscanUsageProvider
 from .reachability.engine import Budget
-from .sbom import bom_cache_path, dynamic_versions
+from .sbom import KIND_LABELS, bom_cache_path, dynamic_versions
 from .scan import run_scan
 from .secret.trufflehog import trufflehog_runner
 from .secret.verify import resolve_secret_policy
@@ -162,11 +162,12 @@ def render_scan_summary(result) -> str:
 
 
 def render_dynamic_version_notice(dyn, limit: int = 5) -> str:
-    """동적 버전 때문에 캐시를 우회한다는 사실과 근거(무엇이 걸렸는지)를 보여준다."""
-    lines = [f"ℹ️ 동적 버전/SNAPSHOT 의존성 {len(dyn)}건 — BOM 캐시를 우회해 새로 해석합니다"
-             " (매니페스트가 그대로여도 해석 결과가 달라지므로)."]
+    """캐시를 우회하는 사실과 근거(무엇을 왜 확정 못 했는지)를 보여준다."""
+    lines = [f"ℹ️ 정적 해석으로 확정할 수 없는 의존성 선언 {len(dyn)}건 —"
+             " BOM 캐시를 우회해 새로 해석합니다."]
     for d in dyn[:limit]:
-        lines.append(f"   - {d.file}: {d.coordinate} = {d.version}")
+        label = KIND_LABELS.get(getattr(d, "kind", "dynamic"), "확정 불가")
+        lines.append(f"   - {d.file}: {d.coordinate} = {d.version} ({label})")
     if len(dyn) > limit:
         lines.append(f"   … 외 {len(dyn) - limit}건")
     return "\n".join(lines)
@@ -188,7 +189,7 @@ def resolve_bom_refresh(target, profile, *, no_bom_cache: bool, notify=print):
         return False, "detection-failed"
     if dyn:
         notify(render_dynamic_version_notice(dyn))
-        return True, "dynamic-versions"
+        return True, "uncertain-manifest"
     return False, "cache"
 
 
@@ -208,7 +209,8 @@ def _cmd_scan(args) -> int:
 
     bom_refresh, bom_reason = resolve_bom_refresh(
         args.target, profile, no_bom_cache=args.no_bom_cache)
-    adapters = build_adapters(profile, bom_refresh=bom_refresh)
+    bom_max_age_s = None if args.bom_max_age < 0 else args.bom_max_age * 3600
+    adapters = build_adapters(profile, bom_refresh=bom_refresh, bom_max_age_s=bom_max_age_s)
     provider = None
     env_ok = (lambda: True)
     if profile.reachability and not args.no_reachability:
@@ -259,7 +261,8 @@ def _cmd_scan(args) -> int:
             "scanner_status": [asdict(s) for s in result.scanner_status],
             "reachability": {"ran": result.reachability_ran, "reason": result.reachability_reason},
             "secret_policy": result.secret_policy, "excluded_count": result.excluded_count,
-            "bom_cache": {"refresh": bom_refresh, "reason": bom_reason},
+            "bom_cache": {"refresh": bom_refresh, "reason": bom_reason,
+                          "max_age_h": args.bom_max_age},
             "run_date": date.today().isoformat(),
         }), encoding="utf-8")
 
@@ -379,7 +382,9 @@ def main(argv: list[str] | None = None) -> int:
     sp.add_argument("--scan-ignored", action="store_true",
                     help=".gitignore 된 파일도 스캔(기본은 제외)")
     sp.add_argument("--no-bom-cache", action="store_true",
-                    help="BOM 캐시를 무시하고 의존성 그래프를 새로 해석(동적 버전·SNAPSHOT 은 자동)")
+                    help="BOM 캐시를 무시하고 의존성 그래프를 새로 해석(확정 불가 선언은 자동)")
+    sp.add_argument("--bom-max-age", type=float, default=24.0, metavar="시간",
+                    help="BOM 캐시 수명(기본 24시간, 0=매 스캔 재생성, 음수=무제한)")
     sp.add_argument("--suppressions", help="사람이 확정한 억제 파일(JSON) 경로")
     sp.add_argument("--baseline", help="baseline 파일(JSON) — 기존 이슈 억제, 신규만 알림")
     sp.add_argument("--write-baseline", help="현재 findings 를 baseline 파일로 저장")

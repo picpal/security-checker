@@ -7,6 +7,7 @@
 import json
 import os
 import re
+import time
 from pathlib import Path
 
 import pytest
@@ -63,7 +64,7 @@ def test_bom_sca_argv_uses_trivy_sbom():
 
 def test_bom_sca_skips_when_bom_unavailable():
     a = BomScaAdapter()
-    r = a.run("/p", ensure_bom=lambda target, timeout, refresh=False: None,
+    r = a.run("/p", ensure_bom=lambda target, timeout, **_: None,
               run=lambda argv, timeout: FakeProc(0))
     assert r.status == SKIPPED
     assert r.tool == "trivy"
@@ -72,7 +73,7 @@ def test_bom_sca_skips_when_bom_unavailable():
 def test_bom_sca_runs_trivy_on_bom_and_reuses_trivy_schema():
     a = BomScaAdapter()
     r = a.run("/p",
-              ensure_bom=lambda target, timeout, refresh=False: "/tmp/bom.json",
+              ensure_bom=lambda target, timeout, **_: "/tmp/bom.json",
               run=lambda argv, timeout: FakeProc(0, stdout='{"Results":[]}'))
     assert r.status == OK
     assert r.tool == "trivy"  # parse_trivy 가 정규화
@@ -80,7 +81,7 @@ def test_bom_sca_runs_trivy_on_bom_and_reuses_trivy_schema():
 
 
 def test_bom_sca_isolates_cdxgen_exception():
-    def boom(target, timeout, refresh=False):
+    def boom(target, timeout, **_):
         raise RuntimeError("cdxgen exploded")
 
     r = BomScaAdapter().run("/p", ensure_bom=boom, run=lambda argv, timeout: FakeProc(0))
@@ -341,12 +342,13 @@ def test_dynamic_versions_respects_excludes(tmp_path):
 
 
 def test_dynamic_versions_isolates_unparsable_manifest(tmp_path):
-    """부분 실패는 정상(원칙 5) — 깨진 pom 하나가 탐지 전체를 죽이면 안 된다."""
+    """부분 실패는 정상(원칙 5) — 깨진 pom 하나가 탐지 전체를 죽이면 안 된다.
+    (깨진 파일 자체는 "모른다"로 보고된다 — test_dynamic_versions_flags_unparsable_manifest)"""
     p = tmp_path / "g"
     p.mkdir()
     (p / "pom.xml").write_text("<project><this is not xml")
     (p / "build.gradle").write_text("dependencies { implementation 'g:a:2.+' }\n")
-    assert [d.version for d in dynamic_versions(p)] == ["2.+"]
+    assert "2.+" in [d.version for d in dynamic_versions(p)]
 
 
 def test_ensure_bom_refresh_regenerates_even_when_cache_hits(tmp_path, monkeypatch):
@@ -374,7 +376,7 @@ def test_ensure_bom_refresh_writes_result_into_cache(tmp_path, monkeypatch):
 def test_bom_sca_adapter_passes_refresh_to_ensure_bom():
     seen = {}
 
-    def fake_ensure(target, *, timeout, refresh=False):
+    def fake_ensure(target, *, timeout, refresh=False, **_):
         seen["refresh"] = refresh
         return "/tmp/bom.json"
 
@@ -386,7 +388,7 @@ def test_bom_sca_adapter_passes_refresh_to_ensure_bom():
 def test_bom_sca_adapter_defaults_to_cached_bom():
     seen = {}
 
-    def fake_ensure(target, *, timeout, refresh=False):
+    def fake_ensure(target, *, timeout, refresh=False, **_):
         seen["refresh"] = refresh
         return "/tmp/bom.json"
 
@@ -609,3 +611,138 @@ def test_dynamic_versions_flags_dynamic_value_from_gradle_build_root(tmp_path):
     """루트가 동적 값을 주면 서브프로젝트 스캔에서도 잡힌다."""
     repo = _gradle_multimodule(tmp_path, root_ext="1.+")
     assert [d.version for d in dynamic_versions(repo / "app")] == ["1.+"]
+
+
+# --- codex 라운드2 P1 4건 ---
+
+def test_dynamic_versions_flags_interpolation_containing_quotes(tmp_path):
+    """[P1-A] `${property('x')}` — 보간 안의 따옴표에서 좌표 정규식이 잘렸다."""
+    p = tmp_path / "g"
+    p.mkdir()
+    (p / "build.gradle").write_text(
+        'dependencies { implementation "g:a:${property(\'libVersion\')}" }\n')
+    assert [d.version for d in dynamic_versions(p)] == ["${property('libVersion')}"]
+
+
+def test_dynamic_versions_flags_parent_when_local_pom_coordinates_differ(tmp_path):
+    """[P1-B] ../pom.xml 이 있어도 좌표가 다르면 maven 은 그 파일을 무시하고 원격에서 받는다."""
+    repo = tmp_path / "repo"
+    (repo / "mod").mkdir(parents=True)
+    (repo / "pom.xml").write_text(_pom("""
+      <groupId>com.other</groupId><artifactId>unrelated</artifactId><version>9.9.9</version>"""))
+    (repo / "mod" / "pom.xml").write_text(_pom("""
+      <parent><groupId>com.corp</groupId><artifactId>platform</artifactId>
+        <version>2.3.0-SNAPSHOT</version></parent>
+      <artifactId>app</artifactId>"""))
+    assert [d.version for d in dynamic_versions(repo / "mod")] == ["2.3.0-SNAPSHOT"]
+
+
+def test_dynamic_versions_flags_ambiguous_symbol_from_maven_profiles(tmp_path):
+    """[P1-C] 상호배타 profile 이 같은 프로퍼티를 다르게 정의 — 활성 profile 이 바뀌면
+    매니페스트 불변인데 그래프가 바뀐다. 개별 후보가 다 고정이라도 모호하면 우회."""
+    p = tmp_path / "m"
+    p.mkdir()
+    (p / "pom.xml").write_text(_pom("""
+      <artifactId>app</artifactId><version>1.0.0</version>
+      <profiles>
+        <profile><id>a</id><properties><lib.version>1.0.0</lib.version></properties></profile>
+        <profile><id>b</id><properties><lib.version>2.0.0</lib.version></properties></profile>
+      </profiles>
+      <dependencies><dependency><groupId>com.corp</groupId><artifactId>lib</artifactId>
+        <version>${lib.version}</version></dependency></dependencies>"""))
+    assert [d.version for d in dynamic_versions(p)] == ["${lib.version}"]
+
+
+def test_dynamic_versions_flags_ambiguous_gradle_symbol(tmp_path):
+    """[P1-C] 형제 모듈이 같은 이름을 다르게 정의하고, 정의가 없는 모듈이 그걸 쓴다 →
+    어느 값인지 정적으로 확정 불가 → 우회."""
+    p = tmp_path / "g"
+    for m in ("a", "b", "c"):
+        (p / m).mkdir(parents=True)
+    (p / "settings.gradle").write_text("include 'a','b','c'\n")
+    (p / "a" / "build.gradle").write_text("ext { libVersion = '1.0.0' }\n")
+    (p / "b" / "build.gradle").write_text("ext { libVersion = '2.0.0' }\n")
+    (p / "c" / "build.gradle").write_text('dependencies { implementation "c:lib:$libVersion" }\n')
+    got = dynamic_versions(p)
+    assert [(d.version, d.kind) for d in got] == [("$libVersion", "ambiguous")]
+
+
+def test_dynamic_versions_prefers_own_script_definition(tmp_path):
+    """[P1-C FP 방어] 모듈이 자기 ext 를 정의하면 gradle 은 그 값을 쓴다 — 모호가 아니다."""
+    p = tmp_path / "g"
+    (p / "mod").mkdir(parents=True)
+    (p / "settings.gradle").write_text("include 'mod'\n")
+    (p / "build.gradle").write_text("ext { libVersion = '1.0.0' }\n")
+    (p / "mod" / "build.gradle").write_text(
+        "ext { libVersion = '2.0.0' }\ndependencies { implementation \"c:lib:$libVersion\" }\n")
+    assert dynamic_versions(p) == []
+
+
+def test_bom_cache_path_changes_when_nested_shared_build_script_changes(tmp_path, monkeypatch):
+    """[P1-D] 빌드 루트가 apply from 으로 읽는 중첩 스크립트도 지문에 들어가야 한다."""
+    _isolate_cache(monkeypatch, tmp_path)
+    repo = tmp_path / "repo"
+    (repo / "app").mkdir(parents=True)
+    (repo / "gradle" / "scripts").mkdir(parents=True)
+    (repo / "settings.gradle").write_text("include 'app'\n")
+    (repo / "build.gradle").write_text("apply from: 'gradle/scripts/dependencies.gradle'\n")
+    (repo / "gradle" / "scripts" / "dependencies.gradle").write_text("ext { libVersion = '1.0.0' }\n")
+    (repo / "app" / "build.gradle").write_text('dependencies { implementation "c:lib:$libVersion" }\n')
+    before = bom_cache_path(repo / "app")
+    (repo / "gradle" / "scripts" / "dependencies.gradle").write_text("ext { libVersion = '2.0.0' }\n")
+    assert bom_cache_path(repo / "app") != before
+
+
+def test_dynamic_versions_resolves_symbol_from_nested_shared_script(tmp_path):
+    """[P1-D FP 방어] 그 중첩 스크립트의 심볼은 해석돼야 한다(우회 남발 금지)."""
+    repo = tmp_path / "repo"
+    (repo / "app").mkdir(parents=True)
+    (repo / "gradle" / "scripts").mkdir(parents=True)
+    (repo / "settings.gradle").write_text("include 'app'\n")
+    (repo / "build.gradle").write_text("apply from: 'gradle/scripts/dependencies.gradle'\n")
+    (repo / "gradle" / "scripts" / "dependencies.gradle").write_text("ext { libVersion = '1.0.0' }\n")
+    (repo / "app" / "build.gradle").write_text('dependencies { implementation "c:lib:$libVersion" }\n')
+    assert dynamic_versions(repo / "app") == []
+
+
+def test_dynamic_versions_flags_unfollowable_applied_script(tmp_path):
+    """[구조적] 따라갈 수 없는 applied script(원격 URL)는 불확실 신호 → 우회."""
+    p = tmp_path / "g"
+    p.mkdir()
+    (p / "build.gradle").write_text(
+        "apply from: 'https://corp.example.com/shared/versions.gradle'\n"
+        "dependencies { implementation 'c:lib:1.0.0' }\n")
+    got = dynamic_versions(p)
+    assert len(got) == 1 and "versions.gradle" in got[0].coordinate
+
+
+def test_dynamic_versions_flags_unparsable_manifest(tmp_path):
+    """[구조적] 파싱 실패는 "고정"이 아니라 "모른다" — 조용히 넘기면 스테일이 된다(원칙 5)."""
+    p = tmp_path / "m"
+    p.mkdir()
+    (p / "pom.xml").write_text("<project><this is not xml")
+    got = dynamic_versions(p)
+    assert len(got) == 1 and got[0].file == "pom.xml"
+
+
+def test_ensure_bom_regenerates_when_cache_is_older_than_max_age(tmp_path, monkeypatch):
+    """[구조적] BOM TTL — 정적 분석이 못 보는 변화(원격 재배포·환경 경유 값)의 하한선."""
+    _isolate_cache(monkeypatch, tmp_path)
+    proj = _proj(tmp_path)
+    calls = []
+    run = _fake_cdxgen(calls)
+    path = ensure_bom(proj, run=run)
+    old = time.time() - 25 * 3600
+    os.utime(path, (old, old))
+    ensure_bom(proj, run=run, max_age_s=24 * 3600)
+    assert calls == ["10.1.55", "10.1.55"]
+
+
+def test_ensure_bom_keeps_fresh_cache_within_max_age(tmp_path, monkeypatch):
+    _isolate_cache(monkeypatch, tmp_path)
+    proj = _proj(tmp_path)
+    calls = []
+    run = _fake_cdxgen(calls)
+    ensure_bom(proj, run=run)
+    ensure_bom(proj, run=run, max_age_s=24 * 3600)
+    assert calls == ["10.1.55"]

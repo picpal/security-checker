@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import subprocess
 
+from ..sbom import DEFAULT_BOM_MAX_AGE_S
 from ..sbom import ensure_bom as _ensure_bom
 from .base import FAILED, OK, SKIPPED, TIMEOUT, RawResult, _subprocess_runner
 
@@ -21,8 +22,9 @@ class BomScaAdapter:
     fmt = "json"
     default_timeout = 900.0
 
-    def __init__(self, *, refresh: bool = False):
+    def __init__(self, *, refresh: bool = False, max_age_s: float | None = DEFAULT_BOM_MAX_AGE_S):
         self.refresh = refresh
+        self.max_age_s = max_age_s
 
     def build_argv(self, bom_path) -> list[str]:
         return ["trivy", "sbom", "--format", "json", "--quiet", str(bom_path)]
@@ -31,7 +33,7 @@ class BomScaAdapter:
             run=_subprocess_runner, timeout=None) -> RawResult:
         t = timeout or self.default_timeout
         try:
-            bom = ensure_bom(target, timeout=t, refresh=self.refresh)
+            bom = ensure_bom(target, timeout=t, refresh=self.refresh, max_age_s=self.max_age_s)
         except Exception as e:
             return RawResult(self.name, SKIPPED, self.fmt, error=f"BOM 생성 격리: {e}")
         if not bom:

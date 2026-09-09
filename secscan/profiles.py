@@ -16,6 +16,9 @@ from .adapters.spotbugs import SpotBugsAdapter
 from .adapters.trivy import TrivyAdapter
 
 
+_UNSET = object()
+
+
 @dataclass(frozen=True)
 class Profile:
     name: str
@@ -48,9 +51,15 @@ def get_profile(name: str) -> Profile:
     return PROFILES[name]
 
 
-def build_adapters(profile: Profile, *, bom_refresh: bool = False) -> list:
-    """프로파일의 어댑터를 만든다. bom_refresh 는 BOM 캐시 우회(동적 버전·--no-bom-cache)."""
+def build_adapters(profile: Profile, *, bom_refresh: bool = False, bom_max_age_s=_UNSET) -> list:
+    """프로파일의 어댑터를 만든다.
+
+    bom_refresh 는 BOM 캐시 우회(불확실 신호·`--no-bom-cache`), bom_max_age_s 는 캐시 수명.
+    """
+    bom_kw = {"refresh": bom_refresh}
+    if bom_max_age_s is not _UNSET:
+        bom_kw["max_age_s"] = bom_max_age_s
     return [
-        BomScaAdapter(refresh=bom_refresh) if n == "bom-sca" else _ADAPTER_CLASSES[n]()
+        BomScaAdapter(**bom_kw) if n == "bom-sca" else _ADAPTER_CLASSES[n]()
         for n in profile.adapter_names
     ]

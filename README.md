@@ -62,7 +62,10 @@ secscan report --check-result result.json --rescan out2/findings.json   # LLM �
   스캔 시작 때 감지해 **자동으로 캐시를 우회**하고 그 사실을 출력·`findings.json`(`meta.bom_cache`)에 남긴다.
   판정은 fail-closed — 로컬에서 풀리는 표현(`def v = "1.2.3"`, 부모 pom `<properties>`, 버전 카탈로그)은
   풀어서 고정으로 보고, **끝내 못 푼 표현은 동적으로 간주**한다. 캐시 키에는 빌드가 실제로 읽는
-  대상 밖 파일(maven 로컬 parent 체인, gradle 빌드 루트)도 포함된다
+  대상 밖 파일(maven 로컬 parent 체인, gradle 빌드 루트 하위 전체)도 포함된다
+- `--bom-max-age <시간>` : BOM 캐시 수명(기본 24시간, `0`=매 스캔 재생성, 음수=무제한). 정적 분석이
+  **원리적으로** 못 보는 변화(실행 시점 주입값·플러그인이 주입하는 의존성·원격 아티팩트 재배포 등,
+  전체 목록은 `PROGRESS.md`)의 하한선이다 — 매니페스트 해시가 1차 방어, 이건 마지막 안전망
 
 ## 슬래시 커맨드 (Claude Code)
 

@@ -255,7 +255,42 @@ crypto 안티패턴 → **커스텀 룰(D)** (3종: MyBatis `${}`/하드코딩/z
   **멀티모듈 maven 3(집합체/core/web)·멀티모듈 gradle 2(루트/서브프로젝트)**·픽스처 5.
   work-note 사본에서 tomcat 핀 10.1.59→10.1.60 시 키 변경·복원까지 확인. 탐지 비용 0.4~25ms.
   회귀 20건 추가(**610 passed, 2 xfailed**).
-- 남은 한계: 동적 선언이 **없는데** 원격 상태가 바뀌는 경우(원격 parent/BOM import 의 *고정* 버전
-  재배포, 미러 변조)·gradle wrapper 버전 변경·gradle 명명인자 표기(`group: 'x', version: '2.+'`)·
-  좌표 전체가 변수인 표기(`"$g:$a:$v"`)·`property('x')` 같은 코드 경유 값(미해석 → 보수적 우회)·
-  깨진 매니페스트(파싱 실패 시 건너뜀)·settings.gradle 없는 gradle 서브프로젝트 단독 스캔.
+
+### codex 리뷰 라운드2 P1 4건 — 정규식 확장 대신 구조로 (2026-09-09)
+- [x] **P1-A(정규식 버그, 그냥 고침)** — 좌표 정규식이 `${property('x')}` 의 따옴표에서 잘려
+  보간으로도 동적으로도 안 보였다. `${...}` 덩어리를 먼저 삼키도록 수정.
+- [x] **P1-B(그냥 고침)** — `../pom.xml` 이 있어도 좌표(groupId/artifactId/version)가 declared parent
+  와 다르면 maven 은 원격에서 받는다. 후보 pom 을 파싱해 대조하고, 다르면 원격 취급.
+  후보가 **생략**한 필드(상속)는 대조에서 제외 — 없는 걸 불일치로 보면 멀티모듈이 캐시를 잃는다.
+- [x] **P1-C·D 는 파서 확장(선택지 1)을 거부하고 구조적 처리(선택지 3 = 2 + 최소 확장)** :
+  - **C(모호)**: 후보 값이 갈리면(상호배타 profile 등) 값을 고르지 않고 **모호 → 우회**.
+    단 의미론이 확정적인 우선순위는 보존한다 — maven 은 자식 pom 이 부모를 덮고, gradle 은
+    자기 스크립트의 정의가 전역보다 앞선다. 이걸 안 지키면 정상 프로젝트가 전부 모호해진다.
+  - **D(지문 범위)**: applied script 를 "따라가는" 대신 **gradle 빌드 루트 하위 전체**의
+    매니페스트를 지문·심볼에 넣는다(중첩 스크립트·중첩 카탈로그·buildSrc/convention 플러그인이
+    한 번에 들어온다). 과잉 무효화 방향이라 안전하고, 루트를 스캔할 때와 같은 집합이다.
+  - **불확실 신호 = 우회** 로 일반화: `DynamicVersion.kind` 5종(dynamic/unresolved/ambiguous/
+    unparsable/external-script). 파싱 실패를 조용히 넘기던 것(=고정으로 단정)도 이제 우회 사유다.
+  - **BOM TTL(기본 24h, `--bom-max-age`)** — 정적 분석이 **원리적으로** 못 보는 변화의 하한선.
+    캐시 파일 mtime 기준(우리가 만든 파일의 생성 시각이라 "키에 mtime 금지"와 무관).
+- [x] 오탐 0 재실측 16개 대상(work-note 루트·backend, 이 저장소, 스프링부트 maven/gradle,
+  멀티모듈 maven 3·gradle 2, 픽스처 5, **관용구 종합**(apply from `$rootDir`·중첩 공유 스크립트·
+  버전 카탈로그 `libs.versions.x.get()`·buildSrc convention)). E2E 캐시적중 0.27s 유지,
+  `--bom-max-age 0` 강제 재생성 4.46s. 회귀 11건 추가(**621 passed, 2 xfailed**).
+
+### 정적 분석으로 **원리적으로** 못 잡는 부류 (숨기지 않는다 — 원칙 5)
+> 아래는 매니페스트를 아무리 정교하게 파싱해도 알 수 없다. gradle/maven 을 **실행해야**
+> 확정되기 때문이다. 유일한 방어선은 BOM TTL(기본 24h)과 `--no-bom-cache` 다.
+1. **실행 시점 주입값** — `-PlibVersion=…`·`-D`·환경변수·`System.getenv`·`providers.exec`,
+   파일/네트워크에서 읽어오는 버전.
+2. **코드가 만드는 좌표** — `"$g:$a:$v"`(좌표 전체가 변수), 반복문·조건문으로 조립하는 의존성,
+   gradle 명명인자 표기(`group: 'x', name: 'y', version: '2.+'`).
+3. **플러그인이 주입하는 의존성** — spring-dependency-management·protobuf·kapt/ksp 등이
+   해석 시점에 추가하는 좌표(매니페스트에 문자열로 존재하지 않는다).
+4. **buildSrc/convention 플러그인·included build 의 *내용*** — 파일 변경은 지문이 잡지만(→캐시
+   무효화) 그 코드가 무엇을 선언하는지는 해석하지 않는다. `includeBuild` 로 붙는 다른 저장소도 마찬가지.
+5. **원격 상태 변화** — *고정* 버전 아티팩트 재배포, 미러·프록시 변조, 원격 parent/BOM import 의
+   내용 변경, 플러그인 포털 해석 결과.
+6. **해상도 규칙** — resolutionStrategy·force·exclude·충돌 해결이 바꾸는 최종 그래프.
+7. **maven profile 활성화** — activeByDefault·OS/JDK 조건·`-P`. 우리는 "모호"로 보고 우회하지만
+   어느 값이 실제로 쓰일지는 모른다.

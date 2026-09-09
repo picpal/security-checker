@@ -19,6 +19,7 @@ from __future__ import annotations
 import hashlib
 import os
 import re
+import time
 import subprocess
 import tempfile
 import threading
@@ -81,7 +82,21 @@ def _local_parent_pom(pom: Path) -> Path | None:
     cand = pom.parent / ((rp.text or "").strip() if rp is not None else "../pom.xml")
     if cand.is_dir():
         cand = cand / "pom.xml"
-    return cand if cand.is_file() else None
+    if not cand.is_file():
+        return None
+    # 파일이 있어도 좌표가 다르면 maven 은 그 파일을 무시하고 원격에서 받는다(P1-B).
+    # 후보가 생략한 필드(부모에게서 상속)는 대조 대상에서 뺀다 — 없는 걸 불일치로 보면
+    # 멀티모듈이 통째로 원격 취급돼 캐시를 잃는다.
+    try:
+        cand_root = ET.fromstring(cand.read_bytes())
+    except Exception:
+        return None  # 읽을 수 없으면 로컬이라 단정하지 않는다
+    for field in ("groupId", "artifactId", "version"):
+        declared = _child_text(node, field)
+        actual = _child_text(cand_root, field)
+        if declared and actual and declared != actual:
+            return None
+    return cand
 
 
 _SETTINGS = ("settings.gradle", "settings.gradle.kts")
@@ -119,14 +134,13 @@ def collect_manifests(target, *, excludes=DEFAULT_EXCLUDES) -> list[Path]:
 
     build_root = _gradle_build_root(root)
     if build_root is not None:
-        # 루트 디렉토리 자신 + gradle/ (카탈로그·공용 스크립트 관례) 만 — 형제 모듈은 제외
-        for d in (build_root, build_root / "gradle"):
-            if not d.is_dir():
-                continue
-            for p in sorted(d.iterdir()):
-                if p.is_file() and _is_manifest(p.name) and p.resolve() not in seen:
-                    seen.add(p.resolve())
-                    found.append(p)
+        # 빌드 루트 **하위 전체**. 직속 파일만 넣으면 apply from 으로 읽는 중첩 스크립트나
+        # buildSrc/convention 플러그인·중첩 카탈로그가 지문 밖에 남는다(P1-D). 형제 모듈까지
+        # 들어가 과잉 무효화가 되지만, 방향이 안전한 쪽이고 루트를 스캔할 때와 같은 집합이다.
+        for p in iter_manifests(build_root, excludes=excludes):
+            if p.resolve() not in seen:
+                seen.add(p.resolve())
+                found.append(p)
     queue = [p for p in found if p.name == "pom.xml"]
     while queue:
         parent = _local_parent_pom(queue.pop(0))
@@ -174,17 +188,32 @@ def bom_cache_path(target, *, excludes=DEFAULT_EXCLUDES) -> Path:
 
 
 class DynamicVersion(NamedTuple):
-    """매니페스트가 그대로여도 해석 결과가 달라질 수 있는 의존성 선언 1건."""
+    """정적 해석으로 "고정"이라고 확정할 수 없는 선언 1건.
+
+    kind 는 왜 확정 못 했는지다 — dynamic(해석된 동적 버전) / unresolved(미해석 보간·
+    프로퍼티) / ambiguous(후보 충돌) / unparsable(파싱 실패) / external-script(따라갈 수
+    없는 applied script). 전부 "캐시를 믿을 수 없다"는 같은 결론으로 간다.
+    """
     file: str        # 대상 기준 상대경로
-    coordinate: str  # "group:artifact" 또는 프로퍼티 키
+    coordinate: str  # "group:artifact" 또는 프로퍼티 키·스크립트 경로
     version: str
+    kind: str = "dynamic"
+
+
+KIND_LABELS = {
+    "dynamic": "동적 버전", "unresolved": "해석 불가", "ambiguous": "후보 모호",
+    "unparsable": "파싱 실패", "external-script": "외부 스크립트",
+}
 
 
 # maven 레거시 키워드는 "정확히 일치"할 때만 동적이다 — "4.3.30.RELEASE"(스프링 구 표기)는
 # 고정 버전이라 부분 일치로 잡으면 대량 FP 가 난다.
 _VERSION_KEYWORDS = frozenset({"LATEST", "RELEASE"})
 # gradle 좌표 문자열 'group:artifact:version' (가장 흔한 선언 형태).
-_GRADLE_COORD = re.compile(r"""["']([\w.\-]+):([\w.\-]+):([^"'\s]+)["']""")
+# 버전 자리에 `${property('x')}` 처럼 따옴표·괄호가 든 보간이 올 수 있어 ${...} 덩어리를
+# 먼저 삼킨다 — 안 그러면 `${property(` 로 잘려 보간으로도 동적으로도 안 보인다(P1-A).
+_GRADLE_COORD = re.compile(
+    r"""(["'])([\w.\-]+):([\w.\-]+):((?:\$\{[^{}]*\}|[^"'\s])+)\1""")
 _TOML_KEY = re.compile(r"""^\s*([\w.\-]+)\s*=""")
 # gradle 보간: $name 또는 ${expr}
 _INTERP = re.compile(r"""\$\{([^{}]+)\}|\$([A-Za-z_]\w*)""")
@@ -194,6 +223,14 @@ _GRADLE_ASSIGN = re.compile(
     re.M)
 _GRADLE_EXT_INDEX = re.compile(
     r"""ext\s*\[\s*["']([^"']+)["']\s*\]\s*=\s*["']([^"']+)["']""")
+# apply from: 'x.gradle' / apply(from = "x.gradle")
+_APPLY_FROM = re.compile(r"""apply\s*\(?\s*from\s*[:=]\s*["']([^"']+)["']""")
+_ROOT_VARS = re.compile(r"""\$\{?(?:rootProject\.projectDir|rootProject\.rootDir|rootDir|projectDir|project\.rootDir)\}?/?""")
+
+
+def _strip_interp(p: str) -> str:
+    """apply from 경로의 $rootDir 류 접두를 걷어낸다(상대 경로로 되돌리기 위함)."""
+    return _ROOT_VARS.sub("", p).lstrip("/")
 _QUOTED = re.compile(r"""["']([^"']+)["']""")
 
 
@@ -231,7 +268,7 @@ def _child_text(node, name: str) -> str:
     return (c.text or "").strip() if c is not None else ""
 
 
-def _dynamic_reason(value, lookup, depth: int = 4):
+def _dynamic_reason(value, lookup, depth: int = 4):  # -> (표현, kind) | None
     """동적이면 근거 버전 표현, 아니면 None. **해석 못 하면 동적으로 본다(fail-closed).**
 
     보고 값은 풀렸으면 해석된 값(`2.+`), 못 풀었으면 원래 표현(`${lib.version}`) —
@@ -245,16 +282,20 @@ def _dynamic_reason(value, lookup, depth: int = 4):
     if not v:
         return None
     if is_dynamic_version(v):
-        return v
+        return v, "dynamic"
     tokens = [a or b for a, b in _INTERP.findall(v)]
     if not tokens:
         return None
     if depth <= 0:
-        return v
+        return v, "unresolved"
     for t in tokens:
         candidates = lookup(t.strip())
         if candidates is None:
-            return v  # 어디에도 정의가 없다 → 보수적으로 동적
+            return v, "unresolved"  # 어디에도 정의가 없다
+        if len({str(c).strip() for c in candidates}) > 1:
+            # 후보가 갈린다(상호배타 maven profile, 모듈마다 다른 ext…). 활성화 규칙은
+            # 정적으로 확정할 수 없으니 모호 → 우회(P1-C).
+            return v, "ambiguous"
         for c in candidates:
             reason = _dynamic_reason(c, lookup, depth - 1)
             if reason is not None:
@@ -275,11 +316,14 @@ def _pom_properties(pom: Path) -> dict:
             root = ET.fromstring(cur.read_bytes())
         except Exception:
             break
+        here: dict[str, set] = {}
         for pnode in root.iter():
             if _tag(pnode) != "properties":
                 continue
             for c in pnode:
-                props.setdefault(_tag(c), set()).add((c.text or "").strip())
+                here.setdefault(_tag(c), set()).add((c.text or "").strip())
+        for k, vals in here.items():
+            props.setdefault(k, vals)  # 가까운 pom 이 이긴다(자식 > 부모)
         cur, depth = _local_parent_pom(cur), depth - 1
     return props
 
@@ -322,7 +366,7 @@ def _maven_dynamic(path: Path, rel: str, fingerprinted: set):
         reason = _dynamic_reason(version, lookup)
         if reason is not None:
             coord = f"{_child_text(node, 'groupId')}:{_child_text(node, 'artifactId')}"
-            yield DynamicVersion(rel, coord, reason)
+            yield DynamicVersion(rel, coord, reason[0], reason[1])
 
 
 def _gradle_symbols(manifests) -> dict:
@@ -353,7 +397,7 @@ def _gradle_symbols(manifests) -> dict:
 _GRADLE_PREFIXES = ("rootProject.ext.", "project.ext.", "rootProject.", "project.", "ext.")
 
 
-def _gradle_lookup(symbols: dict, has_catalog: bool):
+def _gradle_lookup(symbols: dict, has_catalog: bool, local: dict | None = None):
     def lookup(expr: str):
         name = expr.strip()
         if name.endswith(".get()"):
@@ -366,15 +410,34 @@ def _gradle_lookup(symbols: dict, has_catalog: bool):
         # 카탈로그 스캔(_toml_dynamic)이 따로 잡는다. 미해석으로 볼 이유가 없다.
         if has_catalog and (name == "libs" or name.startswith("libs.")):
             return set()
+        if local and name in local:
+            return local[name]  # 자기 스크립트의 정의가 이긴다
         return symbols.get(name)
     return lookup
 
 
-def _gradle_dynamic(path: Path, rel: str, lookup):
-    for group, artifact, version in _GRADLE_COORD.findall(path.read_text(encoding="utf-8", errors="replace")):
+def _gradle_dynamic(path: Path, rel: str, symbols: dict, has_catalog: bool, followed: set):
+    text = path.read_text(encoding="utf-8", errors="replace")
+    local: dict[str, set] = {}
+    for name, value in _GRADLE_ASSIGN.findall(text):
+        local.setdefault(name, set()).add(value)
+    for name, value in _GRADLE_EXT_INDEX.findall(text):
+        local.setdefault(name, set()).add(value)
+    lookup = _gradle_lookup(symbols, has_catalog, local)
+
+    for _q, group, artifact, version in _GRADLE_COORD.findall(text):
         reason = _dynamic_reason(version, lookup)
         if reason is not None:
-            yield DynamicVersion(rel, f"{group}:{artifact}", reason)
+            yield DynamicVersion(rel, f"{group}:{artifact}", reason[0], reason[1])
+
+    # 따라가지 못한 applied script = 그 안의 선언을 통째로 못 본다는 뜻이다.
+    for target in _APPLY_FROM.findall(text):
+        if "://" in target:
+            yield DynamicVersion(rel, f"apply from {target}", "원격 스크립트", "external-script")
+            continue
+        cand = (path.parent / _strip_interp(target)).resolve()
+        if cand not in followed:
+            yield DynamicVersion(rel, f"apply from {target}", "지문 밖", "external-script")
 
 
 def _toml_dynamic(path: Path, rel: str):
@@ -403,12 +466,12 @@ def _properties_dynamic(path: Path, rel: str):
             yield DynamicVersion(rel, key, value)
 
 
-def _manifest_dynamic(path: Path, rel: str, fingerprinted: set, gradle_lookup):
+def _manifest_dynamic(path: Path, rel: str, fingerprinted: set, symbols: dict, has_catalog: bool):
     name = path.name
     if name == "pom.xml":
         return _maven_dynamic(path, rel, fingerprinted)
     if fnmatch(name, "*.gradle") or fnmatch(name, "*.gradle.kts"):
-        return _gradle_dynamic(path, rel, gradle_lookup)
+        return _gradle_dynamic(path, rel, symbols, has_catalog, fingerprinted)
     if fnmatch(name, "*.versions.toml"):
         return _toml_dynamic(path, rel)
     if name == "gradle.properties":
@@ -426,14 +489,16 @@ def dynamic_versions(target, *, excludes=DEFAULT_EXCLUDES) -> list[DynamicVersio
     manifests = collect_manifests(root, excludes=excludes)
     fingerprinted = {p.resolve() for p in manifests}
     has_catalog = any(fnmatch(p.name, "*.versions.toml") for p in manifests)
-    gradle_lookup = _gradle_lookup(_gradle_symbols(manifests), has_catalog)
+    symbols = _gradle_symbols(manifests)
 
     out: list[DynamicVersion] = []
     for p in manifests:
+        key = _manifest_key(p, root)
         try:
-            out.extend(_manifest_dynamic(p, _manifest_key(p, root), fingerprinted, gradle_lookup))
-        except Exception:
-            continue
+            out.extend(_manifest_dynamic(p, key, fingerprinted, symbols, has_catalog))
+        except Exception as e:
+            # 파싱 실패는 "고정"이 아니라 "모른다" — 조용히 넘기면 스테일이 된다(원칙 5).
+            out.append(DynamicVersion(key, type(e).__name__, "해석 실패", "unparsable"))
     return out
 
 
@@ -468,17 +533,30 @@ _locks_guard = threading.Lock()
 _locks: dict[str, threading.Lock] = {}
 
 
-def ensure_bom(target, *, timeout: float = 900.0, run=_cdxgen_runner, refresh: bool = False):
+# BOM 캐시 수명. 정적 분석이 **원리적으로** 못 보는 변화(원격 아티팩트 재배포, -P/-D 로
+# 주입되는 버전, 코드가 계산하는 좌표…)에 대한 하한선이다. 매니페스트 내용 해시가 1차
+# 방어이고, 이건 "그래도 하루 지난 BOM 은 다시 만든다"는 마지막 안전망.
+DEFAULT_BOM_MAX_AGE_S = 24 * 3600
+
+
+def ensure_bom(target, *, timeout: float = 900.0, run=_cdxgen_runner, refresh: bool = False,
+               max_age_s: float | None = DEFAULT_BOM_MAX_AGE_S, now=time.time):
     """BOM 을 한 번만 생성(경로+매니페스트 해시 캐시 + 락). 매니페스트가 그대로면 재사용.
 
     refresh=True 면 캐시 적중을 무시하고 다시 해석한다(동적 버전/SNAPSHOT 처럼 매니페스트가
     그대로여도 그래프가 달라지는 경우, 또는 `--no-bom-cache`). 결과는 같은 캐시 경로에
     기록돼 다음 스캔이 그대로 이득을 본다.
+
+    max_age_s 를 넘긴 캐시도 다시 만든다(None 이면 수명 무제한). 여기서 쓰는 mtime 은
+    **우리가 만든 캐시 파일의 생성 시각**이라 캐시 키에서 mtime 을 금지한 이유(git 이
+    소스 mtime 을 바꾼다)와 무관하다.
     """
     path = bom_cache_path(target)
     with _locks_guard:
         lock = _locks.setdefault(str(path), threading.Lock())
     with lock:
         if not refresh and path.exists() and path.stat().st_size > 0:
-            return path
+            fresh = max_age_s is None or (now() - path.stat().st_mtime) <= max_age_s
+            if fresh:
+                return path
         return generate_sbom(target, path, run=run, timeout=timeout)

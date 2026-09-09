@@ -461,4 +461,4 @@ def test_main_scan_records_bom_cache_decision_in_findings_meta(monkeypatch, tmp_
     cli.main(["scan", "--target", "/proj", "--profile", "accurate-sca",
               "--out", str(tmp_path), "--no-reachability", "--no-bom-cache"])
     meta = json.loads((tmp_path / "findings.json").read_text())["meta"]
-    assert meta["bom_cache"] == {"refresh": True, "reason": "--no-bom-cache"}
+    assert meta["bom_cache"] == {"refresh": True, "reason": "--no-bom-cache", "max_age_h": 24.0}
