@@ -420,3 +420,192 @@ def test_ensure_bom_refresh_does_not_pass_off_stale_bom_when_cdxgen_fails(tmp_pa
 
     assert ensure_bom(proj, run=lambda argv, timeout: FakeProc(1), refresh=True) is None
     assert cached.exists()  # 기존 캐시는 그대로 둔다
+
+
+# --- codex 리뷰 P1 3건: 해석 못 한 버전 표현을 "고정"으로 본 fail-open 수정 ---
+# 뿌리가 하나다 — 로컬에서 해석 가능한 것은 해석해 고정 판정하고, 끝내 해석 못 한 것만
+# 동적으로 간주한다(fail-closed). 순서가 뒤바뀌면 캐시가 사라진다(FP).
+
+def _module_repo(tmp_path, parent_dep_version="1.9", parent_props="", child_body=""):
+    """집합체 pom + 모듈 pom. 모듈만 target 으로 스캔하면 부모는 트리 밖이다."""
+    repo = tmp_path / "repo"
+    (repo / "mod").mkdir(parents=True)
+    (repo / "pom.xml").write_text(_pom(f"""
+      <groupId>com.example</groupId><artifactId>agg</artifactId><version>1.0-SNAPSHOT</version>
+      <properties>{parent_props}</properties>
+      <modules><module>mod</module></modules>
+      <dependencyManagement><dependencies>
+        <dependency><groupId>org.apache.commons</groupId><artifactId>commons-text</artifactId>
+          <version>{parent_dep_version}</version></dependency>
+      </dependencies></dependencyManagement>"""))
+    (repo / "mod" / "pom.xml").write_text(_pom(f"""
+      <parent><groupId>com.example</groupId><artifactId>agg</artifactId>
+        <version>1.0-SNAPSHOT</version></parent>
+      <artifactId>mod</artifactId>{child_body}"""))
+    return repo
+
+
+def test_bom_cache_path_changes_when_out_of_tree_parent_pom_changes(tmp_path, monkeypatch):
+    """[P1-1] 모듈만 스캔해도 빌드는 ../pom.xml 을 실제로 읽는다.
+    그 부모가 바뀌면(관리 버전 상향) 캐시가 무효화돼야 한다."""
+    _isolate_cache(monkeypatch, tmp_path)
+    repo = _module_repo(tmp_path, parent_dep_version="1.9")
+    before = bom_cache_path(repo / "mod")
+    (repo / "pom.xml").write_text((repo / "pom.xml").read_text().replace("1.9", "1.10"))
+    assert bom_cache_path(repo / "mod") != before
+
+
+def test_dynamic_versions_ignores_out_of_tree_local_parent(tmp_path):
+    """[P1-1 FP 방어] 지문에 들어간 로컬 parent 는 SNAPSHOT 이어도 동적 소스가 아니다."""
+    repo = _module_repo(tmp_path)
+    assert dynamic_versions(repo / "mod") == []
+
+
+def test_dynamic_versions_flags_property_defined_only_by_remote_parent(tmp_path):
+    """[P1-2] 원격 부모가 정의한 프로퍼티는 로컬에서 못 푼다 → 보수적으로 동적."""
+    p = tmp_path / "m"
+    p.mkdir()
+    (p / "pom.xml").write_text(_pom("""
+      <parent><groupId>com.corp</groupId><artifactId>platform</artifactId>
+        <version>2.0.0</version><relativePath/></parent>
+      <artifactId>app</artifactId>
+      <dependencies>
+        <dependency><groupId>com.corp</groupId><artifactId>lib</artifactId>
+          <version>${lib.version}</version></dependency>
+      </dependencies>"""))
+    assert [d.version for d in dynamic_versions(p)] == ["${lib.version}"]
+
+
+def test_dynamic_versions_resolves_property_through_local_parent_chain(tmp_path):
+    """[P1-2] 로컬 부모의 프로퍼티는 해석된다 — 값이 동적이면 잡고(여기), 고정이면 놔둔다."""
+    repo = _module_repo(
+        tmp_path, parent_props="<lib.version>1.+</lib.version>",
+        child_body="""<dependencies><dependency><groupId>com.corp</groupId>
+          <artifactId>lib</artifactId><version>${lib.version}</version></dependency></dependencies>""")
+    assert [d.version for d in dynamic_versions(repo)] == ["1.+"]
+
+
+def test_dynamic_versions_ignores_fixed_property_from_local_parent(tmp_path):
+    """[P1-2 FP 방어] 멀티모듈의 표준 패턴 — 부모가 버전을 모아두고 자식이 참조."""
+    repo = _module_repo(
+        tmp_path, parent_props="<lib.version>1.2.3</lib.version>",
+        child_body="""<dependencies><dependency><groupId>com.corp</groupId>
+          <artifactId>lib</artifactId><version>${lib.version}</version></dependency></dependencies>""")
+    assert dynamic_versions(repo) == []
+
+
+@pytest.mark.parametrize("expr", ["${project.version}", "${pom.version}", "${revision}"])
+def test_dynamic_versions_ignores_self_referential_version_property(tmp_path, expr):
+    """[P1-2 FP 방어] 리액터 내부 모듈 참조 — 자기 버전이라 원격 변동 요인이 아니다."""
+    p = tmp_path / "m"
+    p.mkdir()
+    (p / "pom.xml").write_text(_pom(f"""
+      <groupId>com.example</groupId><artifactId>app</artifactId><version>0.0.1-SNAPSHOT</version>
+      <dependencies><dependency><groupId>com.example</groupId><artifactId>other</artifactId>
+        <version>{expr}</version></dependency></dependencies>"""))
+    assert dynamic_versions(p) == []
+
+
+def test_dynamic_versions_ignores_managed_dependency_without_version(tmp_path):
+    """[FP 방어] 스프링부트의 기본형 — 버전 미기재(BOM 관리)는 판단 대상이 아니다."""
+    p = tmp_path / "m"
+    p.mkdir()
+    (p / "pom.xml").write_text(_pom("""
+      <artifactId>app</artifactId><version>1.0.0</version>
+      <dependencies><dependency><groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId></dependency></dependencies>"""))
+    assert dynamic_versions(p) == []
+
+
+def test_dynamic_versions_flags_unresolvable_gradle_interpolation(tmp_path):
+    """[P1-3] 어디에도 정의가 없는 보간 변수 → 보수적으로 동적."""
+    p = tmp_path / "g"
+    p.mkdir()
+    (p / "build.gradle").write_text('dependencies { implementation "g:a:$mysteryVersion" }\n')
+    assert [d.version for d in dynamic_versions(p)] == ["$mysteryVersion"]
+
+
+def test_dynamic_versions_flags_gradle_variable_bound_to_dynamic_value(tmp_path):
+    """[P1-3] def v = "2.+" 를 풀어서 동적으로 판정한다."""
+    p = tmp_path / "g"
+    p.mkdir()
+    (p / "build.gradle").write_text('def v = "2.+"\ndependencies { implementation "g:a:$v" }\n')
+    assert [d.version for d in dynamic_versions(p)] == ["2.+"]  # 풀렸으면 해석값으로 보고
+
+
+@pytest.mark.parametrize("script", [
+    'def v = "1.2.3"\ndependencies { implementation "g:a:$v" }\n',
+    'val v = "1.2.3"\ndependencies { implementation("g:a:${v}") }\n',
+    'ext { commonsVersion = \'1.2.3\' }\ndependencies { implementation "g:a:$commonsVersion" }\n',
+])
+def test_dynamic_versions_resolves_local_gradle_variable(tmp_path, script):
+    """[P1-3 FP 방어] 로컬에서 풀리는 보간은 고정으로 판정한다."""
+    p = tmp_path / "g"
+    p.mkdir()
+    (p / "build.gradle").write_text(script)
+    assert dynamic_versions(p) == []
+
+
+def test_dynamic_versions_resolves_variable_from_gradle_properties(tmp_path):
+    """[P1-3 FP 방어] gradle.properties 의 값은 빌드 스크립트에서 프로퍼티로 보인다."""
+    p = tmp_path / "g"
+    p.mkdir()
+    (p / "gradle.properties").write_text("commonsVersion=1.9\n")
+    (p / "build.gradle").write_text('dependencies { implementation "g:a:$commonsVersion" }\n')
+    assert dynamic_versions(p) == []
+
+
+def test_dynamic_versions_resolves_variable_defined_in_root_script(tmp_path):
+    """[P1-3 FP 방어] 멀티모듈 gradle — 루트에서 정의하고 모듈에서 쓴다."""
+    p = tmp_path / "g"
+    (p / "mod").mkdir(parents=True)
+    (p / "build.gradle").write_text("ext { corpVersion = '1.0.0' }\n")
+    (p / "mod" / "build.gradle").write_text('dependencies { implementation "c:lib:$corpVersion" }\n')
+    assert dynamic_versions(p) == []
+
+
+def test_dynamic_versions_treats_version_catalog_reference_as_resolved(tmp_path):
+    """[P1-3 FP 방어] libs.* 는 카탈로그 참조 — 카탈로그 파일 자체가 지문에 있고,
+    동적 항목이면 카탈로그 스캔이 따로 잡는다."""
+    p = tmp_path / "g"
+    (p / "gradle").mkdir(parents=True)
+    (p / "gradle" / "libs.versions.toml").write_text('[versions]\ncommonsText = "1.9"\n')
+    (p / "build.gradle.kts").write_text(
+        'dependencies { implementation("g:a:${libs.versions.commonsText.get()}") }\n')
+    assert dynamic_versions(p) == []
+
+
+def _gradle_multimodule(tmp_path, root_ext="1.12.0"):
+    repo = tmp_path / "repo"
+    (repo / "app").mkdir(parents=True)
+    (repo / "settings.gradle").write_text("rootProject.name='mm'\ninclude 'app'\n")
+    (repo / "build.gradle").write_text(f"ext {{ commonsVersion = '{root_ext}' }}\n")
+    (repo / "gradle.properties").write_text("guavaVersion=33.0.0-jre\n")
+    (repo / "app" / "build.gradle").write_text(
+        'dependencies {\n'
+        '  implementation "org.apache.commons:commons-text:$commonsVersion"\n'
+        '  implementation "com.google.guava:guava:${rootProject.ext.guavaVersion}"\n'
+        '}\n')
+    return repo
+
+
+def test_dynamic_versions_resolves_variables_from_gradle_build_root(tmp_path):
+    """[P1-3 FP 방어] 서브프로젝트만 스캔해도 빌드 루트(settings.gradle)의 ext·
+    gradle.properties 는 gradle 이 실제로 읽는다 — 해석 가능하므로 고정이다."""
+    repo = _gradle_multimodule(tmp_path)
+    assert dynamic_versions(repo / "app") == []
+
+
+def test_bom_cache_path_changes_when_gradle_build_root_changes(tmp_path, monkeypatch):
+    """서브프로젝트를 스캔해도 빌드 루트가 바뀌면 캐시가 무효화돼야 한다(P1-1 의 gradle 대응)."""
+    _isolate_cache(monkeypatch, tmp_path)
+    repo = _gradle_multimodule(tmp_path, root_ext="1.12.0")
+    before = bom_cache_path(repo / "app")
+    (repo / "build.gradle").write_text("ext { commonsVersion = '1.13.0' }\n")
+    assert bom_cache_path(repo / "app") != before
+
+
+def test_dynamic_versions_flags_dynamic_value_from_gradle_build_root(tmp_path):
+    """루트가 동적 값을 주면 서브프로젝트 스캔에서도 잡힌다."""
+    repo = _gradle_multimodule(tmp_path, root_ext="1.+")
+    assert [d.version for d in dynamic_versions(repo / "app")] == ["1.+"]

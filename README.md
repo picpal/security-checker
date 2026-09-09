@@ -59,7 +59,10 @@ secscan report --check-result result.json --rescan out2/findings.json   # LLM �
 - `--no-bom-cache` : BOM(의존성 그래프) 캐시를 무시하고 새로 해석. BOM 캐시는 **의존성 매니페스트
   내용 해시**로 잡히므로 버전을 올리면 자동으로 다시 만들어진다. 매니페스트가 그대로여도 결과가
   달라지는 선언 — 동적 버전(`2.+`·`latest.release`·`[1.0,2.0)`)·SNAPSHOT·원격 parent pom — 은
-  스캔 시작 때 감지해 **자동으로 캐시를 우회**하고 그 사실을 출력·`findings.json`(`meta.bom_cache`)에 남긴다
+  스캔 시작 때 감지해 **자동으로 캐시를 우회**하고 그 사실을 출력·`findings.json`(`meta.bom_cache`)에 남긴다.
+  판정은 fail-closed — 로컬에서 풀리는 표현(`def v = "1.2.3"`, 부모 pom `<properties>`, 버전 카탈로그)은
+  풀어서 고정으로 보고, **끝내 못 푼 표현은 동적으로 간주**한다. 캐시 키에는 빌드가 실제로 읽는
+  대상 밖 파일(maven 로컬 parent 체인, gradle 빌드 루트)도 포함된다
 
 ## 슬래시 커맨드 (Claude Code)
 

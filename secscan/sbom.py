@@ -61,6 +61,87 @@ def iter_manifests(target, *, excludes=DEFAULT_EXCLUDES):
                 yield Path(dirpath) / name
 
 
+def _local_parent_pom(pom: Path) -> Path | None:
+    """pom 이 실제로 읽는 로컬 parent 파일. 원격(`<relativePath/>` 명시)이거나 없으면 None."""
+    try:
+        data = pom.read_bytes()
+    except OSError:
+        return None
+    if b"<parent" not in data:
+        return None
+    try:
+        node = _child(ET.fromstring(data), "parent")
+    except Exception:
+        return None
+    if node is None:
+        return None
+    rp = _child(node, "relativePath")
+    if rp is not None and not (rp.text or "").strip():
+        return None  # 빈 relativePath = 항상 원격
+    cand = pom.parent / ((rp.text or "").strip() if rp is not None else "../pom.xml")
+    if cand.is_dir():
+        cand = cand / "pom.xml"
+    return cand if cand.is_file() else None
+
+
+_SETTINGS = ("settings.gradle", "settings.gradle.kts")
+
+
+def _gradle_build_root(root: Path, max_up: int = 8) -> Path | None:
+    """대상이 gradle 서브프로젝트면 그 빌드 루트(settings.gradle 를 가진 상위)를 준다.
+
+    gradle 은 서브프로젝트를 평가할 때 루트의 ext·gradle.properties·버전 카탈로그를
+    실제로 읽는다. 그 파일들이 지문·심볼 밖에 있으면 (1) 루트 변경이 캐시를 무효화하지
+    못하고 (2) 보간이 미해석으로 남아 매 스캔 우회한다.
+    """
+    root = root.resolve()
+    if any((root / s).is_file() for s in _SETTINGS):
+        return None  # 이미 빌드 루트
+    for anc in list(root.parents)[:max_up]:
+        if any((anc / s).is_file() for s in _SETTINGS):
+            return anc
+        if (anc / ".git").is_dir():
+            break  # 저장소 경계를 넘지 않는다
+    return None
+
+
+def collect_manifests(target, *, excludes=DEFAULT_EXCLUDES) -> list[Path]:
+    """지문·탐지가 보는 매니페스트 집합.
+
+    대상 안의 매니페스트 + **빌드가 실제로 읽는 파일**(대상 밖일 수 있다):
+    maven 은 로컬 parent pom 체인, gradle 은 빌드 루트의 스크립트·프로퍼티·카탈로그.
+    모듈 하나만 스캔해도 `../pom.xml` 이나 루트 `build.gradle` 이 바뀌면 캐시가
+    무효화돼야 하기 때문이다(codex P1-1). 순서는 표시 경로 기준 정렬로 결정적이다.
+    """
+    root = Path(target)
+    found = list(iter_manifests(root, excludes=excludes))
+    seen = {p.resolve() for p in found}
+
+    build_root = _gradle_build_root(root)
+    if build_root is not None:
+        # 루트 디렉토리 자신 + gradle/ (카탈로그·공용 스크립트 관례) 만 — 형제 모듈은 제외
+        for d in (build_root, build_root / "gradle"):
+            if not d.is_dir():
+                continue
+            for p in sorted(d.iterdir()):
+                if p.is_file() and _is_manifest(p.name) and p.resolve() not in seen:
+                    seen.add(p.resolve())
+                    found.append(p)
+    queue = [p for p in found if p.name == "pom.xml"]
+    while queue:
+        parent = _local_parent_pom(queue.pop(0))
+        if parent is not None and parent.resolve() not in seen:
+            seen.add(parent.resolve())
+            found.append(parent)
+            queue.append(parent)
+    return sorted(found, key=lambda p: _manifest_key(p, root))
+
+
+def _manifest_key(path: Path, root: Path) -> str:
+    """지문에 쓰는 표시 경로. 대상 밖 parent 는 '../pom.xml' 처럼 관계로 표기한다."""
+    return os.path.relpath(path, root)
+
+
 def manifest_fingerprint(target, *, excludes=DEFAULT_EXCLUDES) -> str:
     """의존성 매니페스트의 (상대경로, 내용) 해시. 캐시 키(식별자)용 — 보안 해시 아님.
 
@@ -69,8 +150,8 @@ def manifest_fingerprint(target, *, excludes=DEFAULT_EXCLUDES) -> str:
     """
     root = Path(target)
     h = hashlib.sha1(usedforsecurity=False)
-    for p in iter_manifests(root, excludes=excludes):
-        h.update(str(p.relative_to(root)).encode())  # 매니페스트 추가/삭제/이동도 반영
+    for p in collect_manifests(root, excludes=excludes):
+        h.update(_manifest_key(p, root).encode())  # 매니페스트 추가/삭제/이동도 반영
         h.update(b"\0")
         try:
             h.update(hashlib.sha1(p.read_bytes(), usedforsecurity=False).digest())
@@ -105,6 +186,14 @@ _VERSION_KEYWORDS = frozenset({"LATEST", "RELEASE"})
 # gradle 좌표 문자열 'group:artifact:version' (가장 흔한 선언 형태).
 _GRADLE_COORD = re.compile(r"""["']([\w.\-]+):([\w.\-]+):([^"'\s]+)["']""")
 _TOML_KEY = re.compile(r"""^\s*([\w.\-]+)\s*=""")
+# gradle 보간: $name 또는 ${expr}
+_INTERP = re.compile(r"""\$\{([^{}]+)\}|\$([A-Za-z_]\w*)""")
+# 빌드 스크립트의 문자열 할당: def/val/var/ext. 접두는 선택. (따옴표 값만 — 코드 값은 무시)
+_GRADLE_ASSIGN = re.compile(
+    r"""(?:^|[\s{;(])(?:def|val|var)?\s*(?:ext\s*\.\s*)?([A-Za-z_][\w.]*)\s*=\s*["']([^"']+)["']""",
+    re.M)
+_GRADLE_EXT_INDEX = re.compile(
+    r"""ext\s*\[\s*["']([^"']+)["']\s*\]\s*=\s*["']([^"']+)["']""")
 _QUOTED = re.compile(r"""["']([^"']+)["']""")
 
 
@@ -142,43 +231,150 @@ def _child_text(node, name: str) -> str:
     return (c.text or "").strip() if c is not None else ""
 
 
-def _resolve_property(value: str, props: dict, depth: int = 3) -> str:
-    """`${commons.version}` 을 <properties> 로 한 단계씩 푼다(못 풀면 빈 문자열)."""
-    while depth and value.startswith("${") and value.endswith("}"):
-        value = props.get(value[2:-1], "")
-        depth -= 1
-    return value
+def _dynamic_reason(value, lookup, depth: int = 4):
+    """동적이면 근거 버전 표현, 아니면 None. **해석 못 하면 동적으로 본다(fail-closed).**
+
+    보고 값은 풀렸으면 해석된 값(`2.+`), 못 풀었으면 원래 표현(`${lib.version}`) —
+    사용자가 왜 우회했는지 바로 읽을 수 있다.
+
+    lookup(name) 은 후보 값들의 집합, 또는 None(미해석)을 준다. 빈 집합은 "지문 안에서
+    해석되는 참조"라 값은 몰라도 원격 변동 요인이 아니라는 뜻이다. 정확도 우선(원칙 1):
+    해석 못 한 표현을 고정으로 단정하면 옛 그래프로 스캔하게 된다(codex P1-2·P1-3).
+    """
+    v = str(value or "").strip()
+    if not v:
+        return None
+    if is_dynamic_version(v):
+        return v
+    tokens = [a or b for a, b in _INTERP.findall(v)]
+    if not tokens:
+        return None
+    if depth <= 0:
+        return v
+    for t in tokens:
+        candidates = lookup(t.strip())
+        if candidates is None:
+            return v  # 어디에도 정의가 없다 → 보수적으로 동적
+        for c in candidates:
+            reason = _dynamic_reason(c, lookup, depth - 1)
+            if reason is not None:
+                return reason
+    return None
 
 
-def _maven_dynamic(path: Path, rel: str):
+def _pom_properties(pom: Path) -> dict:
+    """자기 <properties> + 로컬 parent 체인의 <properties>(자식 우선). 값은 후보 집합.
+
+    profile 안의 <properties> 도 포함한다 — 프로파일이 정의한 버전을 미해석으로 두면
+    멀티모듈 프로젝트가 통째로 캐시를 잃는다.
+    """
+    props: dict[str, set] = {}
+    cur, depth = pom, 10
+    while cur is not None and depth:
+        try:
+            root = ET.fromstring(cur.read_bytes())
+        except Exception:
+            break
+        for pnode in root.iter():
+            if _tag(pnode) != "properties":
+                continue
+            for c in pnode:
+                props.setdefault(_tag(c), set()).add((c.text or "").strip())
+        cur, depth = _local_parent_pom(cur), depth - 1
+    return props
+
+
+# maven 내장 프로퍼티 중 "프로젝트 자기 버전"을 가리키는 것들. 리액터 안에서 풀리므로
+# 원격 변동 요인이 아니다(멀티모듈의 표준 표기 — 잡으면 대량 FP).
+_SELF_VERSION_PROPS = frozenset({
+    "project.version", "pom.version", "version", "project.parent.version",
+    "pom.parent.version", "revision", "sha1", "changelist",
+})
+
+
+def _maven_lookup(props: dict):
+    def lookup(name: str):
+        if name in props:
+            return props[name]
+        if name in _SELF_VERSION_PROPS:
+            return set()
+        return None
+    return lookup
+
+
+def _maven_dynamic(path: Path, rel: str, fingerprinted: set):
     root = ET.parse(path).getroot()
-    props = {}
-    for pnode in root.findall("./{*}properties"):
-        for c in pnode:
-            props[_tag(c)] = (c.text or "").strip()
+    lookup = _maven_lookup(_pom_properties(path))
 
     for node in root.iter():
         kind = _tag(node)
         if kind == "parent":
-            # 로컬 parent 는 이미 지문에 들어 있다(멀티모듈 집합체). 원격 parent 만 동적 소스.
-            # `<relativePath/>` 를 빈 값으로 명시하면 항상 원격, 없으면 기본값 ../pom.xml.
-            rp = _child(node, "relativePath")
-            if not (rp is not None and not (rp.text or "").strip()):
-                cand = path.parent / ((rp.text or "").strip() if rp is not None else "../pom.xml")
-                if cand.is_file() or (cand / "pom.xml").is_file():
-                    continue
+            # 억제 조건은 "로컬에 있다"가 아니라 **지문에 실제로 들어갔다** 이다.
+            # 지문에 없는 parent 가 바뀌면 캐시 키가 안 움직인다(codex P1-1).
+            local = _local_parent_pom(path)
+            if local is not None and local.resolve() in fingerprinted:
+                continue
         elif kind != "dependency":
             continue
-        version = _resolve_property(_child_text(node, "version"), props)
-        if is_dynamic_version(version):
+        version = _child_text(node, "version")
+        if not version:
+            continue  # 버전 미기재 = BOM/parent 관리형. 선언이 없으니 판단 대상이 아니다
+        reason = _dynamic_reason(version, lookup)
+        if reason is not None:
             coord = f"{_child_text(node, 'groupId')}:{_child_text(node, 'artifactId')}"
-            yield DynamicVersion(rel, coord, version)
+            yield DynamicVersion(rel, coord, reason)
 
 
-def _gradle_dynamic(path: Path, rel: str):
+def _gradle_symbols(manifests) -> dict:
+    """빌드 스크립트 전체 + gradle.properties 의 "이름 → 값 후보" 표.
+
+    멀티모듈에서는 루트가 정의하고 모듈이 쓰므로 대상 전체를 한 번에 모은다.
+    """
+    symbols: dict[str, set] = {}
+    for p in manifests:
+        try:
+            text = p.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        if p.name == "gradle.properties":
+            for line in text.splitlines():
+                line = line.strip()
+                if line and line[0] not in "#!" and "=" in line:
+                    k, _, v = line.partition("=")
+                    symbols.setdefault(k.strip(), set()).add(v.strip())
+        elif fnmatch(p.name, "*.gradle") or fnmatch(p.name, "*.gradle.kts"):
+            for name, value in _GRADLE_ASSIGN.findall(text):
+                symbols.setdefault(name, set()).add(value)
+            for name, value in _GRADLE_EXT_INDEX.findall(text):
+                symbols.setdefault(name, set()).add(value)
+    return symbols
+
+
+_GRADLE_PREFIXES = ("rootProject.ext.", "project.ext.", "rootProject.", "project.", "ext.")
+
+
+def _gradle_lookup(symbols: dict, has_catalog: bool):
+    def lookup(expr: str):
+        name = expr.strip()
+        if name.endswith(".get()"):
+            name = name[: -len(".get()")]
+        for pre in _GRADLE_PREFIXES:
+            if name.startswith(pre):
+                name = name[len(pre):]
+                break
+        # libs.* 는 버전 카탈로그 참조 — 카탈로그 파일이 지문에 있고, 동적 항목이면
+        # 카탈로그 스캔(_toml_dynamic)이 따로 잡는다. 미해석으로 볼 이유가 없다.
+        if has_catalog and (name == "libs" or name.startswith("libs.")):
+            return set()
+        return symbols.get(name)
+    return lookup
+
+
+def _gradle_dynamic(path: Path, rel: str, lookup):
     for group, artifact, version in _GRADLE_COORD.findall(path.read_text(encoding="utf-8", errors="replace")):
-        if is_dynamic_version(version):
-            yield DynamicVersion(rel, f"{group}:{artifact}", version)
+        reason = _dynamic_reason(version, lookup)
+        if reason is not None:
+            yield DynamicVersion(rel, f"{group}:{artifact}", reason)
 
 
 def _toml_dynamic(path: Path, rel: str):
@@ -207,12 +403,12 @@ def _properties_dynamic(path: Path, rel: str):
             yield DynamicVersion(rel, key, value)
 
 
-def _manifest_dynamic(path: Path, rel: str):
+def _manifest_dynamic(path: Path, rel: str, fingerprinted: set, gradle_lookup):
     name = path.name
     if name == "pom.xml":
-        return _maven_dynamic(path, rel)
+        return _maven_dynamic(path, rel, fingerprinted)
     if fnmatch(name, "*.gradle") or fnmatch(name, "*.gradle.kts"):
-        return _gradle_dynamic(path, rel)
+        return _gradle_dynamic(path, rel, gradle_lookup)
     if fnmatch(name, "*.versions.toml"):
         return _toml_dynamic(path, rel)
     if name == "gradle.properties":
@@ -227,10 +423,15 @@ def dynamic_versions(target, *, excludes=DEFAULT_EXCLUDES) -> list[DynamicVersio
     나머지는 계속 본다(부분 실패는 정상, 원칙 5).
     """
     root = Path(target)
+    manifests = collect_manifests(root, excludes=excludes)
+    fingerprinted = {p.resolve() for p in manifests}
+    has_catalog = any(fnmatch(p.name, "*.versions.toml") for p in manifests)
+    gradle_lookup = _gradle_lookup(_gradle_symbols(manifests), has_catalog)
+
     out: list[DynamicVersion] = []
-    for p in iter_manifests(root, excludes=excludes):
+    for p in manifests:
         try:
-            out.extend(_manifest_dynamic(p, str(p.relative_to(root))))
+            out.extend(_manifest_dynamic(p, _manifest_key(p, root), fingerprinted, gradle_lookup))
         except Exception:
             continue
     return out

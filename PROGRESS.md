@@ -237,6 +237,25 @@ crypto 안티패턴 → **커스텀 룰(D)** (3종: MyBatis `${}`/하드코딩/z
   **옛 BOM 을 성공으로 오인**하던 경로 차단(스테일 재발 방지). 실패 시 SKIPPED, 기존 캐시는 비파괴.
 - [x] 회귀 46건 추가(**590 passed, 2 xfailed**). 기존 테스트 더블 5개(`ensure_bom`×3,
   `build_adapters`×2)는 넓어진 시그니처에 맞춰 갱신.
-- 남은 한계: 동적 선언이 **없는데** 원격 상태가 바뀌는 경우(원격 parent/BOM import 의 *고정* 버전이
-  재배포, 미러 변조)·gradle wrapper 버전 변경·`group:name:version` 이 아닌 gradle 명명인자 표기
-  (`group: 'x', version: '2.+'`)·깨진 매니페스트(파싱 실패 시 조용히 건너뜀)는 여전히 캐시 적중.
+
+### codex 리뷰 P1 3건 반영 — fail-open → fail-closed (2026-09-09)
+> 지적의 뿌리 하나: **해석 못 한 버전 표현을 "고정"으로 단정**해 캐시를 유지했다. 3건 모두 재현됨.
+- [x] **P1-1 지문 범위** — `collect_manifests()` 신설: 대상 안 매니페스트 + **빌드가 실제로 읽는
+  대상 밖 파일**(maven 로컬 parent pom 체인, gradle 빌드 루트의 `build.gradle`·`gradle.properties`·
+  `gradle/` 카탈로그). 모듈만 스캔할 때 `../pom.xml`·루트 스크립트가 바뀌어도 캐시 키가 안 움직이던
+  구멍을 닫았다. parent 억제 조건도 "로컬에 있다" → **"지문에 실제로 들어갔다"** 로 교체.
+- [x] **P1-2 maven 프로퍼티** — `_pom_properties()` 가 로컬 parent 체인과 profile `<properties>` 까지
+  모아 해석. 해석되면 그 값으로 판정, **끝내 못 풀면 동적**(`${lib.version}` 그대로 보고).
+  자기 버전 계열(`project.version`·`revision` 등)과 버전 미기재(BOM 관리형)는 판단 대상에서 제외.
+- [x] **P1-3 gradle 보간** — 프로젝트 전역 심볼표(`def/val/var/ext`·`ext['k']`·`gradle.properties`)로
+  `$v`·`${rootProject.ext.v}` 를 해석. `libs.*` 는 카탈로그 참조(카탈로그 자체가 지문에 있고 동적
+  항목은 TOML 스캔이 잡음)라 해석됨으로 취급. 미해석은 동적.
+- [x] 보고 값 계약: 풀렸으면 해석값(`2.+`), 못 풀었으면 원문(`$mysteryVersion`) — 왜 우회했는지 읽힌다.
+- [x] **오탐 0 실측 15개 대상**: work-note(루트/backend)·이 저장소·스프링부트 maven/gradle·
+  **멀티모듈 maven 3(집합체/core/web)·멀티모듈 gradle 2(루트/서브프로젝트)**·픽스처 5.
+  work-note 사본에서 tomcat 핀 10.1.59→10.1.60 시 키 변경·복원까지 확인. 탐지 비용 0.4~25ms.
+  회귀 20건 추가(**610 passed, 2 xfailed**).
+- 남은 한계: 동적 선언이 **없는데** 원격 상태가 바뀌는 경우(원격 parent/BOM import 의 *고정* 버전
+  재배포, 미러 변조)·gradle wrapper 버전 변경·gradle 명명인자 표기(`group: 'x', version: '2.+'`)·
+  좌표 전체가 변수인 표기(`"$g:$a:$v"`)·`property('x')` 같은 코드 경유 값(미해석 → 보수적 우회)·
+  깨진 매니페스트(파싱 실패 시 건너뜀)·settings.gradle 없는 gradle 서브프로젝트 단독 스캔.
