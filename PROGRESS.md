@@ -203,3 +203,20 @@ crypto 안티패턴 → **커스텀 룰(D)** (3종: MyBatis `${}`/하드코딩/z
   (커스텀 룰 메타데이터 검증)가 테스트에서만 호출되고 report 파이프라인 런타임에서는 호출되지
   않음 · (16) 담당 `자동 수정(LLM)` 경로가 work-note 픽스처에는 0건(MyBatis 픽스처 추가가
   커버 후보).
+
+## BOM 캐시 무효화 수정(2026-09-09)
+- [x] **결함(실측)**: `bom_cache_path` 의 캐시 키가 대상 경로 문자열뿐이라, 의존성을 올려도
+  `ensure_bom` 이 옛 BOM 을 영원히 재사용 → 조치 전·후 스캔이 같은 CVE 를 보고(tomcat-embed-core
+  10.1.55→10.1.59, log4j-api 2.24.3→2.25.5 에서 옛 버전 CVE 4건 잔존, trivy 8.7s→0.5s 가 단서).
+  반대 방향(새로 추가된 취약 의존성을 "깨끗함"으로 보고)이 더 위험 — 원칙 1(정확도 우선) 위반.
+- [x] **수정**: 캐시 키 = `sha1(대상 절대경로)/manifest_fingerprint(...)`. 지문은 의존성 매니페스트
+  (`pom.xml`·`*.gradle`·`*.gradle.kts`·`gradle.properties`·`*.versions.toml`·`*.lockfile`)의
+  (상대경로, 내용 sha1) 해시 — mtime 미사용(git checkout 이 mtime 을 바꿔 캐시를 무의미하게 함).
+  탐색은 `exclude.DEFAULT_EXCLUDES` 로 디렉토리 가지치기(node_modules/build/.git 오염 방지).
+  docstring 의 거짓("코드 해시 캐시") 정정. 코어 인터페이스 무변경(`ensure_bom` 시그니처 동일).
+- [x] 회귀 게이트: 버전 상향 재스캔 시 cdxgen 재실행 + 새 버전 BOM 반환(실측 시나리오 재현),
+  내용 동일 시 캐시 유지(mtime 변경 포함), 대상별 분리, 매니페스트 9종 파라미터, 제외 디렉토리 무시.
+  **544 passed, 2 xfailed** (신규 15건).
+- 남은 한계: 매니페스트가 안 바뀌어도 결과가 달라지는 경우(동적 버전 `2.+`/SNAPSHOT, 원격 BOM/
+  parent pom 변경, gradle wrapper 버전 변경)는 여전히 캐시 적중 — BOM TTL 이나 `--no-bom-cache`
+  가 후속 후보. 지문이 바뀌면 옛 캐시 디렉토리는 그대로 남는다(자동 삭제 안 함).
