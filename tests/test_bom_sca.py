@@ -876,6 +876,9 @@ def test_dynamic_versions_resolves_named_argument_variable(tmp_path):
     "/* implementation group: 'org.x', name: 'y', version: '9.+' */\n",
     # 문자열 안 (문서화 목적으로 적어둔 예시)
     "def doc = \"implementation group: 'org.x', name: 'y', version: '2.+'\"\n",
+    # slashy / dollar-slashy 문자열 안의 예시
+    "def usage = /implementation group: 'org.x', name: 'y', version: '2.+'/\n",
+    "def usage = $/ implementation group: 'org.x', name: 'y', version: '2.+' /$\n",
 ])
 def test_dynamic_versions_named_argument_negative_controls(tmp_path, script):
     """음성 대조군 — 하나라도 잡히면 판별 축이 틀린 것이다."""
@@ -917,3 +920,65 @@ def test_named_arg_ignores_triple_quoted_example_code(tmp_path):
                           "implementation group: 'org.x', name: 'y', version: '2.+'\n"
                           '"""\n')
     assert dynamic_versions(p) == []
+
+
+@pytest.mark.parametrize("call", [
+    "implementation(platform(group: 'g', name: 'bom', version: '2.+'))",
+    "implementation(enforcedPlatform(group: 'g', name: 'bom', version: '2.+'))",
+])
+def test_named_arg_detects_nested_platform_call(tmp_path, call):
+    """[codex P1] 중첩 호출이면 호출 식별자 앞 문자가 `(` 다 — 문자 클래스에 빠져 있었다."""
+    p = _gradle(tmp_path, f"dependencies {{\n  {call}\n}}\n")
+    assert [d.version for d in dynamic_versions(p)] == ["2.+"]
+
+
+def test_kts_type_annotations_are_not_named_arguments(tmp_path):
+    """[codex P2] kts 에서 콜론은 **타입 주석**이다. Groovy 명명인자 파서를 kts 에 돌리면
+    헬퍼 함수 시그니처가 의존성으로 잡혀 kts 프로젝트가 매 스캔 캐시를 잃는다."""
+    p = tmp_path / "g"
+    p.mkdir()
+    (p / "build.gradle.kts").write_text(
+        'fun dep(group: String, name: String, version: String) = "$group:$name:$version"\n'
+        'dependencies {\n    implementation("org.apache.commons:commons-text:1.9")\n}\n')
+    assert dynamic_versions(p) == []
+
+
+@pytest.mark.parametrize("script", [
+    "def usage = /\nimplementation group: 'org.x', name: 'y', version: '2.+'\n/\n",
+    "def usage = $/\nimplementation group: 'org.x', name: 'y', version: '2.+'\n/$\n",
+])
+def test_slashy_string_example_is_not_a_declaration(tmp_path, script):
+    """[codex P2] slashy·dollar-slashy 문자열 안의 예시 코드 — 매 스캔 재생성 오탐."""
+    assert dynamic_versions(_gradle(tmp_path, script)) == []
+
+
+def test_apostrophe_line_does_not_swallow_next_declaration(tmp_path):
+    """[codex P2] 닫히지 않은 따옴표(slashy 정규식 안의 아포스트로피 등)가 개행을 삼키면
+    다음 줄의 진짜 선언이 가려진다 — 렉서는 개행을 먹지 않아야 한다."""
+    p = _gradle(tmp_path, "def pattern = /it's ok/\n"
+                          "implementation group: 'org.x', name: 'y', version: '2.+'\n")
+    assert [d.version for d in dynamic_versions(p)] == ["2.+"]
+
+
+def test_kts_fixture_stays_false_positive_free():
+    """FP0 게이트 — fixtures/kts-app 은 kts 관용구(타입 주석·kotlin 명명인자·카탈로그)를
+    모아둔 회귀 픽스처다. 여기서 한 건이라도 잡히면 kts 프로젝트가 매 스캔 캐시를 잃는다."""
+    assert dynamic_versions(Path(__file__).resolve().parent.parent / "fixtures" / "kts-app") == []
+
+
+@pytest.mark.parametrize("root_decl,sub_decl", [
+    ('val commonsVersion: String by extra("1.12.0")', 'val commonsVersion: String by rootProject.extra'),
+    ('val commonsVersion by extra("1.12.0")', 'val commonsVersion: String by rootProject.extra'),
+    ('extra["commonsVersion"] = "1.12.0"', ''),
+])
+def test_kts_extra_property_bindings_resolve(tmp_path, root_decl, sub_decl):
+    """kts 의 표준 확장 프로퍼티 표기. 이걸 못 읽으면 kts 멀티모듈이 매 스캔 캐시를 잃는다
+    (fixtures/kts-app 이 단일 모듈이라 못 잡던 구멍 — kts 멀티모듈 측정에서 드러났다)."""
+    repo = tmp_path / "repo"
+    (repo / "app").mkdir(parents=True)
+    (repo / "settings.gradle.kts").write_text('include("app")\n')
+    (repo / "build.gradle.kts").write_text(f"{root_decl}\n")
+    (repo / "app" / "build.gradle.kts").write_text(
+        f"{sub_decl}\ndependencies {{ implementation(\"org.apache.commons:commons-text:$commonsVersion\") }}\n")
+    assert dynamic_versions(repo) == []
+    assert dynamic_versions(repo / "app") == []

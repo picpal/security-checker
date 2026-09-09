@@ -234,7 +234,11 @@ _GRADLE_ASSIGN = re.compile(
     r"""(?:^|[\s{;(])(?:def|val|var)?\s*(?:ext\s*\.\s*)?([A-Za-z_][\w.]*)\s*=\s*["']([^"']+)["']""",
     re.M)
 _GRADLE_EXT_INDEX = re.compile(
-    r"""ext\s*\[\s*["']([^"']+)["']\s*\]\s*=\s*["']([^"']+)["']""")
+    r"""(?:ext|extra)\s*\[\s*["']([^"']+)["']\s*\]\s*=\s*["']([^"']+)["']""")
+# kotlin DSL 확장 프로퍼티: `val x: String by extra("1.12.0")` (서브프로젝트 쪽
+# `by rootProject.extra` 는 값이 없으니 잡지 않는다 — 값은 전역 표에서 온다).
+_KTS_EXTRA = re.compile(
+    r"""\b(?:val|var)\s+([A-Za-z_]\w*)\s*(?::\s*[\w.<>?]+\s*)?by\s+(?:\w+\s*\.\s*)*extra\s*\(\s*["']([^"']*)["']\s*\)""")
 # 명명인자 의존성 선언: `implementation group: 'x', name: 'y', version: '2.+'`.
 # 판별 축은 **콜론 명명인자로 group|module + name + version 이 한 논리 줄에 함께 있을 것**.
 # `version:` 단독은 절대 신호로 못 쓴다 — 프로젝트 자기 버전·publishing DSL 과 구분이 안 된다.
@@ -243,8 +247,10 @@ _GRADLE_EXT_INDEX = re.compile(
 # 호출 인식은 느슨하게(식별자 + 여는 구분자 + 명명인자), **필수 키 충족은 파싱 후에** 검증한다 —
 # Groovy 맵은 순서가 무의미해 `version:` 이 먼저 올 수 있고 대괄호 맵도 쓰기 때문.
 # 식별자와 인자 사이에는 **여는 구분자나 공백**이 반드시 있어야 한다 — 없으면 `name:` 의
-# 'nam'+'e:' 처럼 단어 중간이 호출로 잡혀 인자가 두 호출로 쪼개진다.
-_NAMED_CALL = re.compile(r"""(?:^|[\s{;=])([A-Za-z_]\w*)(?:(?:\s*[\(\[])+\s*|\s+)(?=\w+\s*:)""")
+# 'nam'+'e:' 처럼 단어 중간이 호출로 잡혀 인자가 두 호출로 쪼개진다. 식별자 **앞**에는 여는
+# 괄호·대괄호도 온다(`implementation(platform(group: …))` 같은 중첩 호출). 문자열은 이미
+# 골격에서 자리표시자라 앞 문자 제한이 문자열 방어를 겸하지는 않는다.
+_NAMED_CALL = re.compile(r"""(?:^|[\s{;=(\[])([A-Za-z_]\w*)(?:(?:\s*[\(\[])+\s*|\s+)(?=\w+\s*:)""")
 _NAMED_ARG = re.compile(r"""(\w+)\s*:\s*(?:\x00(\d+)\x00|([A-Za-z_][\w.]*))""")
 # apply from: 'x.gradle' / apply(from = "x.gradle")
 _APPLY_FROM = re.compile(r"""apply\s*\(?\s*from\s*[:=]\s*["']([^"']+)["']""")
@@ -400,9 +406,25 @@ def _mask_strings(text: str) -> tuple[str, list[str]]:
     """
     out: list[str] = []
     lits: list[str] = []
+
+    def emit(body: str) -> None:
+        out.append(f"\x00{len(lits)}\x00")
+        lits.append(body)
+
+    def last_code_char() -> str:
+        for ch in reversed(out):
+            if not ch.isspace():
+                return ch
+        return ""
+
     i, n = 0, len(text)
     while i < n:
         pair = text[i:i + 2]
+        if pair == "$/":  # dollar-slashy — 여는 표기가 명확해 항상 문자열이다
+            j = text.find("/$", i + 2)
+            emit(text[i + 2: j if j >= 0 else n])
+            i = n if j < 0 else j + 2
+            continue
         if pair == "//":
             j = text.find("\n", i)
             i = n if j < 0 else j
@@ -412,6 +434,16 @@ def _mask_strings(text: str) -> tuple[str, list[str]]:
             i = n if j < 0 else j + 2
             continue
         c = text[i]
+        if c == "/" and text[i + 1:i + 2] not in ("/", "*") and last_code_char() in "=({[,:":
+            # slashy 문자열. 나눗셈과 구분할 수 없으므로 **값 자리**(= ( [ { , : 뒤)에서만,
+            # 그리고 실제로 닫힐 때만 문자열로 본다 — 아니면 그냥 문자로 둔다.
+            j = i + 1
+            while j < n and text[j] != "/":
+                j += 2 if text[j] == "\\" else 1
+            if j < n:
+                emit(text[i + 1:j])
+                i = j + 1
+                continue
         if c in "'\"":
             triple = text[i:i + 3]
             if triple in ("\'\'\'", '"""'):
@@ -423,9 +455,10 @@ def _mask_strings(text: str) -> tuple[str, list[str]]:
                 while j < n and text[j] != c and text[j] != "\n":
                     j += 2 if text[j] == "\\" else 1
                 body = text[i + 1:j]
-                i = min(j + 1, n)
-            out.append(f"\x00{len(lits)}\x00")
-            lits.append(body)
+                # 닫히지 않은 채 개행을 만나면 **개행은 삼키지 않는다** — 삼키면 다음 줄의
+                # 진짜 선언이 앞 줄에 붙어 가려진다(slashy 정규식 안의 아포스트로피 등).
+                i = (j + 1) if (j < n and text[j] == c) else j
+            emit(body)
             continue
         out.append(c)
         i += 1
@@ -496,10 +529,9 @@ def _gradle_symbols(manifests) -> dict:
                     k, _, v = line.partition("=")
                     symbols.setdefault(k.strip(), set()).add(v.strip())
         elif fnmatch(p.name, "*.gradle") or fnmatch(p.name, "*.gradle.kts"):
-            for name, value in _GRADLE_ASSIGN.findall(text):
-                symbols.setdefault(name, set()).add(value)
-            for name, value in _GRADLE_EXT_INDEX.findall(text):
-                symbols.setdefault(name, set()).add(value)
+            for pattern in (_GRADLE_ASSIGN, _GRADLE_EXT_INDEX, _KTS_EXTRA):
+                for name, value in pattern.findall(text):
+                    symbols.setdefault(name, set()).add(value)
     return symbols
 
 
@@ -526,13 +558,12 @@ def _gradle_lookup(symbols: dict, has_catalog: bool, local: dict | None = None):
 
 
 def _gradle_dynamic(path: Path, rel: str, symbols: dict, has_catalog: bool, followed: set,
-                    build_root: Path):
+                    build_root: Path, groovy: bool = True):
     text = path.read_text(encoding="utf-8", errors="replace")
     local: dict[str, set] = {}
-    for name, value in _GRADLE_ASSIGN.findall(text):
-        local.setdefault(name, set()).add(value)
-    for name, value in _GRADLE_EXT_INDEX.findall(text):
-        local.setdefault(name, set()).add(value)
+    for pattern in (_GRADLE_ASSIGN, _GRADLE_EXT_INDEX, _KTS_EXTRA):
+        for name, value in pattern.findall(text):
+            local.setdefault(name, set()).add(value)
     lookup = _gradle_lookup(symbols, has_catalog, local)
 
     for _q, group, artifact, version in _GRADLE_COORD.findall(text):
@@ -540,7 +571,10 @@ def _gradle_dynamic(path: Path, rel: str, symbols: dict, has_catalog: bool, foll
         if reason is not None:
             yield DynamicVersion(rel, f"{group}:{artifact}", reason[0], reason[1])
 
-    for coord, version in _named_arg_deps(text):
+    # 명명인자 표기는 Groovy 전용이다. kts 에서 콜론은 **타입 주석**이라
+    # `fun dep(group: String, name: String, version: String)` 이 의존성으로 잡혀
+    # kts 프로젝트가 매 스캔 캐시를 잃는다(kotlin 의 명명인자는 `=` 라 애초에 미대응).
+    for coord, version in (_named_arg_deps(text) if groovy else ()):
         reason = _dynamic_reason(version, lookup)
         if reason is not None:
             yield DynamicVersion(rel, coord, reason[0], reason[1])
@@ -590,7 +624,8 @@ def _manifest_dynamic(path: Path, rel: str, fingerprinted: set, symbols: dict, h
     if name == "pom.xml":
         return _maven_dynamic(path, rel, fingerprinted)
     if fnmatch(name, "*.gradle") or fnmatch(name, "*.gradle.kts"):
-        return _gradle_dynamic(path, rel, symbols, has_catalog, fingerprinted, build_root)
+        return _gradle_dynamic(path, rel, symbols, has_catalog, fingerprinted, build_root,
+                               groovy=not fnmatch(name, "*.kts"))
     if fnmatch(name, "*.versions.toml"):
         return _toml_dynamic(path, rel)
     if name == "gradle.properties":
