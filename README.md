@@ -56,6 +56,10 @@ secscan report --check-result result.json --rescan out2/findings.json   # LLM �
 - `--verify-secrets` : TruffleHog 라이브 검증(자격증명을 제3자로 전송, opt-in) · `--network-off` : 검증 강제 차단
 - `--suppressions <file>` / `--baseline <file>` / `--write-baseline <file>` : 억제(사람 확정) · baseline
 - `--allow-large` : 대형 코드베이스에서도 도달성 강제 · `--no-reachability` : 도달성 생략
+- `--no-bom-cache` : BOM(의존성 그래프) 캐시를 무시하고 새로 해석. BOM 캐시는 **의존성 매니페스트
+  내용 해시**로 잡히므로 버전을 올리면 자동으로 다시 만들어진다. 매니페스트가 그대로여도 결과가
+  달라지는 선언 — 동적 버전(`2.+`·`latest.release`·`[1.0,2.0)`)·SNAPSHOT·원격 parent pom — 은
+  스캔 시작 때 감지해 **자동으로 캐시를 우회**하고 그 사실을 출력·`findings.json`(`meta.bom_cache`)에 남긴다
 
 ## 슬래시 커맨드 (Claude Code)
 

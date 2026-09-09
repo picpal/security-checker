@@ -3,6 +3,9 @@
 가장 중요한 recall 복구 경로: 락파일 없는 gradle 에서도 전이 의존 CVE 를 잡는다.
 trivy sbom 출력은 `trivy fs` 와 동일 스키마라 tool="trivy" 로 두면 parse_trivy 가
 그대로 정규화한다. cdxgen/trivy 실패는 status 로 격리(부분 실패).
+
+refresh=True 면 BOM 캐시를 우회하고 다시 해석한다 — 동적 버전/SNAPSHOT 처럼 매니페스트가
+그대로여도 그래프가 달라지는 경우(CLI 가 판단해 주입) 또는 `--no-bom-cache`.
 """
 
 from __future__ import annotations
@@ -18,6 +21,9 @@ class BomScaAdapter:
     fmt = "json"
     default_timeout = 900.0
 
+    def __init__(self, *, refresh: bool = False):
+        self.refresh = refresh
+
     def build_argv(self, bom_path) -> list[str]:
         return ["trivy", "sbom", "--format", "json", "--quiet", str(bom_path)]
 
@@ -25,7 +31,7 @@ class BomScaAdapter:
             run=_subprocess_runner, timeout=None) -> RawResult:
         t = timeout or self.default_timeout
         try:
-            bom = ensure_bom(target, timeout=t)
+            bom = ensure_bom(target, timeout=t, refresh=self.refresh)
         except Exception as e:
             return RawResult(self.name, SKIPPED, self.fmt, error=f"BOM 생성 격리: {e}")
         if not bom:

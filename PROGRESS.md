@@ -217,6 +217,26 @@ crypto 안티패턴 → **커스텀 룰(D)** (3종: MyBatis `${}`/하드코딩/z
 - [x] 회귀 게이트: 버전 상향 재스캔 시 cdxgen 재실행 + 새 버전 BOM 반환(실측 시나리오 재현),
   내용 동일 시 캐시 유지(mtime 변경 포함), 대상별 분리, 매니페스트 9종 파라미터, 제외 디렉토리 무시.
   **544 passed, 2 xfailed** (신규 15건).
-- 남은 한계: 매니페스트가 안 바뀌어도 결과가 달라지는 경우(동적 버전 `2.+`/SNAPSHOT, 원격 BOM/
-  parent pom 변경, gradle wrapper 버전 변경)는 여전히 캐시 적중 — BOM TTL 이나 `--no-bom-cache`
-  가 후속 후보. 지문이 바뀌면 옛 캐시 디렉토리는 그대로 남는다(자동 삭제 안 함).
+- 남은 한계였던 "매니페스트 불변 + 결과 변동" 경로는 아래 후속에서 처리. 지문이 바뀌면 옛 캐시
+  디렉토리는 그대로 남는다(자동 삭제 안 함).
+
+### 후속: 동적 버전 자동 우회 + `--no-bom-cache` (2026-09-09)
+- [x] **`dynamic_versions(target)`** — 매니페스트에서 해석 시점마다 달라질 수 있는 선언을 탐지:
+  동적 버전(`2.+`·`latest.release`·`[1.0,2.0)`)·SNAPSHOT·**원격** parent pom. maven 은
+  ElementTree 로 `dependency`/`parent` 만 보고 `<properties>` 참조를 해석한다.
+  FP 방어 2종이 핵심 — 프로젝트 **자기 버전** SNAPSHOT(`<version>0.0.1-SNAPSHOT</version>`,
+  gradle.properties `version=`)과 **로컬** parent(멀티모듈 집합체)는 제외. 이걸 안 하면 개발 중
+  프로젝트 대부분이 캐시를 못 쓴다. 실증: 스프링부트 maven/gradle 프로젝트·이 저장소·픽스처 5종 모두 0건 오탐.
+- [x] **정책 (a) 자동 우회 채택** — 탐지되면 캐시를 우회하고 그 사실·근거를 출력 +
+  `findings.json` `meta.bom_cache{refresh,reason}` 에 기록. 근거: 경고만 하면(b) 이미 나간 보고서가
+  틀린 채로 남고, 바로잡으려면 전체 재스캔(더 비쌈)이 필요하다. 실측 비용은 스캔당 **+3.3s**
+  (캐시적중 0.27s vs 자동우회 3.58s, spring-boot web+jpa 65 컴포넌트 gradle).
+  탐지 실패는 캐시 정책 유지 + 경고(원칙 5).
+- [x] `--no-bom-cache`(scan 전용) 수동 강제 우회. 우회해도 결과는 캐시에 기록돼 다음 스캔이 이득.
+- [x] `generate_sbom` 임시파일+`os.replace` 원자적 교체 — 우회 재생성이 실패했을 때 같은 경로의
+  **옛 BOM 을 성공으로 오인**하던 경로 차단(스테일 재발 방지). 실패 시 SKIPPED, 기존 캐시는 비파괴.
+- [x] 회귀 46건 추가(**590 passed, 2 xfailed**). 기존 테스트 더블 5개(`ensure_bom`×3,
+  `build_adapters`×2)는 넓어진 시그니처에 맞춰 갱신.
+- 남은 한계: 동적 선언이 **없는데** 원격 상태가 바뀌는 경우(원격 parent/BOM import 의 *고정* 버전이
+  재배포, 미러 변조)·gradle wrapper 버전 변경·`group:name:version` 이 아닌 gradle 명명인자 표기
+  (`group: 'x', version: '2.+'`)·깨진 매니페스트(파싱 실패 시 조용히 건너뜀)는 여전히 캐시 적중.

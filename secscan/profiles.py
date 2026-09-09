@@ -48,5 +48,9 @@ def get_profile(name: str) -> Profile:
     return PROFILES[name]
 
 
-def build_adapters(profile: Profile) -> list:
-    return [_ADAPTER_CLASSES[n]() for n in profile.adapter_names]
+def build_adapters(profile: Profile, *, bom_refresh: bool = False) -> list:
+    """프로파일의 어댑터를 만든다. bom_refresh 는 BOM 캐시 우회(동적 버전·--no-bom-cache)."""
+    return [
+        BomScaAdapter(refresh=bom_refresh) if n == "bom-sca" else _ADAPTER_CLASSES[n]()
+        for n in profile.adapter_names
+    ]

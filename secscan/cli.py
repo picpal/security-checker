@@ -25,6 +25,7 @@ from .output.sarif import to_sarif
 from .profiles import build_adapters, get_profile
 from .reachability.depscan import DepscanUsageProvider
 from .reachability.engine import Budget
+from .sbom import bom_cache_path, dynamic_versions
 from .scan import run_scan
 from .secret.trufflehog import trufflehog_runner
 from .secret.verify import resolve_secret_policy
@@ -160,6 +161,37 @@ def render_scan_summary(result) -> str:
     return "\n".join(lines)
 
 
+def render_dynamic_version_notice(dyn, limit: int = 5) -> str:
+    """동적 버전 때문에 캐시를 우회한다는 사실과 근거(무엇이 걸렸는지)를 보여준다."""
+    lines = [f"ℹ️ 동적 버전/SNAPSHOT 의존성 {len(dyn)}건 — BOM 캐시를 우회해 새로 해석합니다"
+             " (매니페스트가 그대로여도 해석 결과가 달라지므로)."]
+    for d in dyn[:limit]:
+        lines.append(f"   - {d.file}: {d.coordinate} = {d.version}")
+    if len(dyn) > limit:
+        lines.append(f"   … 외 {len(dyn) - limit}건")
+    return "\n".join(lines)
+
+
+def resolve_bom_refresh(target, profile, *, no_bom_cache: bool, notify=print):
+    """BOM 캐시를 우회할지 결정하고 사유를 돌려준다 → (refresh, reason).
+
+    동적 버전 탐지가 실패해도 스캔은 계속한다(부분 실패는 정상, 원칙 5).
+    """
+    if no_bom_cache:
+        return True, "--no-bom-cache"
+    if "bom-sca" not in profile.adapter_names:  # quick 은 BOM 을 안 쓴다 — 탐지 비용 X
+        return False, "unused"
+    try:
+        dyn = dynamic_versions(target)
+    except Exception as e:
+        notify(f"⚠️ 동적 버전 탐지 실패(캐시 정책 유지): {type(e).__name__}: {e}")
+        return False, "detection-failed"
+    if dyn:
+        notify(render_dynamic_version_notice(dyn))
+        return True, "dynamic-versions"
+    return False, "cache"
+
+
 def _has_actionable(findings) -> bool:
     """exit code 게이트 — 판정 H 가 저장한 disposition 만 읽는다(재계산 금지, spec §7.4)."""
     if any(f.disposition is None for f in findings):
@@ -174,7 +206,9 @@ def _cmd_scan(args) -> int:
         print(str(e))
         return 2
 
-    adapters = build_adapters(profile)
+    bom_refresh, bom_reason = resolve_bom_refresh(
+        args.target, profile, no_bom_cache=args.no_bom_cache)
+    adapters = build_adapters(profile, bom_refresh=bom_refresh)
     provider = None
     env_ok = (lambda: True)
     if profile.reachability and not args.no_reachability:
@@ -225,6 +259,7 @@ def _cmd_scan(args) -> int:
             "scanner_status": [asdict(s) for s in result.scanner_status],
             "reachability": {"ran": result.reachability_ran, "reason": result.reachability_reason},
             "secret_policy": result.secret_policy, "excluded_count": result.excluded_count,
+            "bom_cache": {"refresh": bom_refresh, "reason": bom_reason},
             "run_date": date.today().isoformat(),
         }), encoding="utf-8")
 
@@ -238,7 +273,6 @@ def _cmd_scan(args) -> int:
         print(f"⚠️ {wb_warn}")
 
     from .report.cli import write_report_bundle
-    from .sbom import bom_cache_path
     try:
         rp_paths, rp_warn = write_report_bundle(result.findings, wb_meta, out, target=str(args.target), bom=bom_cache_path(args.target))
     except Exception as e:
@@ -344,6 +378,8 @@ def main(argv: list[str] | None = None) -> int:
                     help="기본 제외(build/target/.git/node_modules 등) 끄기")
     sp.add_argument("--scan-ignored", action="store_true",
                     help=".gitignore 된 파일도 스캔(기본은 제외)")
+    sp.add_argument("--no-bom-cache", action="store_true",
+                    help="BOM 캐시를 무시하고 의존성 그래프를 새로 해석(동적 버전·SNAPSHOT 은 자동)")
     sp.add_argument("--suppressions", help="사람이 확정한 억제 파일(JSON) 경로")
     sp.add_argument("--baseline", help="baseline 파일(JSON) — 기존 이슈 억제, 신규만 알림")
     sp.add_argument("--write-baseline", help="현재 findings 를 baseline 파일로 저장")

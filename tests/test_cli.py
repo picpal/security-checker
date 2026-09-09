@@ -366,7 +366,7 @@ def test_scan_writes_findings_json_with_context(tmp_path, monkeypatch):
     from secscan.disposition import decide
     sec = decide([Finding(category="secret", severity="high", rule_id="aws", location=Location("a.properties", 4))])
     monkeypatch.setattr(cli, "run_scan", lambda *a, **k: ScanResult(findings=sec, raw_results=[]))
-    monkeypatch.setattr(cli, "build_adapters", lambda p: [])
+    monkeypatch.setattr(cli, "build_adapters", lambda p, **k: [])
     rc = cli.main(["scan", "--target", str(tmp_path), "--out", str(tmp_path / "out"), "--profile", "quick", "--no-reachability"])
     doc = json.loads((tmp_path / "out" / "findings.json").read_text())
     assert doc["@context"] == "secscan-findings/v1" and doc["findings"][0]["disposition"] == "actionable"
@@ -380,7 +380,85 @@ def test_scan_writes_workbook_or_csv_bundle(tmp_path, monkeypatch):
     from secscan.disposition import decide
     fs = decide([Finding(category="secret", severity="high", rule_id="aws", location=Location("a.properties", 4))])
     monkeypatch.setattr(cli, "run_scan", lambda *a, **k: ScanResult(findings=fs, raw_results=[]))
-    monkeypatch.setattr(cli, "build_adapters", lambda p: [])
+    monkeypatch.setattr(cli, "build_adapters", lambda p, **k: [])
     cli.main(["scan", "--target", str(tmp_path), "--out", str(tmp_path / "out"), "--profile", "quick", "--no-reachability"])
     out = tmp_path / "out"
     assert (out / "findings.xlsx").exists() or (out / "findings-xlsx" / "Secret.csv").exists()
+
+
+# --- BOM 캐시 우회 (--no-bom-cache + 동적 버전 자동 감지) ---
+
+def _adapters_of(captured):
+    return {type(a).__name__: a for a in captured["adapters"]}
+
+
+def _capture_run_scan(monkeypatch):
+    captured = {}
+
+    def fake(*a, **k):
+        captured.update(k)
+        return ScanResult([], [], False, "off", [])
+
+    monkeypatch.setattr(cli, "run_scan", fake)
+    return captured
+
+
+def test_main_scan_no_bom_cache_flag_bypasses_cache(monkeypatch, tmp_path):
+    captured = _capture_run_scan(monkeypatch)
+    cli.main(["scan", "--target", "/proj", "--profile", "accurate-sca",
+              "--out", str(tmp_path), "--no-reachability", "--no-bom-cache"])
+    assert _adapters_of(captured)["BomScaAdapter"].refresh is True
+
+
+def test_main_scan_uses_bom_cache_by_default(monkeypatch, tmp_path):
+    captured = _capture_run_scan(monkeypatch)
+    monkeypatch.setattr(cli, "dynamic_versions", lambda t: [])
+    cli.main(["scan", "--target", "/proj", "--profile", "accurate-sca",
+              "--out", str(tmp_path), "--no-reachability"])
+    assert _adapters_of(captured)["BomScaAdapter"].refresh is False
+
+
+def test_main_scan_auto_bypasses_cache_when_dynamic_versions_found(monkeypatch, tmp_path, capsys):
+    """동적 버전이 있으면 매니페스트가 그대로여도 그래프가 달라진다 → 자동 우회(원칙 1)."""
+    from secscan.sbom import DynamicVersion
+
+    captured = _capture_run_scan(monkeypatch)
+    monkeypatch.setattr(cli, "dynamic_versions",
+                        lambda t: [DynamicVersion("build.gradle", "com.corp:lib", "1.0-SNAPSHOT")])
+    cli.main(["scan", "--target", "/proj", "--profile", "accurate-sca",
+              "--out", str(tmp_path), "--no-reachability"])
+    out = capsys.readouterr().out
+    assert _adapters_of(captured)["BomScaAdapter"].refresh is True
+    assert "com.corp:lib" in out and "1.0-SNAPSHOT" in out  # 왜 우회했는지 사용자에게 보인다
+
+
+def test_main_scan_dynamic_version_detection_failure_does_not_abort(monkeypatch, tmp_path, capsys):
+    """부분 실패는 정상(원칙 5) — 탐지가 죽어도 스캔은 계속된다."""
+    captured = _capture_run_scan(monkeypatch)
+
+    def boom(target):
+        raise RuntimeError("탐지 폭발")
+
+    monkeypatch.setattr(cli, "dynamic_versions", boom)
+    rc = cli.main(["scan", "--target", "/proj", "--profile", "accurate-sca",
+                   "--out", str(tmp_path), "--no-reachability"])
+    assert rc == 0 and captured  # 스캔 자체는 수행됨
+    assert "동적 버전 탐지 실패" in capsys.readouterr().out
+
+
+def test_main_scan_skips_dynamic_detection_when_profile_has_no_bom_sca(monkeypatch, tmp_path):
+    """quick 은 BOM 을 안 쓴다 — 탐지 비용을 치르지 않는다."""
+    _capture_run_scan(monkeypatch)
+    called = []
+    monkeypatch.setattr(cli, "dynamic_versions", lambda t: called.append(t) or [])
+    cli.main(["scan", "--target", "/proj", "--profile", "quick", "--out", str(tmp_path)])
+    assert called == []
+
+
+def test_main_scan_records_bom_cache_decision_in_findings_meta(monkeypatch, tmp_path):
+    """감사 가능성: 이 스캔이 캐시를 썼는지 우회했는지 산출물에 남는다."""
+    _capture_run_scan(monkeypatch)
+    cli.main(["scan", "--target", "/proj", "--profile", "accurate-sca",
+              "--out", str(tmp_path), "--no-reachability", "--no-bom-cache"])
+    meta = json.loads((tmp_path / "findings.json").read_text())["meta"]
+    assert meta["bom_cache"] == {"refresh": True, "reason": "--no-bom-cache"}
