@@ -235,6 +235,14 @@ _GRADLE_ASSIGN = re.compile(
     re.M)
 _GRADLE_EXT_INDEX = re.compile(
     r"""ext\s*\[\s*["']([^"']+)["']\s*\]\s*=\s*["']([^"']+)["']""")
+# 명명인자 의존성 선언: `implementation group: 'x', name: 'y', version: '2.+'`.
+# 판별 축은 **콜론 명명인자로 group|module + name + version 이 한 논리 줄에 함께 있을 것**.
+# `version:` 단독은 절대 신호로 못 쓴다 — 프로젝트 자기 버전·publishing DSL 과 구분이 안 된다.
+# 콜론 형태는 Groovy 의 인자 구문이라 DSL 프로퍼티 대입(`version = '…'`)과 겹치지 않고,
+# 앞선 문자를 [\s{;(] 로 제한해 문자열·주석 안의 유사 표기를 배제한다.
+_COMMENTS = re.compile(r"/\*.*?\*/|//[^\n]*", re.S)
+_NAMED_DEP_HEAD = re.compile(r"""(?:^|[\s{;(])\w+\s*\(?\s*(?:group|module|name)\s*:""")
+_NAMED_ARG = re.compile(r"""(\w+)\s*:\s*(?:(["'])([^"']*)\2|([A-Za-z_][\w.]*))""")
 # apply from: 'x.gradle' / apply(from = "x.gradle")
 _APPLY_FROM = re.compile(r"""apply\s*\(?\s*from\s*[:=]\s*["']([^"']+)["']""")
 _ROOT_VARS = re.compile(r"""\$\{?(?:rootProject\.projectDir|rootProject\.rootDir|rootDir|projectDir|project\.rootDir)\}?/?""")
@@ -381,6 +389,35 @@ def _maven_dynamic(path: Path, rel: str, fingerprinted: set):
             yield DynamicVersion(rel, coord, reason[0], reason[1])
 
 
+def _logical_lines(text: str):
+    """주석을 걷어내고, 쉼표로 이어지는 인자 목록을 한 줄로 합친다(여러 줄 선언 대응)."""
+    buf = ""
+    for line in _COMMENTS.sub("", text).splitlines():
+        buf = f"{buf} {line.strip()}" if buf else line
+        if buf.rstrip().endswith(","):
+            continue
+        yield buf
+        buf = ""
+    if buf:
+        yield buf
+
+
+def _named_arg_deps(text: str):
+    """명명인자 의존성 선언 → (group:name, 버전 표현). 세 키가 다 모일 때만 낸다."""
+    for line in _logical_lines(text):
+        if not _NAMED_DEP_HEAD.search(line):
+            continue
+        args: dict[str, str] = {}
+        for key, quote, quoted, bare in _NAMED_ARG.findall(line):
+            if key not in args:
+                # 따옴표 없는 식(rootProject.ext.libVersion)은 보간과 같은 경로로 해석한다
+                args[key] = quoted if quote else "${%s}" % bare
+        group = args.get("group") or args.get("module")
+        if not group or "name" not in args or "version" not in args:
+            continue
+        yield f"{group}:{args['name']}", args["version"]
+
+
 def _gradle_symbols(manifests) -> dict:
     """빌드 스크립트 전체 + gradle.properties 의 "이름 → 값 후보" 표.
 
@@ -442,6 +479,11 @@ def _gradle_dynamic(path: Path, rel: str, symbols: dict, has_catalog: bool, foll
         reason = _dynamic_reason(version, lookup)
         if reason is not None:
             yield DynamicVersion(rel, f"{group}:{artifact}", reason[0], reason[1])
+
+    for coord, version in _named_arg_deps(text):
+        reason = _dynamic_reason(version, lookup)
+        if reason is not None:
+            yield DynamicVersion(rel, coord, reason[0], reason[1])
 
     # 따라가지 못한 applied script = 그 안의 선언을 통째로 못 본다는 뜻이다.
     for target in _APPLY_FROM.findall(text):

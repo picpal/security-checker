@@ -805,3 +805,78 @@ def test_dynamic_versions_resolves_root_scoped_apply_from_in_subproject(tmp_path
         'dependencies { implementation "c:lib:$libVersion" }\n')
     assert dynamic_versions(repo / "app") == []
     assert dynamic_versions(repo) == []
+
+
+# --- gradle 명명인자 표기 (이월분) ---
+# 판별 축: "한 논리 줄에서, 식별자로 시작하는 호출의 **콜론 명명인자**에 group|module + name +
+# version 이 함께 있을 것". `version:` 단독은 절대 신호로 쓰지 않는다 — 프로젝트 자기 버전·
+# publishing DSL 과 구분이 안 되기 때문(그래서 지난 라운드에 보류했던 표기다).
+
+def _gradle(tmp_path, script, name="build.gradle"):
+    p = tmp_path / "g"
+    p.mkdir(exist_ok=True)
+    (p / name).write_text(script)
+    return p
+
+
+@pytest.mark.parametrize("script,expected", [
+    # 1) 리터럴 동적 버전
+    ("dependencies {\n  implementation group: 'org.x', name: 'y', version: '2.+'\n}\n", "2.+"),
+    # 2) 괄호 + 보간
+    ('def v = "3.+"\ndependencies {\n  implementation(group: \'org.x\', name: \'y\', version: "$v")\n}\n', "3.+"),
+    # 3) 여러 줄로 이어진 인자 목록
+    ("dependencies {\n  implementation group: 'org.x',\n    name: 'y',\n    version: '1.0-SNAPSHOT'\n}\n",
+     "1.0-SNAPSHOT"),
+    # 4) 따옴표 없는 식(미해석) → fail-closed
+    ("dependencies {\n  implementation group: 'org.x', name: 'y', version: rootProject.ext.libVersion\n}\n",
+     "${rootProject.ext.libVersion}"),
+    # 5) module: 별칭
+    ("dependencies {\n  implementation module: 'org.x', name: 'y', version: 'latest.release'\n}\n",
+     "latest.release"),
+])
+def test_dynamic_versions_detects_gradle_named_arguments(tmp_path, script, expected):
+    got = [d.version for d in dynamic_versions(_gradle(tmp_path, script))]
+    assert got == [expected]
+
+
+def test_dynamic_versions_resolves_fixed_named_argument_version(tmp_path):
+    """양성 축이 고정 버전까지 잡으면 안 된다."""
+    p = _gradle(tmp_path, "dependencies {\n  implementation group: 'org.x', name: 'y', version: '1.9'\n}\n")
+    assert dynamic_versions(p) == []
+
+
+def test_dynamic_versions_resolves_named_argument_variable(tmp_path):
+    """따옴표 없는 식도 로컬에서 풀리면 고정이다."""
+    p = _gradle(tmp_path, "ext { libVersion = '1.9' }\n"
+                          "dependencies {\n  implementation group: 'org.x', name: 'y', version: libVersion\n}\n")
+    assert dynamic_versions(p) == []
+
+
+@pytest.mark.parametrize("script", [
+    # 프로젝트 자기 버전 (지난 라운드 보류 사유 그 자체)
+    "group = 'com.corp'\nversion = '1.0-SNAPSHOT'\n",
+    "version '1.0-SNAPSHOT'\n",
+    "ext { version = '2.+' }\n",
+    # publishing / pom 블록
+    """publishing { publications { mavenJava(MavenPublication) {
+        groupId = 'com.corp'
+        artifactId = 'app'
+        version = '1.0-SNAPSHOT'
+    } } }
+    """,
+    "pom {\n  name = 'app'\n  version = '2.+'\n}\n",
+    # 콜론을 쓰는 다른 DSL — 세 키가 다 모이지 않는다
+    "task bundle(type: Copy, group: 'build', description: 'x')\n",
+    "dependencies { implementation('g:a:1.9') { exclude group: 'org.z', module: 'w' } }\n",
+    "artifacts { archives file: jar, name: 'app', type: 'jar' }\n",
+    # 플러그인 DSL
+    "plugins { id 'org.springframework.boot' version '3.5.16' }\n",
+    # 주석 안
+    "// implementation group: 'org.x', name: 'y', version: '2.+'\n",
+    "/* implementation group: 'org.x', name: 'y', version: '9.+' */\n",
+    # 문자열 안 (문서화 목적으로 적어둔 예시)
+    "def doc = \"implementation group: 'org.x', name: 'y', version: '2.+'\"\n",
+])
+def test_dynamic_versions_named_argument_negative_controls(tmp_path, script):
+    """음성 대조군 — 하나라도 잡히면 판별 축이 틀린 것이다."""
+    assert dynamic_versions(_gradle(tmp_path, script)) == []

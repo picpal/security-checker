@@ -283,8 +283,9 @@ crypto 안티패턴 → **커스텀 룰(D)** (3종: MyBatis `${}`/하드코딩/z
 > 확정되기 때문이다. 유일한 방어선은 BOM TTL(기본 24h)과 `--no-bom-cache` 다.
 1. **실행 시점 주입값** — `-PlibVersion=…`·`-D`·환경변수·`System.getenv`·`providers.exec`,
    파일/네트워크에서 읽어오는 버전.
-2. **코드가 만드는 좌표** — `"$g:$a:$v"`(좌표 전체가 변수), 반복문·조건문으로 조립하는 의존성,
-   gradle 명명인자 표기(`group: 'x', name: 'y', version: '2.+'`).
+2. **코드가 만드는 좌표** — `"$g:$a:$v"`(좌표 전체가 변수), `implementation depString`, 반복문·
+   조건문으로 조립하는 의존성. (Groovy 명명인자 표기는 2026-09-09 에 대응 완료. kotlin DSL 의
+   `=` 명명인자는 DSL 프로퍼티 대입과 문법이 같아 안전한 판별 축이 없어 미대응.)
 3. **플러그인이 주입하는 의존성** — spring-dependency-management·protobuf·kapt/ksp 등이
    해석 시점에 추가하는 좌표(매니페스트에 문자열로 존재하지 않는다).
 4. **buildSrc/convention 플러그인·included build 의 *내용*** — 파일 변경은 지문이 잡지만(→캐시
@@ -301,6 +302,23 @@ crypto 안티패턴 → **커스텀 룰(D)** (3종: MyBatis `${}`/하드코딩/z
    잃는다. **오탐 폭발은 스테일보다 나쁜 실패다** — 모두가 캐시를 못 쓰면 도구를 안 쓰게 되고, 그러면
    정확도 자체가 0이 된다. 이 잔여분의 하한선이 **BOM TTL 24h** 이고, 즉시 확실히 하려면
    `--no-bom-cache` 다. (위 1~7 도 같은 백스톱을 공유한다.)
+
+### gradle 명명인자 표기 대응 (2026-09-09, 이월분 종료)
+- [x] `implementation group: 'x', name: 'y', version: '2.+'` 계열을 탐지한다(괄호형·여러 줄 인자
+  목록·`module:` 별칭·따옴표 없는 식 `version: rootProject.ext.libVersion` 포함. 후자는 보간과 같은
+  경로로 해석하고 못 풀면 fail-closed).
+- [x] **판별 축**: 한 논리 줄에서 **콜론 명명인자**로 `group|module` + `name` + `version` 이 **함께**
+  있고, 그 앞이 `[\s{;(]` + 식별자일 것. 근거 — (1) `version:` 단독은 프로젝트 자기 버전·publishing
+  DSL 과 구분 불가라 절대 신호로 못 쓴다(지난 라운드 보류 사유), (2) Groovy 에서 콜론은 **인자 구문**
+  이고 DSL 프로퍼티 설정은 `=`/메서드 호출이라 두 부류가 문법적으로 겹치지 않는다, (3) 주석 제거 +
+  선행 문자 제한으로 주석·문자열 안의 유사 표기를 배제한다.
+- [x] **음성 대조군 12종 전부 미탐**: 자기 버전 3형(`version = …`·`version '…'`·`ext { version }`),
+  publishing/pom 블록 2종, 콜론 쓰는 다른 DSL 3종(`task(type:, group:)`·`exclude group:, module:`·
+  `artifacts { file:, name:, type: }`), 플러그인 DSL, 주석 2종(`//`·`/* */`), 문자열 안 1종.
+- [x] 오탐 0 재실측 19개 대상 유지, E2E 로 `group:/name:/version: '1.+'` → 우회 확인.
+  **647 passed, 2 xfailed**(회귀 19건 추가).
+- 미대응(별건): kotlin DSL 명명인자(`implementation(group = "x", …)` — `=` 형은 DSL 프로퍼티 대입과
+  같은 문법이라 같은 축을 쓸 수 없다), 좌표 전체가 변수인 표기(`implementation depString`).
 
 ### codex 리뷰 라운드3 (2026-09-09) — 리뷰 예산 종료
 - [x] **P1-2 parent 실효 좌표** — 후보 pom 이 groupId/version 을 상속으로 생략하면 자기 `<parent>`
